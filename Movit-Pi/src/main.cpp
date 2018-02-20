@@ -1,92 +1,98 @@
-#include <wiringPiI2C.h>
-#include <wiringPi.h>
+/*
+I2Cdev library collection - MPU6050 RPi example
+Based on the example in Arduino/MPU6050/
+
+==============================================
+I2Cdev device library code is placed under the MIT license
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+===============================================
+
+To compile on a Raspberry Pi (1 or 2)
+  1. install the bcm2835 library, see http://www.airspayce.com/mikem/bcm2835/index.html
+  2. enable i2c on your RPi , see https://learn.adafruit.com/adafruits-raspberry-pi-lesson-4-gpio-setup/configuring-i2c
+  3. connect your i2c devices
+  4. then from bash
+      $ PATH_I2CDEVLIB=~/i2cdevlib/
+      $ gcc -o MPU6050_example_1 ${PATH_I2CDEVLIB}RaspberryPi_bcm2835/MPU6050/examples/MPU6050_example_1.cpp \
+         -I ${PATH_I2CDEVLIB}RaspberryPi_bcm2835/I2Cdev ${PATH_I2CDEVLIB}RaspberryPi_bcm2835/I2Cdev/I2Cdev.cpp \
+         -I ${PATH_I2CDEVLIB}/Arduino/MPU6050/ ${PATH_I2CDEVLIB}/Arduino/MPU6050/MPU6050.cpp -l bcm2835 -l m
+      $ sudo ./MPU6050_example_1
+
+*/
+
 #include <stdio.h>
+#include <bcm2835.h>
+#include "I2Cdev.h"
+#include "MPU6050.h"
 #include <math.h>
 
-#include "MPU6050.h"
-
-int32_t fd;
-int acclX, acclY, acclZ;
-int gyroX, gyroY, gyroZ;
-double acclX_scaled, acclY_scaled, acclZ_scaled;
-double gyroX_scaled, gyroY_scaled, gyroZ_scaled;
-
-int read_word_2c(int addr)
+int main(int argc, char **argv)
 {
-    int val;
-    val = wiringPiI2CReadReg8(fd, addr);
-    val = val << 8;
-    val += wiringPiI2CReadReg8(fd, addr + 1);
-    if (val >= 0x8000)
-        val = -(65536 - val);
+    printf("MPU6050 3-axis acceleromter example program\n");
+    I2Cdev::initialize();
+    MPU6050 accelgyro;
+    int16_t ax, ay, az;
+    int16_t gx, gy, gz;
 
-    return val;
-}
+    printf("MPU6050 Test connection: %X\n", accelgyro.getDeviceID());
 
-double dist(double a, double b)
-{
-    return sqrt((a * a) + (b * b));
-}
-
-double get_y_rotation(double x, double y, double z)
-{
-    double radians;
-    radians = atan2(x, dist(y, z));
-    return -(radians * (180.0 / M_PI));
-}
-
-double get_x_rotation(double x, double y, double z)
-{
-    double radians;
-    radians = atan2(y, dist(x, z));
-    return (radians * (180.0 / M_PI));
-}
-
-int main()
-{
-    MPU6050 mpu(0x68);
-
-    if(mpu.testConnection())
-    {
-        printf("WOUHOU\n");
-    }
+    if (accelgyro.testConnection())
+        printf("MPU6050 connection test successful\n");
     else
     {
-        printf("noooon\n");
+        fprintf(stderr, "MPU6050 connection test failed! something maybe wrong, continuing anyway though ...\n");
+        //return 1;
     }
 
+    accelgyro.initialize();
 
-    mpu.initialize();
+    // use the code below to change accel/gyro offset values
 
+    printf("Updating internal sensor offsets...\n");
+    // -76	-2359	1688	0	0	0
+    printf("%i \t %i \t %i \t %i \t %i \t %i\n",
+           accelgyro.getXAccelOffset(),
+           accelgyro.getYAccelOffset(),
+           accelgyro.getZAccelOffset(),
+           accelgyro.getXGyroOffset(),
+           accelgyro.getYGyroOffset(),
+           accelgyro.getZGyroOffset());
+    accelgyro.setXGyroOffset(220);
+    accelgyro.setYGyroOffset(76);
+    accelgyro.setZGyroOffset(-85);
+    printf("%i \t %i \t %i \t %i \t %i \t %i\n",
+           accelgyro.getXAccelOffset(),
+           accelgyro.getYAccelOffset(),
+           accelgyro.getZAccelOffset(),
+           accelgyro.getXGyroOffset(),
+           accelgyro.getYGyroOffset(),
+           accelgyro.getZGyroOffset());
 
-
-
-    // fd = wiringPiI2CSetup(0x68);
-    // wiringPiI2CWriteReg8(fd, 0x6B, 0x00); //disable sleep mode
-    // printf("fd=%X\n", fd);
-    // printf("set 0x6B=%X\n", wiringPiI2CReadReg8(fd, 0x6B));
-
-    // delay(5000);
-
-    // while (1)
-    // {
-
-    //     acclX = read_word_2c(0x3B);
-    //     acclY = read_word_2c(0x3D);
-    //     acclZ = read_word_2c(0x3F);
-
-    //     acclX_scaled = acclX / 16384.0;
-    //     acclY_scaled = acclY / 16384.0;
-    //     acclZ_scaled = acclZ / 16384.0;
-
-    //     printf("My acclX_scaled: %f\n", acclX_scaled);
-    //     printf("My acclY_scaled: %f\n", acclY_scaled);
-    //     printf("My acclZ_scaled: %f\n", acclZ_scaled);
-
-    //     printf("My X rotation: %f\n", get_x_rotation(acclX_scaled, acclY_scaled, acclZ_scaled));
-    //     printf("My Y rotation: %f\n", get_y_rotation(acclX_scaled, acclY_scaled, acclZ_scaled));
-
-    //     delay(100);
-    // }
-    // return 0;
+    printf("\n");
+    printf("  ax \t ay \t az \t gx \t gy \t gz:\n");
+    while (true)
+    {
+        accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+        printf("  %d \t %d \t %d \t %d \t %d \t %d\r", ax, ay, az, gx, gy, gz);
+        fflush(stdout);
+        bcm2835_delay(100);
+    }
+    return 1;
 }

@@ -777,7 +777,7 @@ class MPU6050 {
         void setDMPConfig2(uint8_t config);
 
     private:
-        //uint8_t fd;
+        uint8_t fd;
         uint8_t devAddr;
         uint8_t buffer[14];
 };

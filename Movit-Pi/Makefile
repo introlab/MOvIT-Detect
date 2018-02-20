@@ -4,10 +4,13 @@ SOURCES = 	src/main.cpp \
 
 OBJECTS = $(SOURCES:%.c=%.o)
 
-TARGET = all
+TARGET = movit-plus
 
 $(TARGET): $(OBJECTS)
-	gcc $^ -o $@ -lm -lwiringPi
+	gcc $^ -o $@ -lm -lbcm2835
 
 %.o: %.c
 	gcc -c $< -o $@
+
+clean:
+	rm -rf *o $(TARGET)
