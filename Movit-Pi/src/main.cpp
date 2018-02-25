@@ -38,13 +38,28 @@ To compile on a Raspberry Pi (1 or 2)
 */
 
 #include <stdio.h>
+#include <cstdio>
 #include <bcm2835.h>
-#include "I2Cdev.h"
-#include "MPU6050.h"
 #include <math.h>
+#include <unistd.h>
+
+#include "lib/I2Cdev.h"
+#include "lib/MPU6050.h"
+#include "mosquitto_broker/mosquitto_broker.h"
+
+#define SLEEP_TIME 2000000
+
+void sendDataToWebServer(MosquittoBroker *mosquittoBroker)
+{
+	mosquittoBroker->sendBackRestAngle(10);
+	mosquittoBroker->sendDistanceTraveled(1000);
+}
 
 int main(int argc, char **argv)
 {
+	MosquittoBroker *mosquittoBroker = new MosquittoBroker("actionlistener");
+	
+	
     printf("MPU6050 3-axis acceleromter example program\n");
     I2Cdev::initialize();
     MPU6050 accelgyro;
@@ -93,6 +108,12 @@ int main(int argc, char **argv)
         printf("  %d \t %d \t %d \t %d \t %d \t %d\r", ax, ay, az, gx, gy, gz);
         fflush(stdout);
         bcm2835_delay(100);
+		
+		sendDataToWebServer(mosquittoBroker);
+		usleep(SLEEP_TIME);
     }
+	
+	delete mosquittoBroker;
+
     return 1;
 }
