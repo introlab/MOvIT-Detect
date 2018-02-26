@@ -33,7 +33,7 @@ THE SOFTWARE.
 #include <bcm2835.h>
 #include <math.h> // required for BMP180
 #include <stdlib.h> // required for MPU6060
-#include <string.h> // required for MPU6060
+#include <string> // required for MPU6060
 
 
 #define set_I2C_pins  false  
