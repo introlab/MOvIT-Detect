@@ -35,7 +35,7 @@ I2Cdev::I2Cdev() {}
 void I2Cdev::initialize()
 {
     bcm2835_init();
-    bcm2835_i2c_set_baudrate(i2c_baudrate);
+    bcm2835_i2c_set_baudrate(I2C_BAUDRATE);
 }
 
 /** Enable or disable I2C,
@@ -43,7 +43,7 @@ void I2Cdev::initialize()
  */
 void I2Cdev::enable(bool isEnabled)
 {
-    if (set_I2C_pins)
+    if (SET_I2C_PINS)
     {
         if (isEnabled)
             bcm2835_i2c_end();
@@ -62,7 +62,7 @@ char recvBuf[256];
  * @param data Container for single bit value
  * @return Status of read operation (true = success)
  */
-int8_t I2Cdev::readBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data)
+bool I2Cdev::readBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data)
 {
     bcm2835_i2c_setSlaveAddress(devAddr);
     sendBuf[0] = regAddr;
@@ -79,7 +79,7 @@ int8_t I2Cdev::readBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t
  * @param data Container for right-aligned value (i.e. '101' read from any bitStart position will equal 0x05)
  * @return Status of read operation (true = success)
  */
-int8_t I2Cdev::readBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data)
+bool I2Cdev::readBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data)
 {
     // 01101001 read byte
     // 76543210 bit numbers
@@ -106,7 +106,7 @@ int8_t I2Cdev::readBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint
  * @param data Container for byte value read from device
  * @return Status of read operation (true = success)
  */
-int8_t I2Cdev::readByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data)
+bool I2Cdev::readByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data)
 {
     bcm2835_i2c_setSlaveAddress(devAddr);
     sendBuf[0] = regAddr;
@@ -122,7 +122,7 @@ int8_t I2Cdev::readByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data)
  * @param data Buffer to store read data in
  * @return I2C_TransferReturn_TypeDef http://downloads.energymicro.com/documentation/doxygen/group__I2C.html
  */
-int8_t I2Cdev::readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data)
+bool I2Cdev::readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data)
 {
     bcm2835_i2c_setSlaveAddress(devAddr);
     sendBuf[0] = regAddr;
@@ -214,7 +214,7 @@ bool I2Cdev::writeByte(uint8_t devAddr, uint8_t regAddr, uint8_t data)
  * @param data Container for word value read from device
  * @return Status of read operation (true = success)
  */
-int8_t I2Cdev::readWord(uint8_t devAddr, uint8_t regAddr, uint16_t *data)
+bool I2Cdev::readWord(uint8_t devAddr, uint8_t regAddr, uint16_t *data)
 {
     bcm2835_i2c_setSlaveAddress(devAddr);
     sendBuf[0] = regAddr;
@@ -230,7 +230,7 @@ int8_t I2Cdev::readWord(uint8_t devAddr, uint8_t regAddr, uint16_t *data)
  * @param data Buffer to store read data in
  * @return Number of words read (-1 indicates failure)
  */
-int8_t I2Cdev::readWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data)
+bool I2Cdev::readWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data)
 {
     bcm2835_i2c_setSlaveAddress(devAddr);
     sendBuf[0] = regAddr;
@@ -279,3 +279,96 @@ bool I2Cdev::writeWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16
     uint8_t response = bcm2835_i2c_write(sendBuf, 1 + 2 * length);
     return response == BCM2835_I2C_REASON_OK;
 }
+
+/*==============================================================================================================*
+    ANCIEN CALL DONT IL EST POSSIBLE DE S'INSPIRER POUR L'IMPLÉMENTATION DE READBYTES ET WRITEBYTES SANS REGISTRE
+ *==============================================================================================================*/
+// bool I2Cdev::readBytes(uint8_t devAddr, uint8_t length, uint8_t *data);
+// {
+//     uint8_t devAddr = MAX11611_DEFAULT_ADDRESS;
+//     int8_t count = 0;
+//     uint32_t t1 = millis();
+//     //I2Cdev::readBytes(MAX11611_DEFAULT_ADDRESS, 0x3B, 6, buffer);
+
+
+//     // Arduino v1.0.1+, Wire library
+//     // Adds official support for repeated start condition, yay!
+
+//     // I2C/TWI subsystem uses internal buffer that breaks with large data requests
+//     // so if user requests more than BUFFER_LENGTH bytes, we have to do it in
+//     // smaller chunks instead of all at once
+//     for (uint8_t k = 0; k < length; k += min(length, BUFFER_LENGTH))
+//     {
+//         //Wire.beginTransmission(devAddr);
+//         //Wire.write(regAddr);
+//         //Wire.endTransmission();
+//         Wire.beginTransmission(devAddr);
+//         Wire.requestFrom(devAddr, (uint8_t)min(length - k, BUFFER_LENGTH));
+
+//         for (; Wire.available() && (timeout == 0 || millis() - t1 < timeout); count++)
+//         {
+//             data[count] = Wire.read();
+// #ifdef I2CDEV_SERIAL_DEBUG
+//             Serial.print(data[count], HEX);
+//             if (count + 1 < length)
+//                 Serial.print(" ");
+// #endif
+//         }
+//     }
+
+//     // check for timeout
+//     if (timeout > 0 && millis() - t1 >= timeout && count < length)
+//         count = -1; // timeout
+
+// #ifdef I2CDEV_SERIAL_DEBUG
+//     printf(". Done (");
+//     printf(count, DEC);
+//     printf(" read).\n");
+// #endif
+
+//     return count;
+// }
+
+// bool I2CdevwriteBytes(uint8_t devAddr, uint8_t length, uint8_t *data);
+// {
+//     uint8_t status = 0;
+// #if ((I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE && ARDUINO < 100) || I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_NBWIRE)
+//     Wire.beginTransmission(devAddr);
+//     //Wire.send((uint8_t) regAddr); // send address
+// #elif (I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE && ARDUINO >= 100)
+//     Wire.beginTransmission(devAddr);
+//     //Wire.write((uint8_t) regAddr); // send address
+// #elif (I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE)
+//     Fastwire::beginTransmission(devAddr);
+//     //Fastwire::write(regAddr);
+// #endif
+//     for (uint8_t i = 0; i < length; i++)
+//     {
+// #ifdef I2CDEV_SERIAL_DEBUG
+//         Serial.print(data[i], HEX);
+//         if (i + 1 < length)
+//             Serial.print(" ");
+// #endif
+// #if ((I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE && ARDUINO < 100) || I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_NBWIRE)
+//         Wire.send((uint8_t)data[i]);
+// #elif (I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE && ARDUINO >= 100)
+//         Wire.write((uint8_t)data[i]);
+// #elif (I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE)
+//         Fastwire::write((uint8_t)data[i]);
+// #endif
+//     }
+// #if ((I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE && ARDUINO < 100) || I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_NBWIRE)
+//     Wire.endTransmission();
+// #elif (I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE && ARDUINO >= 100)
+//     status = Wire.endTransmission();
+// #elif (I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE)
+//     Fastwire::stop();
+//     //status = Fastwire::endTransmission();
+// #endif
+// #ifdef I2CDEV_SERIAL_DEBUG
+//     Serial.println(". Done.");
+// #endif
+//     return status == 0;
+// }
+
+

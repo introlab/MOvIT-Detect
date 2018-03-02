@@ -57,112 +57,111 @@ extern bool bIsBtnPushed;
 //Functions
 extern bool isSomeoneThere();
 extern bool isMoving();
-extern void program_test();
 extern void printStuff();
 extern void light_state();
 extern void buzzer_state();
 extern void ForceSensorUnits();
-//extern void shearing_detection1();
 
-void program_loop()
+bool program_loop()
 {
     bIsBtnPushed = false;
 
     // timer.run();
-    program_test();
+    bool ret = program_test();
 
-    if (sleeping)
-    {
-        if (isSomeoneThere() || testSequence == true)
-        {
-            imuFixe.setSleepEnabled(false);
-            //imuMobile.setSleepEnabled(false);
-            sleeping = false;
-        }
-        else
-        {
-            //Envoie tout de même les valeurs à la page périphériques pour le troobleshooting au besoin
-            //             if (SerialUSB.available() > 1)
-            //             {
-            // #ifdef DEBUG_SERIAL
-            //                 printf("Something has been detected on the SerialUSB port...\n");
-            // #endif
+//     if (sleeping)
+//     {
+//         if (isSomeoneThere() || testSequence == true)
+//         {
+//             imuFixe.setSleepEnabled(false);
+//             //imuMobile.setSleepEnabled(false);
+//             sleeping = false;
+//         }
+//         else
+//         {
+//             //Envoie tout de même les valeurs à la page périphériques pour le troobleshooting au besoin
+//             if (SerialUSB.available() > 1)
+//             {
+// #ifdef DEBUG_SERIAL
+//                 printf("Something has been detected on the SerialUSB port...\n");
+// #endif
+//                 // Get the command / anything that is on the port
+//                                       JsonObject &cmd = getCmd();
 
-            //Get the command/anything that is on the port
-            // JsonObject &cmd = getCmd();
+//                 // Repond seulement pour les demandes de type captForceReq, devrait aussi repondre aux boutons de la page Peripheriques ?
+//                 if (cmd["type"] == "captForceReq")
+//                 {
+//                     //if the parsing of what was on port worked then send a positive response, else send error
+//                     bool error = false;
+//                     if (!cmd.success())
+//                     {
+//                         error = true;
+//                     }
+//                     sendData(cmd, isMoving(), error);
+//                 }
+//             }
+//         }
+//     }
 
-            //Repond seulement pour les demandes de type captForceReq, devrait aussi repondre aux boutons de la page Peripheriques?
-            // if (cmd["type"] == "captForceReq")
-            // {
-            //     //if the parsing of what was on port worked then send a positive response, else send error
-            //     bool error = false;
-            //     if (!cmd.success())
-            //     {
-            //         error = true;
-            //     }
-            //     sendData(cmd, isMoving(), error);
-            // }
-            // }
-        }
-    }
+//     else if (!isSomeoneThere() && testSequence == false)
+//     {
+//         imuFixe.setSleepEnabled(true);
+//         //imuMobile.setSleepEnabled(false);
+//         sleeping = true;
 
-    else if (!isSomeoneThere() && testSequence == false)
-    {
-        imuFixe.setSleepEnabled(true);
-        //imuMobile.setSleepEnabled(false);
-        sleeping = true;
+//         //Envoie une fois, "-" à toutes les valeurs en signe de "No Data" pour toutes les valeurs de real time data affichées
+//         if (SerialUSB.available() > 1)
+//         {
+//             DynamicJsonBuffer jsonBuffer;
+//             JsonObject &response = jsonBuffer.createObject();
 
-        //Envoie une fois, "-" à toutes les valeurs en signe de "No Data" pour toutes les valeurs de real time data affichées
-        // if (SerialUSB.available() > 1)
-        // {
-        // DynamicJsonBuffer jsonBuffer;
-        // JsonObject &response = jsonBuffer.createObject();
+//             response["angle"] = "-";
+//             response["isMoving"] = "-";
 
-        // response["angle"] = "-";
-        // response["isMoving"] = "-";
+//             // Send response if the object was correctly create
+//             if (response.success())
+//             {
+//                 response.printTo(SerialUSB);
+//             }
+// #ifdef DEBUG_SERIAL
+//             if (response.success())
+//             {
+//                 //response.prettyPrintTo(Serial); //Accusé de réception
+//             }
+//             else
+//             {
+//                 printf("There was a problem when creating the object...\n");
+//             }
+// #endif
 
-        //Send response if the object was correctly create
-        // if (response.success())
-        // {
-        //     response.printTo(SerialUSB);
-        // }
-#ifdef DEBUG_SERIAL
-        if (response.success())
-        {
-            //response.prettyPrintTo(Serial); //Accusé de réception
-        }
-        else
-        {
-            printf("There was a problem when creating the object...\n");
-        }
-#endif
+//             sendData(cmd, isMoving(), error);
+//         }
+//     }
+//     else
+//     {
+//         if (SerialUSB.available() > 1)
+//         {
+// #ifdef DEBUG_SERIAL
+//             printf("Something has been detected on the SerialUSB port...\n");
+// #endif
 
-        //sendData(cmd, isMoving(), error);
-        // }
-    }
-    else
-    {
-        //         if (SerialUSB.available() > 1)
-        //         {
-        // #ifdef DEBUG_SERIAL
-        //             printf("Something has been detected on the SerialUSB port...\n");
-        // #endif
+//             //Get the command/anything that is on the port
+//             // JsonObject &cmd = getCmd();
 
-        //             //Get the command/anything that is on the port
-        //             // JsonObject &cmd = getCmd();
+//             //if the parsing of what was on port worked then send a positive response, else send error
+//             bool error = false;
+//             if (!cmd.success())
+//             {
+//                 error = true;
+//             }
+//             sendData(cmd, isMoving(), error);
+//         }
+//     }
 
-        //             //if the parsing of what was on port worked then send a positive response, else send error
-        //             bool error = false;
-        //             if (!cmd.success())
-        //             {
-        //                 error = true;
-        //             }
-        //             sendData(cmd, isMoving(), error);
-        //         }
-    }
+//     led_control();
+//     buzzer_state();
 
-    led_control();
-    buzzer_state();
+    return ret;
 }
 
 //--------------------------------------------------------------------------------------------------//
@@ -401,25 +400,25 @@ void sendData(string &request, bool state, bool e)
 
 void getData()
 {
-    // // Data: Date and time
-    // mcp79410.getDateTime(dateTime);
+    // Data: Date and time
+    mcp79410.getDateTime(dateTime);
 
-    // // Data: Angle (centrales intertielles mobile/fixe)
-    // getMPUAccData(imuMobile, aRawMobile, aRealMobile);
-    // getMPUypr(&pitchMobile, &rollMobile, aRealMobile);
-    // getMPUAccData(imuFixe, aRawFixe, aRealFixe);
-    // getMPUypr(&pitchFixe, &rollFixe, aRealFixe);
-    // getAngle();
+    // Data: Angle (centrales intertielles mobile/fixe)
+    getMPUAccData(imuMobile, aRawMobile, aRealMobile);
+    getMPUypr(&pitchMobile, &rollMobile, aRealMobile);
+    getMPUAccData(imuFixe, aRawFixe, aRealFixe);
+    getMPUypr(&pitchFixe, &rollFixe, aRealFixe);
+    getAngle();
 
-    // // Data: Capteur de force
-    // max11611.getData(capteurForceNb, max11611Data);
-    // ForceSensorUnits();
-    // shearing_detection1();
+    // Data: Capteur de force
+    max11611.getData(capteurForceNb, max11611Data);
+    ForceSensorUnits();
+    shearing_detection1();
 
-    // if (affichageSerial)
-    // {
-    //     printStuff();
-    // }
+    if (affichageSerial)
+    {
+        printStuff();
+    }
 }
 
 void formatDateTimeString()
@@ -466,8 +465,8 @@ void formatDateTimeString()
     mytime = hour + ":" + minute + ":" + second;
 
 #ifdef DEBUG_SERIAL
-    printf("%s", date);
+    printf("%s", date.c_str());
     printf(" - ");
-    printf("%s\n", mytime);
+    printf("%s\n", mytime.c_str());
 #endif
 }

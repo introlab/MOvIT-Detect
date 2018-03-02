@@ -12,7 +12,7 @@ DATASHEET: https://datasheets.maximintegrated.com/en/ds/MAX11606-MAX11611.pdf
 
 #include "I2Cdev.h"
 
-#define MAX11611_DEFAULT_ADDRESS 0b0110101
+#define MAX11611_DEFAULT_ADDRESS 0x35 //0b00110101
 #define BUFFER_LENGTH 32
 
 class MAX11611
@@ -22,8 +22,6 @@ class MAX11611
     MAX11611(uint8_t address);
 
     void initialize();
-    // static int8_t readBytes(uint8_t length, uint8_t *data);
-    // bool writeBytes(uint8_t length, uint8_t *data);
     void getData(uint8_t nbOfAnalogDevices, uint16_t *realData);
 
   private:

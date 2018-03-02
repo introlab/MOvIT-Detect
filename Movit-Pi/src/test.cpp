@@ -4,9 +4,9 @@
 //---------------------------------------------------------------------------------------
 
 //Include : Drivers
-#include "MPU6050.h"     //Implementation of Jeff Rowberg's driver
-#include "MAX11611.h"    //10-Bit ADC
-#include "MCP79410.h"    //Custom driver that uses I2Cdev.h to get RTC data
+#include "MPU6050.h"  //Implementation of Jeff Rowberg's driver
+#include "MAX11611.h" //10-Bit ADC
+#include "MCP79410.h" //Custom driver that uses I2Cdev.h to get RTC data
 
 //Include : Modules
 #include "init.h"         //variables and modules initialisation
@@ -17,6 +17,7 @@
 #include "test.h"         //variables and modules initialisation
 
 #include <stdio.h>
+#include <unistd.h>
 
 //External functions and variables
 //Variables
@@ -67,7 +68,7 @@ extern bool right_shearing;
 extern bool front_shearing;
 extern bool rear_shearing;
 
-void program_test()
+bool program_test()
 {
     //char inSerialChar = (char)Serial.read();
     char inSerialChar = getchar();
@@ -126,28 +127,24 @@ void program_test()
 
         inSerialChar = 'x';
     }
-
     else if (inSerialChar == 'g')
     {
         LightOn(GREEN_LED);
         printf("Fonction allumer la DEL verte activée.\n");
         inSerialChar = 'x';
     }
-
     else if (inSerialChar == 'r')
     {
         LightOn(RED_LED);
         printf("Fonction allumer la DEL rouge activée.\n");
         inSerialChar = 'x';
     }
-
     else if (inSerialChar == 'm')
     {
         StartBuzzer();
         printf("Fonction mettre en marche le moteur DC activée.\n");
         inSerialChar = 'x';
     }
-
     else if (inSerialChar == 'b')
     {
         uint8_t btn_state = isPushed();
@@ -157,7 +154,6 @@ void program_test()
         printf("\n");
         inSerialChar = 'x';
     }
-
     else if (inSerialChar == 'a')
     {
         blink_enabled = true;
@@ -179,7 +175,6 @@ void program_test()
         printf("Fonction verifier l'alarme du module notification activée.\n");
         inSerialChar = 'x';
     }
-
     else if (inSerialChar == 'c')
     {
 
@@ -212,7 +207,6 @@ void program_test()
             printf("aucun\n");
         }
     }
-
     else if (inSerialChar == 'z')
     {
         StopBuzzer();
@@ -221,7 +215,6 @@ void program_test()
         printf("Fonction pour etteindre toutes les DELs et arrêter le moteur.\n");
         inSerialChar = 'x';
     }
-
     //---------------------------------------------------------------------------------------
     // OPTION DE DEBUG : OK
     // Sequence de test ON-OFF, Output print ON-OFF
@@ -232,28 +225,24 @@ void program_test()
         testSequence = true;
         inSerialChar = 'x';
     }
-
     else if (inSerialChar == 'f')
     {
         printf("Fin de séquence de test en cours.\n");
         testSequence = false;
         inSerialChar = 'x';
     }
-
     else if (inSerialChar == 'p')
     {
         printf("Ne pas afficher les sorties.\n");
         affichageSerial = false;
         inSerialChar = 'x';
     }
-
     else if (inSerialChar == 'P')
     {
         printf("Afficher les sorties.\n");
         affichageSerial = true;
         inSerialChar = 'x';
     }
-
     else if (inSerialChar == 'c')
     {
         calibrationProcess(imuFixe, 0);
@@ -262,6 +251,32 @@ void program_test()
         printf("Calibration des capteurs effectuée.\n");
         inSerialChar = 'x';
     }
+    else if (inSerialChar == 'n')
+    {
+        printf("LightOn(GREEN_LED);\n");
+        LightOn(GREEN_LED);
+        printf("LightOn(RED_LED);\n");
+        LightOn(RED_LED);
+        usleep(2000000);
+        printf("LightOff(GREEN_LED);\n");
+        LightOff(GREEN_LED);
+        usleep(1000000);
+        printf("LightOff(RED_LED);\n");
+        LightOff(RED_LED);
+        // usleep(1000000);
+        // printf("StartBuzzer()\n");
+        // StartBuzzer();
+        // usleep(1000000);
+        // printf("StopBuzzer()\n");
+        // StopBuzzer();
+        inSerialChar = 'x';
+    }
+    else if (inSerialChar == 'q')
+    {
+        return true;
+    }
+
+    return false;
     //---------------------------------------------------------------------------------------
     // A VALIDER
     //---------------------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 /*==============================================================================================================*
- 
+
     @file     PCA9536.h
     @author   Nadav Matalon
     @license  MIT (c) 2016 Nadav Matalon
@@ -11,13 +11,13 @@
  *===============================================================================================================*
     INTRODUCTION
  *===============================================================================================================*
- 
+
     The PCA9536 is a 4-Channel GPIO Expander with a hardware I2C interface.
- 
-    The PCA9536's 4 channels (or IO pins) can be controlled as a single unit or individually in terms of their 
-    Mode (INPUT /OUTPUT) and Polarity (NON-INVERTED INPUT / INVERTED INPUT). The pins' states (LOW / HIGH) can 
+
+    The PCA9536's 4 channels (or IO pins) can be controlled as a single unit or individually in terms of their
+    Mode (INPUT /OUTPUT) and Polarity (NON-INVERTED INPUT / INVERTED INPUT). The pins' states (LOW / HIGH) can
     be read (in INPUT mode) or written (in OUTPUT mode).
-    
+
     This library contains a complete driver for the PCA9536 exposing all the above functionality.
 
  *===============================================================================================================*
@@ -25,7 +25,7 @@
  *===============================================================================================================*
 
     The PCA9536 has a single I2C address (factory hardwired):
- 
+
         PART               DEVICE I2C ADDRESS          PART
        NUMBER          (BIN)      (HEX)     (DEC)     MARKING
       PCA9536D        01000001     0x41       65      PCA9536
@@ -44,13 +44,13 @@
 *===============================================================================================================*
 
     DEFAULT (WITH NO EXTENRAL INPUT SIGNAL CONNECTED): 'HIGH' (ALL IO PINS HAVE WEAK PULL-UP RESISTORS)
- 
+
                                     DEFAULT
     PIN_IO0             BIT 0          1
     PIN_IO1             BIT 1          1
     PIN_IO2             BIT 2          1
     PIN_IO3             BIT 3          1
- 
+
     BITS 4-7: NOT USED (DEFAULT: 1)
 
 *===============================================================================================================*
@@ -74,27 +74,27 @@
      PIN_IO1             BIT 1         0
      PIN_IO2             BIT 2         0
      PIN_IO3             BIT 3         0
-     
+
     BITS 4-7: NOT USED (DEFAULT: 0) - MAY BE SET AS '0' OR '1'
- 
+
 *===============================================================================================================*
     REGISTER 3: CONFIGURATION - READ / WRITE (0 = OUTPUT / 1 = INPUT)
 *===============================================================================================================*
 
     POWER-UP DEFAULT: ALL PINS ARE SET AS 'INPUT' (1)
- 
+
                                     DEFAULT
      PIN_IO0             BIT 0         1
      PIN_IO1             BIT 1         1
      PIN_IO2             BIT 2         1
      PIN_IO3             BIT 3         1
-     
+
      BITS 4-7: NOT USED (DEFAULT: 1) - MAY BE SET AS '0' OR '1'
- 
+
 *===============================================================================================================*
     LICENSE
 *===============================================================================================================*
- 
+
     The MIT License (MIT)
     Copyright (c) 2016 Nadav Matalon
 
@@ -144,7 +144,7 @@ namespace Pca9536 {
 //        IO1 = 1,
 //        IO2 = 2,
 //        IO3 = 3
-		
+
         DC_MOTOR = 0,
         PUSH_BUTTON = 1,
         RED_LED = 2,
@@ -170,7 +170,6 @@ namespace Pca9536 {
          public:
             PCA9536();
             ~PCA9536();
-            uint8_t ping();
             uint8_t getMode(pin_t pin);
             uint8_t getState(pin_t pin);
             uint8_t getPolarity(pin_t pin);
@@ -183,15 +182,11 @@ namespace Pca9536 {
             void setPolarity(pin_t pin, polarity_t newPolarity);
             void setPolarity(polarity_t newPolarity);
             void reset();
-            uint8_t getComResult();
          private:
-            uint8_t _comBuffer;
             uint8_t getReg(reg_ptr_t regPtr);
             uint8_t getPin(pin_t pin, reg_ptr_t regPtr);
             void setReg(reg_ptr_t ptr, uint8_t newSetting);
             void setPin(pin_t pin, reg_ptr_t regPtr, uint8_t newSetting);
-            void initCall(reg_ptr_t regPtr);
-            void endCall();
     };
 }
 

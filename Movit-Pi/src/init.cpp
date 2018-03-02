@@ -46,7 +46,7 @@ void init_accel()
     {
         printf("imuFixe.initialize()\n");
         imuFixe.initialize();
-        printf("\n.-.--..---.-.-.--.--.--.---.--.-");
+        printf(".-.--..---.-.-.--.--.--.---.--.-");
         printf("\nimuFixe initialized...\n");
         //calibrationProcess(imuFixe, 1); // Décommenter pour une calibration à chaque début de programme.
         printf("imuFixe calibrated.\n");
@@ -63,10 +63,10 @@ void init_accel()
     else
     {
         imuMobile.initialize();
-        printf("\n.-.--..---.-.-.--.--.--.---.--.-");
-        printf("\nimuMobile initialized...");
+        printf(".-.--..---.-.-.--.--.--.---.--.-");
+        printf("\nimuMobile initialized...\n");
         //calibrationProcess(imuMobile, 1); // Décommenter pour une calibration à chaque début de programme.
-        printf("imuMobile calibrated.");
+        printf("imuMobile calibrated.\n");
         printf(".-.--..---.-.-.--.--.--.---.--.-");
         printf("\n");
         // Dernier offset mesurés le 12 janvier 2018 - 17h10
@@ -77,6 +77,7 @@ void init_accel()
 
 void init_ADC()
 {
+    //TODO: Ajouter une facon de détecter si l'initialisation a fail
     max11611.initialize();
     printf("max11611 initialized...\n");
 
@@ -97,10 +98,16 @@ void init_PCA9536()
     pca9536.setState(IO_LOW);
     pca9536.setMode(PUSH_BUTTON, IO_INPUT);
     pca9536.setPolarity(PUSH_BUTTON, IO_INVERTED);
-    printf("PCA9536 initialized...\n");
 
-    // pinMode(LED_BUILTIN, OUTPUT); //Configure Arduino LED
-    // printf("LED initialized...\n");
+    if (pca9536.getMode(DC_MOTOR) == IO_OUTPUT && pca9536.getMode(GREEN_LED) == IO_OUTPUT && pca9536.getMode(RED_LED) == IO_OUTPUT)
+    {
+        printf("PCA9536 initialized success...\n");
+    }
+    else
+    {
+        printf("PCA9536 initialized failed...\n");
+    }
+
 }
 
 void init_notification()

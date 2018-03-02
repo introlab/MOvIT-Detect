@@ -5,7 +5,9 @@
 
 using std::string;
 
-void program_loop();
+#define DEBUG_SERIAL //Debug trace
+
+bool program_loop();
 string& getCmd();
 void sendData(string& request, bool state, bool e);
 void getData();

@@ -76,11 +76,9 @@ uint8_t isPushed()
 
 void led_control()
 {
-
     //LED Blinking start
     if (blink_enabled)
     {
-
         if (redLedEnabled || greenLedEnabled)
         {
             nCompteur += 1;
@@ -101,7 +99,6 @@ void led_control()
                     currentLedState = false;
                 }
             }
-
             //Red LED blinking
             else if (!redLedEnabled)
             {
@@ -118,7 +115,6 @@ void led_control()
                     currentLedState = false;
                 }
             }
-
             //Both LED blinking
             else
             {
@@ -159,11 +155,9 @@ void led_control()
             nCompteur = 0; //Reset le compteur
         }
     }
-
     //No LED blinking start
     else
     {
-
         //Green LED ON
         if (greenLedEnabled && !redLedEnabled)
         {

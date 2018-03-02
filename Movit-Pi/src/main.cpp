@@ -27,9 +27,6 @@ void sendDataToWebServer(MosquittoBroker *mosquittoBroker)
     mosquittoBroker->sendDistanceTraveled(1000);
 }
 
-#define DEBUG_SERIAL //Debug trace
-
-
 MPU6050 imuMobile(0x68); //Initialisation of the mobile MPU6050
 MPU6050 imuFixe(0x69);   //Initialisation of the fixed MPU6050
 MCP79410 mcp79410;       //Initialisation of the MCP79410
@@ -59,24 +56,25 @@ bool bIsBtnPushed = false;
 int main()
 {
     // timer.setInterval(1000, callback);
-
     MosquittoBroker *mosquittoBroker = new MosquittoBroker("actionlistener");
 
     printf("Program begin...\n");
-    I2Cdev::initialize();
     printf("I2Cdev::initialize();\n");
-    init_accel();
+    I2Cdev::initialize();
     printf("init_accel\n");
-    init_ADC();
+    init_accel();
     printf("init_ADC\n");
-    init_PCA9536();
+    init_ADC();
     printf("init_PCA9536\n");
+    init_PCA9536();
+    printf("init_notification\n");
     init_notification();
     printf("Setup Done\n");
 
-    while (true)
+    bool done = false;
+    while (!done)
     {
-        program_loop();
+        done = program_loop();
 
         sendDataToWebServer(mosquittoBroker);
         usleep(SLEEP_TIME);
