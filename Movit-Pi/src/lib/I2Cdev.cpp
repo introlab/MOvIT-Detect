@@ -127,8 +127,21 @@ bool I2Cdev::readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t
     bcm2835_i2c_setSlaveAddress(devAddr);
     sendBuf[0] = regAddr;
     uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, length);
-    int i;
-    for (i = 0; i < length; i++)
+
+    for (uint8_t i = 0; i < length; i++)
+    {
+        data[i] = (uint8_t)recvBuf[i];
+    }
+    return response == BCM2835_I2C_REASON_OK;
+}
+
+bool I2Cdev::readBytes(uint8_t devAddr, uint8_t length, uint8_t *data)
+{
+    bcm2835_i2c_setSlaveAddress(devAddr);
+    // sendBuf[0] = regAddr;
+    uint8_t response = bcm2835_i2c_read(recvBuf, length);
+
+    for (uint8_t i = 0; i < length; i++)
     {
         data[i] = (uint8_t)recvBuf[i];
     }
@@ -235,8 +248,8 @@ bool I2Cdev::readWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_
     bcm2835_i2c_setSlaveAddress(devAddr);
     sendBuf[0] = regAddr;
     uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, length * 2);
-    uint8_t i;
-    for (i = 0; i < length; i++)
+
+    for (uint8_t i = 0; i < length; i++)
     {
         data[i] = (recvBuf[i * 2] << 8) | recvBuf[i * 2 + 1];
     }
@@ -257,8 +270,8 @@ bool I2Cdev::writeBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_
 {
     bcm2835_i2c_setSlaveAddress(devAddr);
     sendBuf[0] = regAddr;
-    uint8_t i;
-    for (i = 0; i < length; i++)
+
+    for (uint8_t i = 0; i < length; i++)
     {
         sendBuf[i + 1] = data[i];
     }
@@ -266,12 +279,21 @@ bool I2Cdev::writeBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_
     return response == BCM2835_I2C_REASON_OK;
 }
 
+bool I2Cdev::writeByte(uint8_t devAddr, uint8_t data)
+{
+    bcm2835_i2c_setSlaveAddress(devAddr);
+    // sendBuf[0] = regAddr;
+    sendBuf[0] = data;
+    uint8_t response = bcm2835_i2c_write(sendBuf, 1);
+    return response == BCM2835_I2C_REASON_OK;
+}
+
 bool I2Cdev::writeWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data)
 {
     bcm2835_i2c_setSlaveAddress(devAddr);
     sendBuf[0] = regAddr;
-    uint8_t i;
-    for (i = 0; i < length; i++)
+
+    for (uint8_t i = 0; i < length; i++)
     {
         sendBuf[1 + 2 * i] = (uint8_t)(data[i] >> 8); //MSByte
         sendBuf[2 + 2 * i] = (uint8_t)(data[i] >> 0); //LSByte
@@ -279,96 +301,3 @@ bool I2Cdev::writeWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16
     uint8_t response = bcm2835_i2c_write(sendBuf, 1 + 2 * length);
     return response == BCM2835_I2C_REASON_OK;
 }
-
-/*==============================================================================================================*
-    ANCIEN CALL DONT IL EST POSSIBLE DE S'INSPIRER POUR L'IMPLÉMENTATION DE READBYTES ET WRITEBYTES SANS REGISTRE
- *==============================================================================================================*/
-// bool I2Cdev::readBytes(uint8_t devAddr, uint8_t length, uint8_t *data);
-// {
-//     uint8_t devAddr = MAX11611_DEFAULT_ADDRESS;
-//     int8_t count = 0;
-//     uint32_t t1 = millis();
-//     //I2Cdev::readBytes(MAX11611_DEFAULT_ADDRESS, 0x3B, 6, buffer);
-
-
-//     // Arduino v1.0.1+, Wire library
-//     // Adds official support for repeated start condition, yay!
-
-//     // I2C/TWI subsystem uses internal buffer that breaks with large data requests
-//     // so if user requests more than BUFFER_LENGTH bytes, we have to do it in
-//     // smaller chunks instead of all at once
-//     for (uint8_t k = 0; k < length; k += min(length, BUFFER_LENGTH))
-//     {
-//         //Wire.beginTransmission(devAddr);
-//         //Wire.write(regAddr);
-//         //Wire.endTransmission();
-//         Wire.beginTransmission(devAddr);
-//         Wire.requestFrom(devAddr, (uint8_t)min(length - k, BUFFER_LENGTH));
-
-//         for (; Wire.available() && (timeout == 0 || millis() - t1 < timeout); count++)
-//         {
-//             data[count] = Wire.read();
-// #ifdef I2CDEV_SERIAL_DEBUG
-//             Serial.print(data[count], HEX);
-//             if (count + 1 < length)
-//                 Serial.print(" ");
-// #endif
-//         }
-//     }
-
-//     // check for timeout
-//     if (timeout > 0 && millis() - t1 >= timeout && count < length)
-//         count = -1; // timeout
-
-// #ifdef I2CDEV_SERIAL_DEBUG
-//     printf(". Done (");
-//     printf(count, DEC);
-//     printf(" read).\n");
-// #endif
-
-//     return count;
-// }
-
-// bool I2CdevwriteBytes(uint8_t devAddr, uint8_t length, uint8_t *data);
-// {
-//     uint8_t status = 0;
-// #if ((I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE && ARDUINO < 100) || I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_NBWIRE)
-//     Wire.beginTransmission(devAddr);
-//     //Wire.send((uint8_t) regAddr); // send address
-// #elif (I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE && ARDUINO >= 100)
-//     Wire.beginTransmission(devAddr);
-//     //Wire.write((uint8_t) regAddr); // send address
-// #elif (I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE)
-//     Fastwire::beginTransmission(devAddr);
-//     //Fastwire::write(regAddr);
-// #endif
-//     for (uint8_t i = 0; i < length; i++)
-//     {
-// #ifdef I2CDEV_SERIAL_DEBUG
-//         Serial.print(data[i], HEX);
-//         if (i + 1 < length)
-//             Serial.print(" ");
-// #endif
-// #if ((I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE && ARDUINO < 100) || I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_NBWIRE)
-//         Wire.send((uint8_t)data[i]);
-// #elif (I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE && ARDUINO >= 100)
-//         Wire.write((uint8_t)data[i]);
-// #elif (I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE)
-//         Fastwire::write((uint8_t)data[i]);
-// #endif
-//     }
-// #if ((I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE && ARDUINO < 100) || I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_NBWIRE)
-//     Wire.endTransmission();
-// #elif (I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE && ARDUINO >= 100)
-//     status = Wire.endTransmission();
-// #elif (I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE)
-//     Fastwire::stop();
-//     //status = Fastwire::endTransmission();
-// #endif
-// #ifdef I2CDEV_SERIAL_DEBUG
-//     Serial.println(". Done.");
-// #endif
-//     return status == 0;
-// }
-
-

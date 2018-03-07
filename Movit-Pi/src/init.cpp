@@ -36,39 +36,37 @@ void init_accel()
 {
     //Accelerometer setup
 
-    printf("imuMobile.getDeviceID() = %X\n", imuMobile.getDeviceID());
-
+    // printf("imuMobile.getDeviceID() = %X\n", imuMobile.getDeviceID());
+    printf("MPU6050 (imuFixe) initializing ... ");
     if (!imuFixe.testConnection())
     {
-        printf("imuFixe not found.\n");
+        printf("FAIL\n");
     }
     else
     {
-        printf("imuFixe.initialize()\n");
         imuFixe.initialize();
-        printf(".-.--..---.-.-.--.--.--.---.--.-");
-        printf("\nimuFixe initialized...\n");
+        printf("success\n");
+
         //calibrationProcess(imuFixe, 1); // Décommenter pour une calibration à chaque début de programme.
-        printf("imuFixe calibrated.\n");
-        printf(".-.--..---.-.-.--.--.--.---.--.-");
-        printf("\n");
+
+        // printf("imuFixe calibrated.\n");
         // Dernier offset mesurés le 12 janvier 2018 - 17h10
         // ax   ay    az    gx  gy  gz
         // 806  -4419 1018  264 -74 15
     }
+    printf("MPU6050 (imuMobile) initializing ... ");
     if (!imuMobile.testConnection())
     {
-        printf("imuMobile not found.\n");
+        printf("FAIL\n");
     }
     else
     {
         imuMobile.initialize();
-        printf(".-.--..---.-.-.--.--.--.---.--.-");
-        printf("\nimuMobile initialized...\n");
+        printf("success\n");
+
         //calibrationProcess(imuMobile, 1); // Décommenter pour une calibration à chaque début de programme.
-        printf("imuMobile calibrated.\n");
-        printf(".-.--..---.-.-.--.--.--.---.--.-");
-        printf("\n");
+
+        // printf("imuMobile calibrated.\n");
         // Dernier offset mesurés le 12 janvier 2018 - 17h10
         // ax   ay    az    gx  gy  gz
         // -700 -1054 1562  76  65  0
@@ -77,20 +75,27 @@ void init_accel()
 
 void init_ADC()
 {
-    //TODO: Ajouter une facon de détecter si l'initialisation a fail
-    max11611.initialize();
-    printf("max11611 initialized...\n");
-
-    for (unsigned int i = 0; i < sizeof(max11611DataArray); i++)
+    printf("MAX11611 (ADC) initializing ... ");
+    if (max11611.initialize())
     {
-        max11611DataArray[i] = 0;
+        for (unsigned int i = 0; i < sizeof(max11611DataArray); i++)
+        {
+            max11611DataArray[i] = 0;
+        }
+        max11611Data = max11611DataArray; //pointer assignation to the data table
+
+        printf("success\n");
     }
-    max11611Data = max11611DataArray; //pointer assignation to the data table
+    else
+    {
+        printf("FAIL\n");
+    }
 }
 
 void init_PCA9536()
 {
     delay(50);
+    printf("PCA9536 (manette) initializing ... ");
     pca9536.reset();
     pca9536.setMode(DC_MOTOR, IO_OUTPUT);
     pca9536.setMode(GREEN_LED, IO_OUTPUT);
@@ -101,13 +106,12 @@ void init_PCA9536()
 
     if (pca9536.getMode(DC_MOTOR) == IO_OUTPUT && pca9536.getMode(GREEN_LED) == IO_OUTPUT && pca9536.getMode(RED_LED) == IO_OUTPUT)
     {
-        printf("PCA9536 initialized success...\n");
+        printf("success\n");
     }
     else
     {
-        printf("PCA9536 initialized failed...\n");
+        printf("FAIL\n");
     }
-
 }
 
 void init_notification()

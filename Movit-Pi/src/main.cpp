@@ -58,16 +58,10 @@ int main()
     // timer.setInterval(1000, callback);
     MosquittoBroker *mosquittoBroker = new MosquittoBroker("actionlistener");
 
-    printf("Program begin...\n");
-    printf("I2Cdev::initialize();\n");
     I2Cdev::initialize();
-    printf("init_accel\n");
     init_accel();
-    printf("init_ADC\n");
     init_ADC();
-    printf("init_PCA9536\n");
     init_PCA9536();
-    printf("init_notification\n");
     init_notification();
     printf("Setup Done\n");
     mcp79410.setDateTime();

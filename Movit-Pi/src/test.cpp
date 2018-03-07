@@ -263,12 +263,12 @@ bool program_test()
         usleep(1000000);
         printf("LightOff(RED_LED);\n");
         LightOff(RED_LED);
-        // usleep(1000000);
-        // printf("StartBuzzer()\n");
-        // StartBuzzer();
-        // usleep(1000000);
-        // printf("StopBuzzer()\n");
-        // StopBuzzer();
+        usleep(1000000);
+        printf("StartBuzzer()\n");
+        StartBuzzer();
+        usleep(1000000);
+        printf("StopBuzzer()\n");
+        StopBuzzer();
         inSerialChar = 'x';
     }
     else if (inSerialChar == 'v')

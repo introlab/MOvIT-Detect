@@ -24,7 +24,7 @@ MAX11611::MAX11611(uint8_t address)
     devAddr = address;
 }
 
-void MAX11611::initialize()
+bool MAX11611::initialize()
 {
     //Setup Byte Format (Datasheet p.13)
     /*
@@ -39,11 +39,11 @@ void MAX11611::initialize()
 	*/
     uint8_t dataToSend;
 
-    dataToSend = 0x8A; //0b10001010
-    //Ancien call deprecated
-    //writeBytes(1, &dataToSend);
-    //Nouveau call à implémenter
-    // I2CDev::writeByte(devAddr, &dataToSend);
+    dataToSend = 0x8A; //10001010
+    if (!I2Cdev::writeByte(devAddr, dataToSend))
+    {
+        return false;
+    }
 
     //Configuration Byte
     /*
@@ -56,12 +56,13 @@ void MAX11611::initialize()
 	bit1 = 0; //CS0
 	bit0 = 1; //Single-ended
 	*/
+    dataToSend = 0x12; //00010001
+    if (!I2Cdev::writeByte(devAddr, dataToSend))
+    {
+        return false;
+    }
 
-    dataToSend = 0x12; //0b00010001
-    //Ancien call deprecated
-    //writeBytes(1, &dataToSend);
-    //Nouveau call à implémenter
-    // I2CDev::writeByte(devAddr, &dataToSend);
+    return true;
 }
 
 //Fonctions traitant les donnees brutes (2*8bits par capteur) sur une seule variable 16 bits
@@ -87,7 +88,7 @@ void MAX11611::getData(uint8_t nbOfAnalogDevices, uint16_t *realData)
     //Ancien call deprecated
     //readBytes(2 * nbOfAnalogDevices, rawData); //2 bytes par capteur (car valeur sur 10 bits (fig.11 datasheet p.16))
     //Nouveau call à implémenter
-    //I2Cdev::readBytes(MAX11611_DEFAULT_ADDRESS, 2 * nbOfAnalogDevices, rawData);
+    I2Cdev::readBytes(MAX11611_DEFAULT_ADDRESS, 2 * nbOfAnalogDevices, rawData);
 
     for (int i = 0; i < (2 * nbOfAnalogDevices); i++)
     {
@@ -111,4 +112,3 @@ void MAX11611::getData(uint8_t nbOfAnalogDevices, uint16_t *realData)
         printf("i = %i\tdata = %i\n", i, realData[i]);
     }
 }
-

@@ -21,7 +21,7 @@ class MAX11611
     MAX11611();
     MAX11611(uint8_t address);
 
-    void initialize();
+    bool initialize();
     void getData(uint8_t nbOfAnalogDevices, uint16_t *realData);
 
   private:
