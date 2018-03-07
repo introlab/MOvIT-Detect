@@ -42,7 +42,7 @@ extern unsigned char dateTime[7]; //{s, m, h, w, d, date, month, year}
 extern MPU6050 imuMobile; //Initialisation of the mobile MPU6050
 extern MPU6050 imuFixe;   //Initialisation of the fixed MPU6050
 // extern MAX11611 max11611; //Initialisation of the 10-bit ADC
-// extern MCP79410 mcp79410; //Initialisation of the MCP79410
+extern MCP79410 mcp79410; //Initialisation of the MCP79410
 
 // extern int aRange;                                          //maximal measurable g-force
 // extern int16_t ax, ay, az;                                  //axis accelerations
@@ -270,6 +270,28 @@ bool program_test()
         // printf("StopBuzzer()\n");
         // StopBuzzer();
         inSerialChar = 'x';
+    }
+    else if (inSerialChar == 'v')
+    {
+        uint8_t mydateTime[7]; //{s, m, h, w, d, date, month, year}
+
+        mcp79410.getDateTime(mydateTime);
+
+        // Date and time
+        printf("\nAffichage de la date + heure\n");
+        printf("20");
+        printf("%X\n", mydateTime[6]);
+        printf(".");
+        printf("%X\n", mydateTime[5]);
+        printf(".");
+        printf("%X\n", mydateTime[4]);
+        printf(" ");
+        printf("%X\n", mydateTime[2]);
+        printf(":");
+        printf("%X\n", mydateTime[1]);
+        printf(":");
+        printf("%X\n", mydateTime[0]);
+        printf("\n");
     }
     else if (inSerialChar == 'q')
     {

@@ -70,6 +70,7 @@ int main()
     printf("init_notification\n");
     init_notification();
     printf("Setup Done\n");
+    mcp79410.setDateTime();
 
     bool done = false;
     while (!done)
