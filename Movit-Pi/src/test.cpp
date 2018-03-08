@@ -19,18 +19,6 @@
 #include <stdio.h>
 #include <unistd.h>
 
-//External functions and variables
-//Variables
-// extern SimpleTimer timer;
-extern int blinkDuree;
-extern double blinkFreq;
-extern int nCompteur;
-extern bool blink_enabled;
-extern bool redLedEnabled;
-extern bool greenLedEnabled;
-// extern bool buzzerEnabled;
-// extern bool currentLedState;
-
 // extern bool sleeping;
 extern bool testSequence;
 extern bool affichageSerial;
@@ -70,6 +58,8 @@ extern bool rear_shearing;
 
 bool program_test()
 {
+	Alarm alarm(700, 0.1);
+
     //char inSerialChar = (char)Serial.read();
     char inSerialChar = getchar();
 
@@ -129,50 +119,44 @@ bool program_test()
     }
     else if (inSerialChar == 'g')
     {
-        LightOn(GREEN_LED);
-        printf("Fonction allumer la DEL verte activée.\n");
+		printf("Allumer la DEL verte.\n");
+		alarm.SetIsGreenLedEnabled(true);
+		alarm.SetPinState(GREEN_LED, IO_HIGH, true);
         inSerialChar = 'x';
     }
     else if (inSerialChar == 'r')
     {
-        LightOn(RED_LED);
-        printf("Fonction allumer la DEL rouge activée.\n");
+		printf("Allumer la DEL rouge.\n");
+		alarm.SetIsRedLedEnabled(true);
+		alarm.SetPinState(RED_LED, IO_HIGH, true);
         inSerialChar = 'x';
     }
     else if (inSerialChar == 'm')
     {
-        StartBuzzer();
-        printf("Fonction mettre en marche le moteur DC activée.\n");
+		printf("Activer le moteur DC.\n");
+		alarm.SetIsDCMotorEnabled(true);
+		int count = 0;
+		while (count++ < 70)
+		{
+			alarm.SetPinState(DC_MOTOR, IO_HIGH, true);
+			delay(100);
+		}
+		alarm.SetPinState(DC_MOTOR, IO_LOW, true);
         inSerialChar = 'x';
     }
     else if (inSerialChar == 'b')
     {
-        uint8_t btn_state = isPushed();
-        printf("Fonction verifier l'etat du boutton poussoir activée.\n");
-        printf("Etat du bouton = ");
-        printf("%i\n", btn_state);
-        printf("\n");
+		printf("Verifier l'etat du bouton poussoir.\n");
+        printf("Etat du bouton = %i\n", !alarm.GetPinState(PUSH_BUTTON));
         inSerialChar = 'x';
     }
     else if (inSerialChar == 'a')
     {
-        blink_enabled = true;
-
-        greenLedEnabled = true;
-        redLedEnabled = true;
-        blinkDuree = 10000;
-        blinkFreq = 0.1;
-        while (!isPushed() || (nCompteur >= (blinkFreq * blinkDuree)))
-        {
-            StartBuzzer();
-            led_control();
-        }
-        StopBuzzer();
-        blink_enabled = false;
-        greenLedEnabled = false;
-        redLedEnabled = false;
-        led_control();
-        printf("Fonction verifier l'alarme du module notification activée.\n");
+		printf("Activer une alarme sur le module de notifications.\n");
+		alarm.SetIsGreenLedEnabled(true);
+		alarm.SetIsRedLedEnabled(true);  
+		alarm.SetIsDCMotorEnabled(true);
+		alarm.TurnOnBlinkLedsAlarm();
         inSerialChar = 'x';
     }
     else if (inSerialChar == 'c')
@@ -209,10 +193,10 @@ bool program_test()
     }
     else if (inSerialChar == 'z')
     {
-        StopBuzzer();
-        LightOff(GREEN_LED);
-        LightOff(RED_LED);
-        printf("Fonction pour etteindre toutes les DELs et arrêter le moteur.\n");
+		printf("Eteindre les DELs et arrêter le moteur DC.\n");
+		alarm.SetPinState(DC_MOTOR, IO_LOW, true);
+		alarm.SetPinState(RED_LED, IO_LOW, true);
+		alarm.SetPinState(GREEN_LED, IO_LOW, true);
         inSerialChar = 'x';
     }
     //---------------------------------------------------------------------------------------
@@ -254,21 +238,15 @@ bool program_test()
     else if (inSerialChar == 'n')
     {
         printf("LightOn(GREEN_LED);\n");
-        LightOn(GREEN_LED);
-        printf("LightOn(RED_LED);\n");
-        LightOn(RED_LED);
-        usleep(2000000);
+		    alarm.SetPinState(GREEN_LED, IO_HIGH, true);
+		    printf("LightOn(RED_LED);\n");
+		    alarm.SetPinState(RED_LED, IO_HIGH, true);
+		    usleep(2000000);
         printf("LightOff(GREEN_LED);\n");
-        LightOff(GREEN_LED);
-        usleep(1000000);
+		    alarm.SetPinState(GREEN_LED, IO_LOW, true);
+		    usleep(1000000);
         printf("LightOff(RED_LED);\n");
-        LightOff(RED_LED);
-        usleep(1000000);
-        printf("StartBuzzer()\n");
-        StartBuzzer();
-        usleep(1000000);
-        printf("StopBuzzer()\n");
-        StopBuzzer();
+		    alarm.SetPinState(RED_LED, IO_LOW, true);
         inSerialChar = 'x';
     }
     else if (inSerialChar == 'v')

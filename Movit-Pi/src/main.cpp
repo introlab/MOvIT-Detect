@@ -2,7 +2,6 @@
 #include "MPU6050.h"  //Implementation of Jeff Rowberg's driver
 #include "MCP79410.h" //Custom driver that uses I2Cdev.h to get RTC data
 #include "MAX11611.h" //10-Bit ADC librairy
-#include "PCA9536.h"  //Arduino 4 programmable 4-channel digital i-o
 
 //Include : Modules
 #include "init.h"         //variables and modules initialisation
@@ -31,7 +30,6 @@ MPU6050 imuMobile(0x68); //Initialisation of the mobile MPU6050
 MPU6050 imuFixe(0x69);   //Initialisation of the fixed MPU6050
 MCP79410 mcp79410;       //Initialisation of the MCP79410
 MAX11611 max11611;       //Initialisation of the 10-bit ADC
-PCA9536 pca9536;         //Construct a new PCA9536 instance
 
 //Time variables
 // SimpleTimer timer;                                 //Creation of a timer
@@ -55,14 +53,14 @@ bool bIsBtnPushed = false;
 
 int main()
 {
+    I2Cdev::initialize();
+
     // timer.setInterval(1000, callback);
     MosquittoBroker *mosquittoBroker = new MosquittoBroker("actionlistener");
+    Alarm alarm();
 
-    I2Cdev::initialize();
     init_accel();
     init_ADC();
-    init_PCA9536();
-    init_notification();
     printf("Setup Done\n");
     mcp79410.setDateTime();
 

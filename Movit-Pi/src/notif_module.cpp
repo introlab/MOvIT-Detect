@@ -1,202 +1,140 @@
-//---------------------------------------------------------------------------------------
-// TITRE
-// Description
-//---------------------------------------------------------------------------------------
+#include "notif_module.h"
 
-//Include : Drivers
-#include "PCA9536.h" //Arduino 4 programmable 4-channel digital i-o
-
-//Include : Modules
-#include "init.h"         //variables and modules initialisation
-#include "notif_module.h" //variables and modules initialisation
-#include "accel_module.h" //variables and modules initialisation
-#include "force_module.h" //variables and modules initialisation
-#include "program.h"      //variables and modules initialisation
-#include "test.h"         //variables and modules initialisation
-
-//External functions and variables
-//Variables
-extern PCA9536 pca9536; //Construct a new PCA9536 instance
-// extern int blinkDuree;
-// extern double blinkFreq;
-// extern bool blink_enabled;
-// extern int nCompteur;
-// extern bool redLedEnabled;
-// extern bool greenLedEnabled;
-// extern bool buzzerEnabled;
-// extern bool currentLedState;
-extern bool bIsBtnPushed;
-
-//Notification module variables
-int blinkDuree = 0;
-double blinkFreq = 0;
-bool blink_enabled = false;
-int nCompteur = 0;
-bool redLedEnabled = false;
-bool greenLedEnabled = false;
-bool buzzerEnabled = false;
-bool currentLedState = false;
-
-//---------------------------------------------------------------------------------------
-// FONCTIONS DE CONTROLE DU MODULE DE NOTIFICATION
-// LightON-OFF, BuzzerON-OFF, isPushed
-//---------------------------------------------------------------------------------------
-
-//PCA9536 function for the Red/Green LEDs
-void LightOn(pin_t pin)
+Alarm::Alarm()
 {
-    pca9536.setState(pin, IO_HIGH);
-}
-void LightOff(pin_t pin)
-{
-    pca9536.setState(pin, IO_LOW);
+	Alarm(DEFAULT_BLINK_DURATION, DEFAULT_BLINK_FREQUENCY);
 }
 
-//PCA9536 function for the DC motor (buzzer)
-void StartBuzzer()
+Alarm::Alarm(int blinkDuration, double blinkFrequency)
 {
-    pca9536.setState(DC_MOTOR, IO_HIGH);
-}
-void StopBuzzer()
-{
-    pca9536.setState(DC_MOTOR, IO_LOW);
-}
+	_isRedLedEnabled = true;
+	_isGreenLedEnabled = true;
+	_isDCMotorEnabled = true;
+	_blinkDuration = blinkDuration;
+	_blinkFrequency = blinkFrequency;
 
-//PCA9536 function for push-button state
-uint8_t isPushed()
-{
-    uint8_t res = !pca9536.getState(PUSH_BUTTON);
-    return res;
+	initialize();
+	SetPinState(DC_MOTOR, IO_LOW, _isDCMotorEnabled);
+	SetPinState(RED_LED, IO_LOW, _isRedLedEnabled);
+	SetPinState(GREEN_LED, IO_LOW, _isGreenLedEnabled);
 }
 
-//---------------------------------------------------------------------------------------
-// FONCTIONS DE BLINK DES LEDS
-// Blink de LED verte, rouge
-//---------------------------------------------------------------------------------------
-
-void led_control()
+void Alarm::initialize()
 {
-    //LED Blinking start
-    if (blink_enabled)
+	_pca9536.reset();
+	_pca9536.setMode(DC_MOTOR, IO_OUTPUT);
+	_pca9536.setMode(GREEN_LED, IO_OUTPUT);
+	_pca9536.setMode(RED_LED, IO_OUTPUT);
+	_pca9536.setState(IO_LOW);
+	_pca9536.setMode(PUSH_BUTTON, IO_INPUT);
+	_pca9536.setPolarity(PUSH_BUTTON, IO_INVERTED);
+
+    if (_pca9536.getMode(DC_MOTOR) != IO_OUTPUT || _pca9536.getMode(GREEN_LED) != IO_OUTPUT || _pca9536.getMode(RED_LED) != IO_OUTPUT)
     {
-        if (redLedEnabled || greenLedEnabled)
-        {
-            nCompteur += 1;
-
-            //Green LED blinking
-            if (!greenLedEnabled)
-            {
-                LightOff(GREEN_LED);
-
-                if (currentLedState == false)
-                {
-                    LightOn(RED_LED);
-                    currentLedState = true;
-                }
-                else
-                {
-                    LightOff(RED_LED);
-                    currentLedState = false;
-                }
-            }
-            //Red LED blinking
-            else if (!redLedEnabled)
-            {
-                LightOff(RED_LED);
-
-                if (currentLedState == false)
-                {
-                    LightOn(GREEN_LED);
-                    currentLedState = true;
-                }
-                else
-                {
-                    LightOff(GREEN_LED);
-                    currentLedState = false;
-                }
-            }
-            //Both LED blinking
-            else
-            {
-                if (currentLedState == false)
-                {
-                    LightOff(RED_LED);
-                    LightOn(GREEN_LED);
-                    currentLedState = true;
-                }
-                else
-                {
-                    LightOff(GREEN_LED);
-                    LightOn(RED_LED);
-                    currentLedState = false;
-                }
-            }
-        }
-
-        delay(blinkFreq * 1000);
-
-        //LED blinking end
-        if (nCompteur >= (blinkFreq * blinkDuree))
-        {
-
-            printf("NoCompteur: ");
-            printf("%i\n", nCompteur);
-            printf("blinkFreq: ");
-            printf("%f\n", blinkFreq);
-            printf("blinkDuree: ");
-            printf("%i\n", blinkDuree);
-            printf("LED blink end\n");
-            LightOff(GREEN_LED);
-            LightOff(RED_LED);
-            currentLedState = false;
-            greenLedEnabled = false;
-            redLedEnabled = false;
-            blink_enabled = false;
-            nCompteur = 0; //Reset le compteur
-        }
-    }
-    //No LED blinking start
-    else
-    {
-        //Green LED ON
-        if (greenLedEnabled && !redLedEnabled)
-        {
-            LightOn(GREEN_LED);
-            LightOff(RED_LED);
-            currentLedState = true;
-        }
-        else if (!greenLedEnabled && redLedEnabled)
-        {
-            LightOn(RED_LED);
-            LightOff(GREEN_LED);
-            currentLedState = true;
-        }
-        else if (!greenLedEnabled && !redLedEnabled && currentLedState == true)
-        {
-            LightOff(GREEN_LED);
-            LightOff(RED_LED);
-            currentLedState = false;
-        }
-    }
+		printf("Failed to initialize pca9536...\n");
+	}
 }
 
-//---------------------------------------------------------------------------------------
-// FONCTIONS DE CONTROLE DU MOTEUR DC
-//
-//---------------------------------------------------------------------------------------
-
-void buzzer_state()
+void Alarm::SetBlinkDuration(int blinkDuration)
 {
-    // Etat du bouton et du buzzer
-    bIsBtnPushed = isPushed(); //Prend l'état actuel du bouton
-    //Gère le buzzer, peut aussi être arreté par l'appuie du bouton
-    if (buzzerEnabled && !bIsBtnPushed)
-    {
-        StartBuzzer();
-    }
-    else if (bIsBtnPushed)
-    {
-        buzzerEnabled = false;
-        StopBuzzer();
-    }
+	_blinkDuration = blinkDuration;
+}
+
+void Alarm::SetBlinkFrequency(double blinkFrequency)
+{
+	_blinkFrequency = blinkFrequency;
+}
+
+void Alarm::SetIsRedLedEnabled(bool isRedLedEnabled)
+{
+	_isRedLedEnabled = isRedLedEnabled;
+}
+
+void Alarm::SetIsGreenLedEnabled(bool isGreenLedEnabled)
+{
+	_isGreenLedEnabled = isGreenLedEnabled;
+}
+
+void Alarm::SetIsDCMotorEnabled(bool isDCMotorEnabled)
+{
+	_isDCMotorEnabled = isDCMotorEnabled;
+}
+
+void Alarm::SetPinState(pin_t pin, Pca9536::state_t state, bool isEnabled)
+{
+	if (isEnabled)
+	{
+		_pca9536.setState(pin, state);
+	}
+	else 
+	{
+		_pca9536.setState(pin, IO_LOW);
+	}
+}
+
+uint8_t Alarm::GetPinState(pin_t pin)
+{
+	return _pca9536.getState(pin);
+}
+
+void Alarm::TurnOffAlarm()
+{
+	SetPinState(GREEN_LED, IO_LOW, _isGreenLedEnabled);
+	SetPinState(RED_LED, IO_LOW, _isRedLedEnabled);
+	SetPinState(DC_MOTOR, IO_LOW, _isDCMotorEnabled);
+}
+
+void Alarm::TurnOnAlarm()
+{
+	int count = 0;
+	SetPinState(DC_MOTOR, IO_HIGH, _isDCMotorEnabled);
+	SetPinState(RED_LED, IO_HIGH, _isRedLedEnabled);
+	SetPinState(GREEN_LED, IO_LOW, _isGreenLedEnabled);
+
+	while (GetPinState(PUSH_BUTTON) && (count++ <= (int)(_blinkFrequency * _blinkDuration)))
+	{
+		ChangeRedLedState();
+		ChangeGreenLedState();
+		delay(_blinkFrequency * 1000);
+	}
+
+	TurnOffAlarm();
+}
+
+void Alarm::TurnOnBlinkLedsAlarm()
+{
+	SetIsDCMotorEnabled(false);
+	TurnOnAlarm();
+	SetIsDCMotorEnabled(true);
+}
+
+void Alarm::TurnOnRedAlarm()
+{
+	SetIsGreenLedEnabled(false);
+	TurnOnAlarm();
+	SetIsGreenLedEnabled(true);
+}
+
+void Alarm::ChangeRedLedState()
+{
+	if (!GetPinState(RED_LED))
+	{
+		SetPinState(RED_LED, IO_HIGH, _isRedLedEnabled);
+	}
+	else
+	{
+		SetPinState(RED_LED, IO_LOW, _isRedLedEnabled);
+	}
+}
+
+void Alarm::ChangeGreenLedState()
+{
+	if (!GetPinState(GREEN_LED))
+	{
+		SetPinState(GREEN_LED, IO_HIGH, _isGreenLedEnabled);
+	}
+	else
+	{
+		SetPinState(GREEN_LED, IO_LOW, _isGreenLedEnabled);
+	}
 }
