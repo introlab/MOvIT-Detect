@@ -87,6 +87,7 @@ void MAX11611::getData(uint8_t nbOfAnalogDevices, uint16_t *realData)
     //Ancien call deprecated
     //readBytes(2 * nbOfAnalogDevices, rawData); //2 bytes par capteur (car valeur sur 10 bits (fig.11 datasheet p.16))
     //Nouveau call à implémenter
+    //mise en commentaire des 4 printfs, decommenter pour debug
     I2Cdev::readBytes(MAX11611_DEFAULT_ADDRESS, 2 * nbOfAnalogDevices, rawData);
 
     for (int i = 0; i < (2 * nbOfAnalogDevices); i++)
@@ -94,20 +95,20 @@ void MAX11611::getData(uint8_t nbOfAnalogDevices, uint16_t *realData)
         //Pair = Prend seulement les 2 LSB (MSB du resultat), impair tout le byte est les LSB du resultat
         if (i % 2 == 0)
         {
-            printf("\nValeur pair = %i", rawData[i]);
+            //printf("\nValeur pair = %i", rawData[i]);
             rawData[i] &= 0x03;                  // 0b00000011;            //Garde seulement les 2 LSB
             realData[(i) / 2] = rawData[i] << 8; //Deplace au 8 MSB du resultat
         }
         else
         {
-            printf("\nValeur impair = %i", rawData[i]);
+            //printf("\nValeur impair = %i", rawData[i]);
             realData[(i - 1) / 2] += rawData[i];
         }
     }
 
-    printf("\n----RealData ---- \n");
+    //printf("\n----RealData ---- \n");
     for (int i = 0; i < nbOfAnalogDevices; i++)
     {
-        printf("i = %i\tdata = %i\n", i, realData[i]);
+        //printf("i = %i\tdata = %i\n", i, realData[i]);
     }
 }

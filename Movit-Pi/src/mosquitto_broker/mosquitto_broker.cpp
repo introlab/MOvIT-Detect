@@ -45,12 +45,14 @@ MosquittoBroker::~MosquittoBroker()
 
 void MosquittoBroker::on_connect(int rc)
 {
-	printf("Connected with code %d.\n", rc);
+	// printf("Connected with code %d.\n", rc);
+	// uncomment for debug
 }
 
 void MosquittoBroker::on_publish(int mid)
 {
-	printf("Message published with id %d.\n", mid);
+	// printf("Message published with id %d.\n", mid);
+	// uncomment for debug
 }
 
 void MosquittoBroker::sendBackRestAngle(const int angle)

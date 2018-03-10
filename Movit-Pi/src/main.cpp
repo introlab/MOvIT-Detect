@@ -7,7 +7,9 @@
 #include "init.h"         //variables and modules initialisation
 #include "notif_module.h" //variables and modules initialisation
 #include "accel_module.h" //variables and modules initialisation
-#include "ForceSensor.h" //variables and modules initialisation
+
+#include "forcePlate.h"
+#include "forceSensor.h"
 #include "program.h"      //variables and modules initialisation
 #include "test.h"         //variables and modules initialisation
 
@@ -18,7 +20,7 @@
 
 using std::string;
 
-ForceSensor sensorMatrix;
+forceSensor sensorMatrix;
 
 
 #define SLEEP_TIME 2000000
@@ -36,8 +38,7 @@ MAX11611 max11611;       //Initialisation of the 10-bit ADC
 
 unsigned char dateTime[7] = {0, 0, 0, 0, 0, 0, 0}; //{s, m, h, w, d, date, month, year}
 
-uint16_t* max11611Data;
-uint16_t Max11611Data[9]; //Data table of size=total sensors
+uint16_t max11611Data[9]; //Data table of size=total sensors
 long detectedPresence = 0;
 long detectionThreshold = 0;
 bool left_shearing = false;
@@ -92,8 +93,8 @@ int main()
 // on verifie si les led doivent blink, puis on les fait blink pour la duree demandee
 // flagrunning : utilite a determiner
 //---------------------------------------------------------------------------------------
-// void callback()
-// {
+ //void callback()
+ //{
 //     getData();     //Lit l'état des capteurs
 //     led_control(); //Gère la LED du bouton, Etats: On,Off ou Blink
 

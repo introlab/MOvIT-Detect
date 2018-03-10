@@ -3,19 +3,18 @@
 // Description
 //---------------------------------------------------------------------------------------
 
-//Include : Drivers
 #include "MPU6050.h"  //Implementation of Jeff Rowberg's driver
 #include "MAX11611.h" //10-Bit ADC
 #include "MCP79410.h" //Custom driver that uses I2Cdev.h to get RTC data
 
-//Include : Modules
-#include "init.h"
-#include "notif_module.h"
-#include "accel_module.h"
-#include "ForceSensor.h"
-#include "ForcePlate.h"
-#include "program.h"
-#include "test.h"
+#include "init.h"         //variables and modules initialisation
+#include "notif_module.h" //variables and modules initialisation
+#include "accel_module.h" //variables and modules initialisation
+#include "forceSensor.h" //variables and modules initialisation
+#include "forcePlate.h" //variables and modules initialisation
+#include "program.h"      //variables and modules initialisation
+#include "test.h"         //variables and modules initialisation
+
 
 #include <stdio.h>
 #include <unistd.h>
@@ -34,29 +33,20 @@ extern MCP79410 mcp79410; //Initialisation of the MCP79410
 extern double aRealFixe[3], aRealMobile[3];                 //computed acceleration
 extern double pitchFixe, rollFixe, pitchMobile, rollMobile; //pitch and roll angle values
 extern int angle;                                           //Final angle computed between sensors
+// extern int obs;                                             //Debug variable for getAngle function
 
-// extern uint16_t *max11611Data;                     //ADC 10-bit data variable
-// extern uint16_t max11611DataArray[sensorCount]; //Data table of size=total sensors
-// extern long max11611Voltage[sensorCount];       //ADC 10-bit data variable
-// extern long max11611Resistance[sensorCount];    //ADC 10-bit data variable
-// extern long max11611Conductance[sensorCount];   //ADC 10-bit data variable
-// extern long max11611Force[sensorCount];         //ADC 10-bit data variable
+extern uint16_t max11611Data[9];                     //ADC 10-bit data variable
+extern uint16_t max11611DataArray[9]; //Data table of size=total sensors
 
-extern ForceSensor sensorMatrix;
+extern forceSensor sensorMatrix;
 
-extern long detectedPresence;
-extern long detectionThreshold;
-
-extern bool left_shearing;
-extern bool right_shearing;
-extern bool front_shearing;
-extern bool rear_shearing;
 
 bool program_test(Alarm &alarm)
 {
     // Alarm alarm(700, 0.1);
 
     //char inSerialChar = (char)Serial.read();
+		printf("Enter user command and press enter \n");
     char inSerialChar = getchar();
 
     //---------------------------------------------------------------------------------------
@@ -95,236 +85,121 @@ bool program_test(Alarm &alarm)
     }
     else if (inSerialChar == 'a')
     {
-        printf("Activer une alarme sur le module de notifications.\n");
-        alarm.SetIsGreenLedEnabled(true);
-        alarm.SetIsRedLedEnabled(true);
-        alarm.SetIsDCMotorEnabled(true);
-        alarm.TurnOnBlinkLedsAlarm();
+		printf("Activer une alarme sur le module de notifications.\n");
+		alarm.SetIsGreenLedEnabled(true);
+		alarm.SetIsRedLedEnabled(true);
+		alarm.SetIsDCMotorEnabled(true);
+		alarm.TurnOnBlinkLedsAlarm();
+        inSerialChar = 'x';
     }
     else if (inSerialChar == 'c')
     {
-        printf("\nDEBUG CALIBRATION FORCE SENSORS START\n");
-        sensorMatrix.CalibrateForceSensor(sensorMatrix);
+			printf("\nDEBUG CALIBRATION FORCE SENSORS START");
+			//Calibration
+	    sensorMatrix.CalibrateForceSensor(sensorMatrix);
+			//Last sensed presence analog reading to compare with calibration
+			long sensedPresence = 0;
+			for (int i = 0; i < sensorMatrix.sensorCount; i++)
+			{
+				sensedPresence += sensorMatrix.GetAnalogData(i);
+			}
 
-        printf("\n.-.--..---.-.OFFSET INITIAUX.--.---.--.-");
-        printf("\n");
-        printf("Sensor Number\t");
-        printf("Analog value\n");
-        printf("Sensor No: 1 \t");
-        printf("%li\n", sensorMatrix.getAnalogOffset(0));
-        printf("Sensor No: 2 \t");
-        printf("%li\n", sensorMatrix.getAnalogOffset(1));
-        printf("Sensor No: 3 \t");
-        printf("%li\n", sensorMatrix.getAnalogOffset(2));
-        printf("Sensor No: 4 \t");
-        printf("%li\n", sensorMatrix.getAnalogOffset(3));
-        printf("Sensor No: 5 \t");
-        printf("%li\n", sensorMatrix.getAnalogOffset(4));
-        printf("Sensor No: 6 \t");
-        printf("%li\n", sensorMatrix.getAnalogOffset(5));
-        printf("Sensor No: 7 \t");
-        printf("%li\n", sensorMatrix.getAnalogOffset(6));
-        printf("Sensor No: 8 \t");
-        printf("%li\n", sensorMatrix.getAnalogOffset(7));
-        printf("Sensor No: 9 \t");
-        printf("%li\n", sensorMatrix.getAnalogOffset(8));
-        printf(".-.--..---.-.-.--.--.--.---.--.-");
-        printf("\n");
+	    printf("\n.-.--..---DERNIERE MESURE DES CAPTEURS EN TEMPS REEL.--.---.--.-");printf("\n");
+	    printf("Sensor Number \t Analog value \t Voltage (mV) \t Force (N) \n");
+	    printf("Sensor No: 1 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(0), sensorMatrix.GetVoltageData(0), sensorMatrix.GetForceData(0));
+	    printf("Sensor No: 2 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(1), sensorMatrix.GetVoltageData(1), sensorMatrix.GetForceData(1));
+	    printf("Sensor No: 3 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(2), sensorMatrix.GetVoltageData(2), sensorMatrix.GetForceData(2));
+	    printf("Sensor No: 4 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(3), sensorMatrix.GetVoltageData(3), sensorMatrix.GetForceData(3));
+	    printf("Sensor No: 5 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(4), sensorMatrix.GetVoltageData(4), sensorMatrix.GetForceData(4));
+	    printf("Sensor No: 6 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(5), sensorMatrix.GetVoltageData(5), sensorMatrix.GetForceData(5));
+	    printf("Sensor No: 7 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(6), sensorMatrix.GetVoltageData(6), sensorMatrix.GetForceData(6));
+	    printf("Sensor No: 8 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(7), sensorMatrix.GetVoltageData(7), sensorMatrix.GetForceData(7));
+	    printf("Sensor No: 9 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(8), sensorMatrix.GetVoltageData(8), sensorMatrix.GetForceData(8));
+			printf(".-.--..---.-.-.--.--.--.---.--.-\n");
 
-        printf("\n.-.--..---.-.OFFSET INITIAUX.--.---.--.-");
-        printf("\n");
-        printf("Total sensor mean : \t");
-        printf("%i\n", sensorMatrix.getTotalSensorMean());
-        printf(".-.--..---.-.-.--.--.--.---.--.-");
-        printf("\n");
+	    printf("\n.-.--..---.-.OFFSET INITIAUX.--.---.--.-\n");
+	    printf("Sensor Number\t");
+			printf("Analog value\n");
 
-        printf("\n.-.--..---DERNIERE MESURE DES CAPTEURS EN TEMPS REEL.--.---.--.-");
-        printf("\n");
-        printf("Sensor Number\t");
-        printf("Analog value\t");
-        printf("Voltage (mV)\t");
-        printf("Force (N)\n");
-        printf("Sensor No: 1 \t");
-        printf("%i", sensorMatrix.getAnalogData(0));
-        printf("\t\t");
-        printf("%li", sensorMatrix.getVoltageData(0));
-        printf("\t\t");
-        printf("%f\n", sensorMatrix.getForceData(0));
-        printf("Sensor No: 2 \t");
-        printf("%i", sensorMatrix.getAnalogData(1));
-        printf("\t\t");
-        printf("%li", sensorMatrix.getVoltageData(1));
-        printf("\t\t");
-        printf("%f\n", sensorMatrix.getForceData(1));
-        printf("Sensor No: 3 \t");
-        printf("%i", sensorMatrix.getAnalogData(2));
-        printf("\t\t");
-        printf("%li", sensorMatrix.getVoltageData(2));
-        printf("\t\t");
-        printf("%f\n", sensorMatrix.getForceData(2));
-        printf("Sensor No: 4 \t");
-        printf("%i", sensorMatrix.getAnalogData(3));
-        printf("\t\t");
-        printf("%li", sensorMatrix.getVoltageData(3));
-        printf("\t\t");
-        printf("%f\n", sensorMatrix.getForceData(3));
-        printf("Sensor No: 5 \t");
-        printf("%i", sensorMatrix.getAnalogData(4));
-        printf("\t\t");
-        printf("%li", sensorMatrix.getVoltageData(4));
-        printf("\t\t");
-        printf("%f\n", sensorMatrix.getForceData(4));
-        printf("Sensor No: 6 \t");
-        printf("%i", sensorMatrix.getAnalogData(5));
-        printf("\t\t");
-        printf("%li", sensorMatrix.getVoltageData(5));
-        printf("\t\t");
-        printf("%f\n", sensorMatrix.getForceData(5));
-        printf("Sensor No: 7 \t");
-        printf("%i", sensorMatrix.getAnalogData(6));
-        printf("\t\t");
-        printf("%li", sensorMatrix.getVoltageData(6));
-        printf("\t\t");
-        printf("%f\n", sensorMatrix.getForceData(6));
-        printf("Sensor No: 8 \t");
-        printf("%i", sensorMatrix.getAnalogData(7));
-        printf("\t\t");
-        printf("%li", sensorMatrix.getVoltageData(7));
-        printf("\t\t");
-        printf("%f\n", sensorMatrix.getForceData(7));
-        printf("Sensor No: 9 \t");
-        printf("%i", sensorMatrix.getAnalogData(8));
-        printf("\t\t");
-        printf("%li", sensorMatrix.getVoltageData(8));
-        printf("\t\t");
-        printf("%f\n", sensorMatrix.getForceData(8));
-        printf(".-.--..---.-.-.--.--.--.---.--.-");
-        printf("\n");
+	    printf("Sensor No: 1 \t %lu \n", sensorMatrix.GetAnalogOffset(0));
+	    printf("Sensor No: 2 \t %lu \n", sensorMatrix.GetAnalogOffset(1));
+	    printf("Sensor No: 3 \t %lu \n", sensorMatrix.GetAnalogOffset(2));
+	    printf("Sensor No: 4 \t %lu \n", sensorMatrix.GetAnalogOffset(3));
+	    printf("Sensor No: 5 \t %lu \n", sensorMatrix.GetAnalogOffset(4));
+	    printf("Sensor No: 6 \t %lu \n", sensorMatrix.GetAnalogOffset(5));
+	    printf("Sensor No: 7 \t %lu \n", sensorMatrix.GetAnalogOffset(6));
+	    printf("Sensor No: 8 \t %lu \n", sensorMatrix.GetAnalogOffset(7));
+	    printf("Sensor No: 9 \t %lu \n", sensorMatrix.GetAnalogOffset(8));
+	    printf(".-.--..---.-.-.--.--.--.---.--.-\n");
+
+	    printf("\n.-.--..---.-.OFFSET INITIAUX.--.---.--.-");printf("\n");
+	    printf("Total sensor mean : \t %i \n", sensorMatrix.GetTotalSensorMean());
+	    printf(".-.--..---.-.-.--.--.--.---.--.-\n");
+
+			printf("\n.-.--..---DETECTION DUNE PERSONNE SUR LA CHAISE--.---.--.-\n");
+	    printf("Detected Presence : %lu \n", sensedPresence);
+	    printf("Detection Threshold : %f \n", sensorMatrix.GetDetectionThreshold());
+	    printf("Presence verification result : ");
+	    if(sensorMatrix.IsUserDetected(sensorMatrix))
+	    {
+	       printf("User detected \n");
+	    }
+	    else
+	    {
+	      printf("No user detected \n");
+	    }
+	    printf(".-.--..---.-.-.--.--.--.---.--.-\n\n");
+
+			inSerialChar = 'x';
     }
-    else if (inSerialChar == 'v')
-    {
-        printf("\n.-.--..---MESURE DES CAPTEURS DE FORCE--.---.--.-");
-        printf("\n");
-        printf("Sensor Number\t");
-        printf("Analog value\t");
-        printf("Voltage (mV)\t");
-        printf("Force (N)\n");
-        printf("Sensor No: 1 \t");
-        printf("%i", sensorMatrix.getAnalogData(0));
-        printf("\t\t");
-        printf("%li", sensorMatrix.getVoltageData(0));
-        printf("\t\t");
-        printf("%f\n", sensorMatrix.getForceData(0));
-        printf("Sensor No: 2 \t");
-        printf("%i", sensorMatrix.getAnalogData(1));
-        printf("\t\t");
-        printf("%li", sensorMatrix.getVoltageData(1));
-        printf("\t\t");
-        printf("%f\n", sensorMatrix.getForceData(1));
-        printf("Sensor No: 3 \t");
-        printf("%i", sensorMatrix.getAnalogData(2));
-        printf("\t\t");
-        printf("%li", sensorMatrix.getVoltageData(2));
-        printf("\t\t");
-        printf("%f\n", sensorMatrix.getForceData(2));
-        printf("Sensor No: 4 \t");
-        printf("%i", sensorMatrix.getAnalogData(3));
-        printf("\t\t");
-        printf("%li", sensorMatrix.getVoltageData(3));
-        printf("\t\t");
-        printf("%f\n", sensorMatrix.getForceData(3));
-        printf("Sensor No: 5 \t");
-        printf("%i", sensorMatrix.getAnalogData(4));
-        printf("\t\t");
-        printf("%li", sensorMatrix.getVoltageData(4));
-        printf("\t\t");
-        printf("%f\n", sensorMatrix.getForceData(4));
-        printf("Sensor No: 6 \t");
-        printf("%i", sensorMatrix.getAnalogData(5));
-        printf("\t\t");
-        printf("%li", sensorMatrix.getVoltageData(5));
-        printf("\t\t");
-        printf("%f\n", sensorMatrix.getForceData(5));
-        printf("Sensor No: 7 \t");
-        printf("%i", sensorMatrix.getAnalogData(6));
-        printf("\t\t");
-        printf("%li", sensorMatrix.getVoltageData(6));
-        printf("\t\t");
-        printf("%f\n", sensorMatrix.getForceData(6));
-        printf("Sensor No: 8 \t");
-        printf("%i", sensorMatrix.getAnalogData(7));
-        printf("\t\t");
-        printf("%li", sensorMatrix.getVoltageData(7));
-        printf("\t\t");
-        printf("%f\n", sensorMatrix.getForceData(7));
-        printf("Sensor No: 9 \t");
-        printf("%i", sensorMatrix.getAnalogData(8));
-        printf("\t\t");
-        printf("%li", sensorMatrix.getVoltageData(8));
-        printf("\t\t");
-        printf("%f\n", sensorMatrix.getForceData(8));
-        printf(".-.--..---.-.-.--.--.--.---.--.-");
-        printf("\n");
 
-        printf("\n.-.--..---DETECTION DUNE PERSONNE SUR LA CHAISE--.---.--.-");
-        printf("\n");
-        printf("Detected Presence : ");
-        printf("%li\n", detectedPresence);
-        printf("Detection Threshold : ");
-        printf("%li\n", detectionThreshold);
-        printf("Presence verification result : ");
-        if (sensorMatrix.isPresenceDetected(sensorMatrix))
-        {
-            printf("User detected\n");
-        }
-        else
-        {
-            printf("No user detected\n");
-        }
-        printf(".-.--..---.-.-.--.--.--.---.--.-");
-        printf("\n");
+		else if (inSerialChar == 'v')
+		{
+			getData();
 
-        printf("\n.-.--..---MESURE DES CENTRES DE PRESSION.--.---.--.-");
-        printf("\n");
-        //Force plates variables
-        ForcePlate ForcePlate1;
-        ForcePlate ForcePlate2;
-        ForcePlate ForcePlate3;
-        ForcePlate ForcePlate4;
+			printf("\nDEBUG CALIBRATION FORCE SENSORS START\n");
+			//Force plates variables
+			forcePlate forcePlate1;
+			forcePlate forcePlate2;
+			forcePlate forcePlate3;
+			forcePlate forcePlate4;
 
-        //Creation of the 4 ForcePlates
-        ForcePlate1.CreateForcePlate(ForcePlate1, sensorMatrix, 5, 2, 1, 4);
-        ForcePlate1.CreateForcePlate(ForcePlate2, sensorMatrix, 8, 5, 4, 7);
-        ForcePlate1.CreateForcePlate(ForcePlate3, sensorMatrix, 6, 3, 2, 5);
-        ForcePlate1.CreateForcePlate(ForcePlate4, sensorMatrix, 9, 6, 5, 8);
+			//Creation of the 4 ForcePlates
+			forcePlate1.CreateForcePlate(forcePlate1, sensorMatrix, 4, 1, 0, 3);
+			forcePlate2.CreateForcePlate(forcePlate2, sensorMatrix, 7, 4, 3, 6);
+			forcePlate3.CreateForcePlate(forcePlate3, sensorMatrix, 5, 2, 1, 4);
+			forcePlate4.CreateForcePlate(forcePlate4, sensorMatrix, 8, 5, 4, 7);
 
-        //Global analysis of the 4 plates (treated as one plate)
-        ForcePlate GlobalForcePlate;
-        GlobalForcePlate.AnalyzeForcePlates(GlobalForcePlate, sensorMatrix, ForcePlate1, ForcePlate2, ForcePlate3, ForcePlate4);
+			//Global analysis of the 4 plates (treated as one plate)
+			forcePlate globalForcePlate;
+			globalForcePlate.AnalyzeForcePlates(globalForcePlate, sensorMatrix, forcePlate1, forcePlate2, forcePlate3, forcePlate4);
 
-        printf("ForcePlate1 COP along X-Axis: ");
-        printf("%f\n", ForcePlate1.getCOPx());
-        printf("                along Y-Axis: ");
-        printf("%f\n", ForcePlate1.getCOPy());
-        printf("ForcePlate2 COP along X-Axis: ");
-        printf("%f\n", ForcePlate2.getCOPx());
-        printf("                along Y-Axis: ");
-        printf("%f\n", ForcePlate2.getCOPy());
-        printf("ForcePlate3 COP along X-Axis: ");
-        printf("%f\n", ForcePlate3.getCOPx());
-        printf("                along Y-Axis: ");
-        printf("%f\n", ForcePlate3.getCOPy());
-        printf("ForcePlate4 COP along X-Axis: ");
-        printf("%f\n", ForcePlate4.getCOPx());
-        printf("                along Y-Axis: ");
-        printf("%f\n", ForcePlate4.getCOPy());
-        printf("Global COP along X-Axis: ");
-        printf("%f\n", GlobalForcePlate.getCOPx());
-        printf("           along Y-Axis: ");
-        printf("%f\n", GlobalForcePlate.getCOPy());
-        printf(".-.--..---.-.-.--.--.--.---.--.-");
-        printf("\n");
-    }
+			printf("\n.-.--..---MESURE DES CAPTEURS DE FORCE--.---.--.-");printf("\n");
+			printf("Sensor Number \t Analog value \t Voltage (mV) \t Force (N) \n");
+	    printf("Sensor No: 1 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(0), sensorMatrix.GetVoltageData(0), sensorMatrix.GetForceData(0));
+	    printf("Sensor No: 2 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(1), sensorMatrix.GetVoltageData(1), sensorMatrix.GetForceData(1));
+	    printf("Sensor No: 3 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(2), sensorMatrix.GetVoltageData(2), sensorMatrix.GetForceData(2));
+	    printf("Sensor No: 4 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(3), sensorMatrix.GetVoltageData(3), sensorMatrix.GetForceData(3));
+	    printf("Sensor No: 5 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(4), sensorMatrix.GetVoltageData(4), sensorMatrix.GetForceData(4));
+	    printf("Sensor No: 6 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(5), sensorMatrix.GetVoltageData(5), sensorMatrix.GetForceData(5));
+	    printf("Sensor No: 7 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(6), sensorMatrix.GetVoltageData(6), sensorMatrix.GetForceData(6));
+	    printf("Sensor No: 8 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(7), sensorMatrix.GetVoltageData(7), sensorMatrix.GetForceData(7));
+	    printf("Sensor No: 9 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(8), sensorMatrix.GetVoltageData(8), sensorMatrix.GetForceData(8));
+			printf(".-.--..---.-.-.--.--.--.---.--.-\n");
+
+			printf("\n.-.--..---MESURE DES CENTRES DE PRESSION.--.---.--.-");printf("\n");
+			printf("Position relative au centre des quadrants sur le siege (cm) \n");
+			printf("COP Axis \t forcePlate1 \t\t forcePlate2 \t\t forcePlate3 \t\t forcePlate4 \n");
+			printf("COP (X): \t %f \t\t %f \t\t %f \t\t %f \n", forcePlate1.GetCOPx(), forcePlate2.GetCOPx(), forcePlate3.GetCOPx(), forcePlate4.GetCOPx());
+			printf("COP (Y): \t %f \t\t %f \t\t %f \t\t %f \n", forcePlate1.GetCOPy(), forcePlate2.GetCOPy(), forcePlate3.GetCOPy(), forcePlate4.GetCOPy());
+
+			printf("\nPosition globale relative au centre du siege (cm) \n");
+			printf("COP Axis \t globalForcePlate \n");
+			printf("COP (X): \t %f \n", globalForcePlate.GetCOPx());
+			printf("COP (Y): \t %f \n", globalForcePlate.GetCOPy());
+			printf(".-.--..---.-.-.--.--.--.---.--.-");printf("\n");
+		}
+
     else if (inSerialChar == 'z')
     {
 		printf("Eteindre les DELs et arrêter le moteur DC.\n");
@@ -356,13 +231,16 @@ bool program_test(Alarm &alarm)
         printf("Afficher les sorties.\n");
         affichageSerial = true;
     }
-    else if (inSerialChar == 'c')
-    {
-        calibrationProcess(imuFixe, 0);
-        usleep(50000);
-        calibrationProcess(imuMobile, 0);
-        printf("Calibration des capteurs effectuée.\n");
-    }
+
+    // else if (inSerialChar == 'c')
+    // {
+    //     calibrationProcess(imuFixe, 0);
+    //     delay(50);
+    //     calibrationProcess(imuMobile, 0);
+    //     printf("Calibration des capteurs effectuée.\n");
+    //     inSerialChar = 'x';
+    // }
+
     else if (inSerialChar == 'n')
     {
         printf("LightOn(GREEN_LED);\n");
@@ -440,110 +318,23 @@ void printStuff()
     printf("\n");
 
     // Capteurs de force
-    printf("\n.-.--..---.-.-.--.--.--.---.--.-");
-    printf("\n");
-    printf("Sensor Number\t");
-    printf("Analog value\t");
-    printf("Voltage (mV)\t");
-    printf("Force (N)\n");
-    printf("Sensor No: 1 \t");
-    printf("%i", sensorMatrix.getAnalogData(0));
-    printf("\t\t");
-    printf("%li", sensorMatrix.getVoltageData(0));
-    printf("\t\t");
-    printf("%f\n", sensorMatrix.getForceData(0));
-    printf("Sensor No: 2 \t");
-    printf("%i", sensorMatrix.getAnalogData(1));
-    printf("\t\t");
-    printf("%li", sensorMatrix.getVoltageData(1));
-    printf("\t\t");
-    printf("%f\n", sensorMatrix.getForceData(1));
-    printf("Sensor No: 3 \t");
-    printf("%i", sensorMatrix.getAnalogData(2));
-    printf("\t\t");
-    printf("%li", sensorMatrix.getVoltageData(2));
-    printf("\t\t");
-    printf("%f\n", sensorMatrix.getForceData(2));
-    printf("Sensor No: 4 \t");
-    printf("%i", sensorMatrix.getAnalogData(3));
-    printf("\t\t");
-    printf("%li", sensorMatrix.getVoltageData(3));
-    printf("\t\t");
-    printf("%f\n", sensorMatrix.getForceData(3));
-    printf("Sensor No: 5 \t");
-    printf("%i", sensorMatrix.getAnalogData(4));
-    printf("\t\t");
-    printf("%li", sensorMatrix.getVoltageData(4));
-    printf("\t\t");
-    printf("%f\n", sensorMatrix.getForceData(4));
-    printf("Sensor No: 6 \t");
-    printf("%i", sensorMatrix.getAnalogData(5));
-    printf("\t\t");
-    printf("%li", sensorMatrix.getVoltageData(5));
-    printf("\t\t");
-    printf("%f\n", sensorMatrix.getForceData(5));
-    printf("Sensor No: 7 \t");
-    printf("%i", sensorMatrix.getAnalogData(6));
-    printf("\t\t");
-    printf("%li", sensorMatrix.getVoltageData(6));
-    printf("\t\t");
-    printf("%f\n", sensorMatrix.getForceData(6));
-    printf("Sensor No: 8 \t");
-    printf("%i", sensorMatrix.getAnalogData(7));
-    printf("\t\t");
-    printf("%li", sensorMatrix.getVoltageData(7));
-    printf("\t\t");
-    printf("%f\n", sensorMatrix.getForceData(7));
-    printf("Sensor No: 9 \t");
-    printf("%i", sensorMatrix.getAnalogData(8));
-    printf("\t\t");
-    printf("%li", sensorMatrix.getVoltageData(8));
-    printf("\t\t");
-    printf("%f\n", sensorMatrix.getForceData(8));
-    printf(".-.--..---.-.-.--.--.--.---.--.-");
-    printf("\n");
+    //Analog values
+    printf("\nValeurs Capteurs de force : Analog reading- DEBUG\n");
 
-    printf("\n.-.--..---DETECTION DUNE PERSONNE SUR LA CHAISE--.---.--.-");
-    printf("\n");
-    printf("Presence verification result : ");
-    if (sensorMatrix.isPresenceDetected(sensorMatrix))
-    {
-        printf("User detected\n");
-    }
-    else
-    {
-        printf("No user detected\n");
-    }
-    printf(".-.--..---.-.-.--.--.--.---.--.-");
-    printf("\n");
+    //}
+    //Voltage values
+    printf("\nValeurs Capteurs de force : Voltage reading (mV)- DEBUG\n");
+    //for (uint16_t capteurNo = 0; capteurNo < capteurForceNb; capteurNo++)
+    //{
+
+
+    //Force values
+    printf("\nValeurs Capteurs de force : Force reading (N)- DEBUG\n");
+    //for (uint16_t capteurNo = 0; capteurNo < capteurForceNb; capteurNo++)
+    //{
 
     //Verifier le positionnement de la personne
-    printf("Cisaillement (L-R): ");
-    if (right_shearing)
-    {
-        printf("vers la droite\n");
-    }
-    else if (left_shearing)
-    {
-        printf("vers la gauche\n");
-    }
-    else
-    {
-        printf("aucun\n");
-    }
-    printf("Cisaillement (F-R): ");
-    if (front_shearing)
-    {
-        printf("vers l'avant\n");
-    }
-    else if (rear_shearing)
-    {
-        printf("vers l'arriere\n");
-    }
-    else
-    {
-        printf("aucun\n");
-    }
+
 
     // Verifier si le fauteuil est en mouvement
     printf("\nDetection si la chaise est en mouvement");
