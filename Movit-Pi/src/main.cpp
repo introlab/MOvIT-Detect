@@ -7,9 +7,7 @@
 #include "init.h"         //variables and modules initialisation
 #include "notif_module.h" //variables and modules initialisation
 #include "accel_module.h" //variables and modules initialisation
-
-#include "forcePlate.h"
-#include "forceSensor.h"
+#include "force_module.h" //variables and modules initialisation
 #include "program.h"      //variables and modules initialisation
 #include "test.h"         //variables and modules initialisation
 
@@ -85,8 +83,8 @@ int main()
 // on verifie si les led doivent blink, puis on les fait blink pour la duree demandee
 // flagrunning : utilite a determiner
 //---------------------------------------------------------------------------------------
- //void callback()
- //{
+// void callback()
+// {
 //     getData();     //Lit l'état des capteurs
 //     led_control(); //Gère la LED du bouton, Etats: On,Off ou Blink
 

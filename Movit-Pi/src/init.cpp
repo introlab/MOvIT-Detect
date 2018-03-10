@@ -3,23 +3,31 @@
 // Description
 //---------------------------------------------------------------------------------------
 
+//---------------------------------------------------------------------------------------
+// TITLE
+// Includes : Drivers Modules
+//---------------------------------------------------------------------------------------
+//Include : Drivers
 #include "MPU6050.h"  //Implementation of Jeff Rowberg's driver
 #include "MAX11611.h" //10-Bit ADC librairy
 
+//Include : Modules
 #include "init.h"         //variables and modules initialisation
 #include "notif_module.h" //variables and modules initialisation
 #include "accel_module.h" //variables and modules initialisation
-#include "forceSensor.h"   //variables and modules initialisation
-#include "forcePlate.h"   //variables and modules initialisation
+#include "force_module.h" //variables and modules initialisation
 #include "program.h"      //variables and modules initialisation
 #include "test.h"         //variables and modules initialisation
 
+//External functions and variables
+//Variables
 extern MPU6050 imuMobile;             //Initialisation of the mobile MPU6050
 extern MPU6050 imuFixe;               //Initialisation of the fixed MPU6050
 extern MAX11611 max11611;             //Initialisation of the 10-bit ADC
-uint16_t max11611Data[9];       //Data table of size=total sensors
-uint16_t max11611EmptyData[9];       //Data table of size=total sensors
-
+extern uint16_t *max11611Data;        //ADC 10-bit data variable
+extern int capteurForceNb;            //Total number of sensors
+extern uint16_t max11611DataArray[9]; //Data table of size=total sensors
+//Functions
 extern void calibrationProcess(MPU6050 &mpu, uint8_t calibrationComplexite);
 
 void init_accel()
@@ -68,14 +76,13 @@ void init_ADC()
     printf("MAX11611 (ADC) initializing ... ");
     if (max11611.initialize())
     {
-      forceSensor sensorMatrix;
-      for(int i=0; i < sensorMatrix.sensorCount; i++)
-      {
-          max11611EmptyData[i] = 0;
-          sensorMatrix.SetAnalogData(max11611EmptyData[i], i);
-      }
-      sensorMatrix.GetForceSensorData(sensorMatrix);
-      printf("success\n");
+        for (unsigned int i = 0; i < sizeof(max11611DataArray); i++)
+        {
+            max11611DataArray[i] = 0;
+        }
+        max11611Data = max11611DataArray; //pointer assignation to the data table
+
+        printf("success\n");
     }
     else
     {

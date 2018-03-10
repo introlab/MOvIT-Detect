@@ -12,8 +12,7 @@
 #include "init.h"         //variables and modules initialisation
 #include "notif_module.h" //variables and modules initialisation
 #include "accel_module.h" //variables and modules initialisation
-#include "forceSensor.h" //variables and modules initialisation
-#include "forcePlate.h" //variables and modules initialisation
+#include "force_module.h" //variables and modules initialisation
 #include "program.h"      //variables and modules initialisation
 #include "test.h"         //variables and modules initialisation
 
@@ -49,12 +48,9 @@ extern double pitchFixe, rollFixe, pitchMobile, rollMobile; //pitch and roll ang
 extern int angle;                                           //Final angle computed between sensors
 extern int obs;                                             //Debug variable for getAngle function
 
-
+extern uint16_t *max11611Data;                     //ADC 10-bit data variable
 const uint8_t capteurForceNb = 9;                  //Total number of sensors
-extern uint16_t max11611Data[capteurForceNb];                     //ADC 10-bit data variable
 extern uint16_t max11611DataArray[capteurForceNb]; //Data table of size=total sensors
-
-extern forceSensor sensorMatrix;
 
 extern bool bIsBtnPushed;
 
@@ -415,12 +411,9 @@ void getData()
     getAngle();
 
     // Data: Capteur de force
-    max11611.getData(sensorMatrix.sensorCount, max11611Data);
-    for(int i = 0; i < sensorMatrix.sensorCount; i++)
-    {
-      sensorMatrix.SetAnalogData(max11611Data[i], i);
-    }
-    sensorMatrix.GetForceSensorData(sensorMatrix);
+    max11611.getData(capteurForceNb, max11611Data);
+    ForceSensorUnits();
+    shearing_detection1();
 
     if (affichageSerial)
     {

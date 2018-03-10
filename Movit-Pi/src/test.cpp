@@ -12,8 +12,7 @@
 #include "init.h"         //variables and modules initialisation
 #include "notif_module.h" //variables and modules initialisation
 #include "accel_module.h" //variables and modules initialisation
-#include "forceSensor.h" //variables and modules initialisation
-#include "forcePlate.h" //variables and modules initialisation
+#include "force_module.h" //variables and modules initialisation
 #include "program.h"      //variables and modules initialisation
 #include "test.h"         //variables and modules initialisation
 
@@ -41,9 +40,8 @@ extern double pitchFixe, rollFixe, pitchMobile, rollMobile; //pitch and roll ang
 extern int angle;                                           //Final angle computed between sensors
 // extern int obs;                                             //Debug variable for getAngle function
 
-
+extern uint16_t *max11611Data;                     //ADC 10-bit data variable
 const uint8_t capteurForceNb = 9;                  //Total number of sensors
-extern uint16_t max11611Data[capteurForceNb];                     //ADC 10-bit data variable
 extern uint16_t max11611DataArray[capteurForceNb]; //Data table of size=total sensors
 extern long max11611Voltage[capteurForceNb];       //ADC 10-bit data variable
 extern long max11611Resistance[capteurForceNb];    //ADC 10-bit data variable
@@ -57,8 +55,6 @@ extern bool left_shearing;
 extern bool right_shearing;
 extern bool front_shearing;
 extern bool rear_shearing;
-
-forceSensor sensorMatrix;
 
 bool program_test()
 {
@@ -79,20 +75,45 @@ bool program_test()
         getData();
 
         //Force plates variables
-        forcePlate forcePlate1;
-        forcePlate forcePlate2;
-        forcePlate forcePlate3;
-        forcePlate forcePlate4;
+        ForcePlate ForcePlate1;
+        ForcePlate ForcePlate2;
+        ForcePlate ForcePlate3;
+        ForcePlate ForcePlate4;
 
-        //Creation of the 4 forcePlates
-        forcePlate1.CreateForcePlate(forcePlate1, sensorMatrix, 4, 5, 2, 1);
-        forcePlate1.CreateForcePlate(forcePlate2, sensorMatrix, 3, 4, 1, 9);
-        forcePlate1.CreateForcePlate(forcePlate3, sensorMatrix, 7, 8, 5, 4);
-        forcePlate1.CreateForcePlate(forcePlate4, sensorMatrix, 6, 7, 4, 3);
+        //Creation of the 4 ForcePlates
+        ForcePlate1.CreateForcePlate(ForcePlate1, 4, 5, 2, 1);
+        ForcePlate1.CreateForcePlate(ForcePlate2, 3, 4, 1, 9);
+        ForcePlate1.CreateForcePlate(ForcePlate3, 7, 8, 5, 4);
+        ForcePlate1.CreateForcePlate(ForcePlate4, 6, 7, 4, 3);
 
         //Global analysis of the 4 plates (treated as one plate)
-        forcePlate globalForcePlate;
-        globalForcePlate.AnalyzeForcePlates(globalForcePlate, sensorMatrix, forcePlate1, forcePlate2, forcePlate3, forcePlate4);
+        ForcePlate GlobalForcePlate;
+        GlobalForcePlate.AnalyzeForcePlates(GlobalForcePlate, ForcePlate1, ForcePlate2, ForcePlate3, ForcePlate4);
+
+        printf("ForcePlate1 COP along X-Axis: ");
+        printf("%i\n", ForcePlate1.COPx);
+        printf("ForcePlate1 COP along Y-Axis: ");
+        printf("%i\n", ForcePlate1.COPy);
+
+        printf("ForcePlate2 COP along X-Axis: ");
+        printf("%i\n", ForcePlate2.COPx);
+        printf("ForcePlate2 COP along Y-Axis: ");
+        printf("%i\n", ForcePlate2.COPy);
+
+        printf("ForcePlate3 COP along X-Axis: ");
+        printf("%i\n", ForcePlate3.COPx);
+        printf("ForcePlate3 COP along Y-Axis: ");
+        printf("%i\n", ForcePlate3.COPy);
+
+        printf("ForcePlate4 COP along X-Axis: ");
+        printf("%i\n", ForcePlate4.COPx);
+        printf("ForcePlate4 COP along Y-Axis: ");
+        printf("%i\n", ForcePlate4.COPy);
+
+        printf("Global COP along X-Axis: ");
+        printf("%i\n", GlobalForcePlate.COPx);
+        printf("Global COP along Y-Axis: ");
+        printf("%i\n", GlobalForcePlate.COPy);
 
         inSerialChar = 'x';
     }
@@ -133,7 +154,7 @@ bool program_test()
     {
 		printf("Activer une alarme sur le module de notifications.\n");
 		alarm.SetIsGreenLedEnabled(true);
-		alarm.SetIsRedLedEnabled(true);
+		alarm.SetIsRedLedEnabled(true);  
 		alarm.SetIsDCMotorEnabled(true);
 		alarm.TurnOnBlinkLedsAlarm();
         inSerialChar = 'x';
@@ -141,6 +162,34 @@ bool program_test()
     else if (inSerialChar == 'c')
     {
 
+        shearing_detection1();
+        printf("Fonction detection de cisaillement activée.\n");
+        printf("Cisaillement (L-R): ");
+        if (right_shearing)
+        {
+            printf("vers la droite\n");
+        }
+        else if (left_shearing)
+        {
+            printf("vers la gauche\n");
+        }
+        else
+        {
+            printf("aucun\n");
+        }
+        printf("Cisaillement (F-R): ");
+        if (front_shearing)
+        {
+            printf("vers l'avant\n");
+        }
+        else if (rear_shearing)
+        {
+            printf("vers l'arriere\n");
+        }
+        else
+        {
+            printf("aucun\n");
+        }
     }
     else if (inSerialChar == 'z')
     {
@@ -267,23 +316,194 @@ void printStuff()
     // Capteurs de force
     //Analog values
     printf("\nValeurs Capteurs de force : Analog reading- DEBUG\n");
-
+    //for (uint16_t capteurNo = 0; capteurNo < capteurForceNb; capteurNo++)
+    //{
+    printf("Capt.No:");
+    printf("2");
+    printf(" - ");
+    printf("%i\n", max11611Data[1]);
+    printf("\t");
+    printf("Capt.No:");
+    printf("1");
+    printf(" - ");
+    printf("%i\n", max11611Data[0]);
+    printf("\t");
+    printf("Capt.No:");
+    printf("9");
+    printf(" - ");
+    printf("%i\n", max11611Data[8]);
+    printf("\n");
+    printf("Capt.No:");
+    printf("5");
+    printf(" - ");
+    printf("%i\n", max11611Data[4]);
+    printf("\t");
+    printf("Capt.No:");
+    printf("4");
+    printf(" - ");
+    printf("%i\n", max11611Data[3]);
+    printf("\t");
+    printf("Capt.No:");
+    printf("3");
+    printf(" - ");
+    printf("%i\n", max11611Data[2]);
+    printf("\n");
+    printf("Capt.No:");
+    printf("8");
+    printf(" - ");
+    printf("%i\n", max11611Data[7]);
+    printf("\t");
+    printf("Capt.No:");
+    printf("7");
+    printf(" - ");
+    printf("%i\n", max11611Data[6]);
+    printf("\t");
+    printf("Capt.No:");
+    printf("6");
+    printf(" - ");
+    printf("%i\n", max11611Data[5]);
+    printf("\n");
     //}
     //Voltage values
     printf("\nValeurs Capteurs de force : Voltage reading (mV)- DEBUG\n");
     //for (uint16_t capteurNo = 0; capteurNo < capteurForceNb; capteurNo++)
     //{
-
+    printf("Capt.No:");
+    printf("2");
+    printf(" - ");
+    printf("%li\n", max11611Voltage[1]);
+    printf("\t\t");
+    printf("Capt.No:");
+    printf("1");
+    printf(" - ");
+    printf("%li\n", max11611Voltage[0]);
+    printf("\t\t");
+    printf("Capt.No:");
+    printf("9");
+    printf(" - ");
+    printf("%li\n", max11611Voltage[8]);
+    printf("\n");
+    printf("Capt.No:");
+    printf("5");
+    printf(" - ");
+    printf("%li\n", max11611Voltage[4]);
+    printf("\t\t");
+    printf("Capt.No:");
+    printf("4");
+    printf(" - ");
+    printf("%li\n", max11611Voltage[3]);
+    printf("\t\t");
+    printf("Capt.No:");
+    printf("3");
+    printf(" - ");
+    printf("%li\n", max11611Voltage[2]);
+    printf("\n");
+    printf("Capt.No:");
+    printf("8");
+    printf(" - ");
+    printf("%li\n", max11611Voltage[7]);
+    printf("\t\t");
+    printf("Capt.No:");
+    printf("7");
+    printf(" - ");
+    printf("%li\n", max11611Voltage[6]);
+    printf("\t\t");
+    printf("Capt.No:");
+    printf("6");
+    printf(" - ");
+    printf("%li\n", max11611Voltage[5]);
+    printf("\n");
+    //}
 
     //Force values
     printf("\nValeurs Capteurs de force : Force reading (N)- DEBUG\n");
     //for (uint16_t capteurNo = 0; capteurNo < capteurForceNb; capteurNo++)
     //{
+    printf("Capt.No:");
+    printf("2");
+    printf(" - ");
+    printf("%li\n", max11611Force[1]);
+    printf("\t");
+    printf("Capt.No:");
+    printf("1");
+    printf(" - ");
+    printf("%li\n", max11611Force[0]);
+    printf("\t");
+    printf("Capt.No:");
+    printf("9");
+    printf(" - ");
+    printf("%li\n", max11611Force[8]);
+    printf("\n");
+    printf("Capt.No:");
+    printf("5");
+    printf(" - ");
+    printf("%li\n", max11611Force[4]);
+    printf("\t");
+    printf("Capt.No:");
+    printf("4");
+    printf(" - ");
+    printf("%li\n", max11611Force[3]);
+    printf("\t");
+    printf("Capt.No:");
+    printf("3");
+    printf(" - ");
+    printf("%li\n", max11611Force[2]);
+    printf("\n");
+    printf("Capt.No:");
+    printf("8");
+    printf(" - ");
+    printf("%li\n", max11611Force[7]);
+    printf("\t");
+    printf("Capt.No:");
+    printf("7");
+    printf(" - ");
+    printf("%li\n", max11611Force[6]);
+    printf("\t");
+    printf("Capt.No:");
+    printf("6");
+    printf(" - ");
+    printf("%li\n", max11611Force[5]);
+    printf("\n");
+    //}
 
     // Verifier si une personne est assise
+    printf("\nDetection d'une personne sur la chaise\n");
+    if (isSomeoneThere())
+    {
+        printf("Someone is on the chair\n");
+    }
+    else
+    {
+        printf("No one is on the chair\n");
+    }
 
     //Verifier le positionnement de la personne
-
+    printf("Cisaillement (L-R): ");
+    if (right_shearing)
+    {
+        printf("vers la droite\n");
+    }
+    else if (left_shearing)
+    {
+        printf("vers la gauche\n");
+    }
+    else
+    {
+        printf("aucun\n");
+    }
+    printf("Cisaillement (F-R): ");
+    if (front_shearing)
+    {
+        printf("vers l'avant\n");
+    }
+    else if (rear_shearing)
+    {
+        printf("vers l'arriere\n");
+    }
+    else
+    {
+        printf("aucun\n");
+    }
 
     // Verifier si le fauteuil est en mouvement
     printf("\nDetection si la chaise est en mouvement");
