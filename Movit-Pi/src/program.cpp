@@ -12,7 +12,7 @@
 #include "init.h"         //variables and modules initialisation
 #include "notif_module.h" //variables and modules initialisation
 #include "accel_module.h" //variables and modules initialisation
-#include "force_module.h" //variables and modules initialisation
+#include "ForceSensor.h"  //variables and modules initialisation
 #include "program.h"      //variables and modules initialisation
 #include "test.h"         //variables and modules initialisation
 
@@ -49,8 +49,7 @@ extern int angle;                                           //Final angle comput
 extern int obs;                                             //Debug variable for getAngle function
 
 extern uint16_t *max11611Data;                     //ADC 10-bit data variable
-const uint8_t capteurForceNb = 9;                  //Total number of sensors
-extern uint16_t max11611DataArray[capteurForceNb]; //Data table of size=total sensors
+extern uint16_t Max11611Data[sensorCount]; //Data table of size=total sensors
 
 extern bool bIsBtnPushed;
 
@@ -62,104 +61,106 @@ extern void light_state();
 extern void buzzer_state();
 extern void ForceSensorUnits();
 
-bool program_loop()
+extern ForceSensor sensorMatrix;
+
+bool program_loop(Alarm &alarm)
 {
     bIsBtnPushed = false;
 
     // timer.run();
-    bool ret = program_test();
+    bool ret = program_test(alarm);
 
-//     if (sleeping)
-//     {
-//         if (isSomeoneThere() || testSequence == true)
-//         {
-//             imuFixe.setSleepEnabled(false);
-//             //imuMobile.setSleepEnabled(false);
-//             sleeping = false;
-//         }
-//         else
-//         {
-//             //Envoie tout de même les valeurs à la page périphériques pour le troobleshooting au besoin
-//             if (SerialUSB.available() > 1)
-//             {
-// #ifdef DEBUG_SERIAL
-//                 printf("Something has been detected on the SerialUSB port...\n");
-// #endif
-//                 // Get the command / anything that is on the port
-//                                       JsonObject &cmd = getCmd();
+    //     if (sleeping)
+    //     {
+    //         if (isSomeoneThere() || testSequence == true)
+    //         {
+    //             imuFixe.setSleepEnabled(false);
+    //             //imuMobile.setSleepEnabled(false);
+    //             sleeping = false;
+    //         }
+    //         else
+    //         {
+    //             //Envoie tout de même les valeurs à la page périphériques pour le troobleshooting au besoin
+    //             if (SerialUSB.available() > 1)
+    //             {
+    // #ifdef DEBUG_SERIAL
+    //                 printf("Something has been detected on the SerialUSB port...\n");
+    // #endif
+    //                 // Get the command / anything that is on the port
+    //                                       JsonObject &cmd = getCmd();
 
-//                 // Repond seulement pour les demandes de type captForceReq, devrait aussi repondre aux boutons de la page Peripheriques ?
-//                 if (cmd["type"] == "captForceReq")
-//                 {
-//                     //if the parsing of what was on port worked then send a positive response, else send error
-//                     bool error = false;
-//                     if (!cmd.success())
-//                     {
-//                         error = true;
-//                     }
-//                     sendData(cmd, isMoving(), error);
-//                 }
-//             }
-//         }
-//     }
+    //                 // Repond seulement pour les demandes de type captForceReq, devrait aussi repondre aux boutons de la page Peripheriques ?
+    //                 if (cmd["type"] == "captForceReq")
+    //                 {
+    //                     //if the parsing of what was on port worked then send a positive response, else send error
+    //                     bool error = false;
+    //                     if (!cmd.success())
+    //                     {
+    //                         error = true;
+    //                     }
+    //                     sendData(cmd, isMoving(), error);
+    //                 }
+    //             }
+    //         }
+    //     }
 
-//     else if (!isSomeoneThere() && testSequence == false)
-//     {
-//         imuFixe.setSleepEnabled(true);
-//         //imuMobile.setSleepEnabled(false);
-//         sleeping = true;
+    //     else if (!isSomeoneThere() && testSequence == false)
+    //     {
+    //         imuFixe.setSleepEnabled(true);
+    //         //imuMobile.setSleepEnabled(false);
+    //         sleeping = true;
 
-//         //Envoie une fois, "-" à toutes les valeurs en signe de "No Data" pour toutes les valeurs de real time data affichées
-//         if (SerialUSB.available() > 1)
-//         {
-//             DynamicJsonBuffer jsonBuffer;
-//             JsonObject &response = jsonBuffer.createObject();
+    //         //Envoie une fois, "-" à toutes les valeurs en signe de "No Data" pour toutes les valeurs de real time data affichées
+    //         if (SerialUSB.available() > 1)
+    //         {
+    //             DynamicJsonBuffer jsonBuffer;
+    //             JsonObject &response = jsonBuffer.createObject();
 
-//             response["angle"] = "-";
-//             response["isMoving"] = "-";
+    //             response["angle"] = "-";
+    //             response["isMoving"] = "-";
 
-//             // Send response if the object was correctly create
-//             if (response.success())
-//             {
-//                 response.printTo(SerialUSB);
-//             }
-// #ifdef DEBUG_SERIAL
-//             if (response.success())
-//             {
-//                 //response.prettyPrintTo(Serial); //Accusé de réception
-//             }
-//             else
-//             {
-//                 printf("There was a problem when creating the object...\n");
-//             }
-// #endif
+    //             // Send response if the object was correctly create
+    //             if (response.success())
+    //             {
+    //                 response.printTo(SerialUSB);
+    //             }
+    // #ifdef DEBUG_SERIAL
+    //             if (response.success())
+    //             {
+    //                 //response.prettyPrintTo(Serial); //Accusé de réception
+    //             }
+    //             else
+    //             {
+    //                 printf("There was a problem when creating the object...\n");
+    //             }
+    // #endif
 
-//             sendData(cmd, isMoving(), error);
-//         }
-//     }
-//     else
-//     {
-//         if (SerialUSB.available() > 1)
-//         {
-// #ifdef DEBUG_SERIAL
-//             printf("Something has been detected on the SerialUSB port...\n");
-// #endif
+    //             sendData(cmd, isMoving(), error);
+    //         }
+    //     }
+    //     else
+    //     {
+    //         if (SerialUSB.available() > 1)
+    //         {
+    // #ifdef DEBUG_SERIAL
+    //             printf("Something has been detected on the SerialUSB port...\n");
+    // #endif
 
-//             //Get the command/anything that is on the port
-//             // JsonObject &cmd = getCmd();
+    //             //Get the command/anything that is on the port
+    //             // JsonObject &cmd = getCmd();
 
-//             //if the parsing of what was on port worked then send a positive response, else send error
-//             bool error = false;
-//             if (!cmd.success())
-//             {
-//                 error = true;
-//             }
-//             sendData(cmd, isMoving(), error);
-//         }
-//     }
+    //             //if the parsing of what was on port worked then send a positive response, else send error
+    //             bool error = false;
+    //             if (!cmd.success())
+    //             {
+    //                 error = true;
+    //             }
+    //             sendData(cmd, isMoving(), error);
+    //         }
+    //     }
 
-//     led_control();
-//     buzzer_state();
+    //     led_control();
+    //     buzzer_state();
 
     return ret;
 }
@@ -411,9 +412,12 @@ void getData()
     getAngle();
 
     // Data: Capteur de force
-    max11611.getData(capteurForceNb, max11611Data);
-    ForceSensorUnits();
-    shearing_detection1();
+    max11611.getData(sensorCount, Max11611Data);
+    for (int i = 0; i < sensorCount; i++)
+    {
+        sensorMatrix.setAnalogData(Max11611Data[i], i);
+    }
+    sensorMatrix.GetForceSensorData(sensorMatrix);
 
     if (affichageSerial)
     {

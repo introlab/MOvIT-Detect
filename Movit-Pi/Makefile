@@ -3,7 +3,9 @@ LDFLAGS=-Lsrc/lib -Lsrc/lib/mosquitto_broker src/lib/mosquitto_broker/cpp/libmos
 
 SOURCES = 	src/main.cpp \
 			src/accel_module.cpp \
-			src/force_module.cpp \
+			src/ForceSensor.cpp \
+			src/ForcePlate.cpp \
+			src/Utils.cpp \
 			src/init.cpp \
 			src/notif_module.cpp \
 			src/program.cpp \

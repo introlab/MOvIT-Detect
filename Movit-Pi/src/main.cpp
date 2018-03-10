@@ -7,7 +7,7 @@
 #include "init.h"         //variables and modules initialisation
 #include "notif_module.h" //variables and modules initialisation
 #include "accel_module.h" //variables and modules initialisation
-#include "force_module.h" //variables and modules initialisation
+#include "ForceSensor.h" //variables and modules initialisation
 #include "program.h"      //variables and modules initialisation
 #include "test.h"         //variables and modules initialisation
 
@@ -17,6 +17,9 @@
 #include "mosquitto_broker/mosquitto_broker.h"
 
 using std::string;
+
+ForceSensor sensorMatrix;
+
 
 #define SLEEP_TIME 2000000
 
@@ -31,10 +34,16 @@ MPU6050 imuFixe(0x69);   //Initialisation of the fixed MPU6050
 MCP79410 mcp79410;       //Initialisation of the MCP79410
 MAX11611 max11611;       //Initialisation of the 10-bit ADC
 
-//Time variables
-// SimpleTimer timer;                                 //Creation of a timer
 unsigned char dateTime[7] = {0, 0, 0, 0, 0, 0, 0}; //{s, m, h, w, d, date, month, year}
 
+uint16_t* max11611Data;
+uint16_t Max11611Data[9]; //Data table of size=total sensors
+long detectedPresence = 0;
+long detectionThreshold = 0;
+bool left_shearing = false;
+bool right_shearing = false;
+bool front_shearing = false;
+bool rear_shearing = false;
 
 //Movement detection variables
 const float isMovingTrigger = 1.05;
@@ -57,17 +66,17 @@ int main()
 
     // timer.setInterval(1000, callback);
     MosquittoBroker *mosquittoBroker = new MosquittoBroker("actionlistener");
-    Alarm alarm();
 
+    Alarm alarm(700, 0.1);
     init_accel();
     init_ADC();
-    printf("Setup Done\n");
     mcp79410.setDateTime();
+    printf("Setup Done\n");
 
     bool done = false;
     while (!done)
     {
-        done = program_loop();
+        done = program_loop(alarm);
 
         sendDataToWebServer(mosquittoBroker);
         usleep(SLEEP_TIME);

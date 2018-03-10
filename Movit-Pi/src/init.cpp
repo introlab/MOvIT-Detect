@@ -15,9 +15,12 @@
 #include "init.h"         //variables and modules initialisation
 #include "notif_module.h" //variables and modules initialisation
 #include "accel_module.h" //variables and modules initialisation
-#include "force_module.h" //variables and modules initialisation
+#include "ForceSensor.h"  //variables and modules initialisation
 #include "program.h"      //variables and modules initialisation
 #include "test.h"         //variables and modules initialisation
+
+
+#include <stdio.h>
 
 //External functions and variables
 //Variables
@@ -25,10 +28,11 @@ extern MPU6050 imuMobile;             //Initialisation of the mobile MPU6050
 extern MPU6050 imuFixe;               //Initialisation of the fixed MPU6050
 extern MAX11611 max11611;             //Initialisation of the 10-bit ADC
 extern uint16_t *max11611Data;        //ADC 10-bit data variable
-extern int capteurForceNb;            //Total number of sensors
-extern uint16_t max11611DataArray[9]; //Data table of size=total sensors
+extern uint16_t max11611DataArray[sensorCount]; //Data table of size=total sensors
 //Functions
 extern void calibrationProcess(MPU6050 &mpu, uint8_t calibrationComplexite);
+
+extern ForceSensor sensorMatrix;
 
 void init_accel()
 {
@@ -76,11 +80,12 @@ void init_ADC()
     printf("MAX11611 (ADC) initializing ... ");
     if (max11611.initialize())
     {
-        for (unsigned int i = 0; i < sizeof(max11611DataArray); i++)
+        for (uint8_t i = 0; i < sensorCount; i++)
         {
-            max11611DataArray[i] = 0;
+            sensorMatrix.setAnalogData(0, i);
         }
-        max11611Data = max11611DataArray; //pointer assignation to the data table
+        // La ligne suivante est commenté car elle cause une division par 0
+        // sensorMatrix.GetForceSensorData(sensorMatrix);
 
         printf("success\n");
     }

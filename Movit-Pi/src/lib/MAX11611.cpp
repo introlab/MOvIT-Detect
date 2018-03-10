@@ -9,8 +9,7 @@ DATASHEET: https://datasheets.maximintegrated.com/en/ds/MAX11606-MAX11611.pdf
 
 #include "MAX11611.h"
 #include "I2Cdev.h"
-
-//uint8_t *dataToSend;
+#include <stdio.h>
 
 // Default constructor, uses default I2C address.
 MAX11611::MAX11611()
