@@ -55,7 +55,7 @@ bool MAX11611::initialize()
 	bit1 = 0; //CS0
 	bit0 = 1; //Single-ended
 	*/
-    dataToSend = 0x12; //00010001
+    dataToSend = 0x11; //0b00010001
     if (!I2Cdev::writeByte(devAddr, dataToSend))
     {
         return false;
