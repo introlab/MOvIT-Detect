@@ -4,7 +4,10 @@
 class forceSensor
 {
   public:
-    void CalibrateForceSensor(forceSensor &sensors);
+    forceSensor();
+    ~forceSensor();
+
+    void CalibrateForceSensor(uint16_t* max11611Data, forceSensor &sensors);
     void GetForceSensorData(forceSensor &sensors);
     bool IsUserDetected(forceSensor &sensors);
 

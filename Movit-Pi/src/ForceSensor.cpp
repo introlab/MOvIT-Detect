@@ -10,11 +10,25 @@
 #include <unistd.h>
 
 extern MAX11611 max11611;                    //Initialisation of the 10-bit ADC
-extern uint16_t max11611Data[9];     //Data table of size=total sensors
-long sensedPresence;
 
+forceSensor::forceSensor()
+{
+  for(int i = 0; i < sensorCount; i++)
+  {
+    _analogData[i] = 0;
+    _voltageData[i] = 0;
+    _resistanceData[i] = 0;
+    _conductanceData[i] = 0;
+    _forceData[i] = 0;
+    _analogOffset[i] = 0;
+  }
+  _totalSensorMean = 0;
+  _detectionThreshold = 0;
+}
 
-void forceSensor::CalibrateForceSensor(forceSensor &sensors)
+forceSensor::~forceSensor() {}
+
+void forceSensor::CalibrateForceSensor(uint16_t* max11611Data, forceSensor &sensors)
 //---------------------------------------------------------------------------------------
 //Function: ForceSensor::CalibrateForceSensor
 //Force sensor individual calibration - establish initial offset
@@ -29,11 +43,11 @@ void forceSensor::CalibrateForceSensor(forceSensor &sensors)
   /*******************************************************************/
 
   const int maxIterations = 10;    //Calibration preceision adjustement - Number of measures (1s) in final mean
-  uint16_t sensorMean[sensors.sensorCount];    //Individual iterations sensors mean
-  uint16_t totalSensorMean;                          //Final sensors analog data reading mean
+  uint16_t sensorMean[sensorCount];    //Individual iterations sensors mean
+  uint16_t totalSensorMean = 0;                          //Final sensors analog data reading mean
 
   //Sensor mean table initialization
-  for(int i = 0; i < sensors.sensorCount; i++)
+  for(int i = 0; i < sensorCount; i++)
   {
     sensorMean[i] = 0;
   }
@@ -41,14 +55,12 @@ void forceSensor::CalibrateForceSensor(forceSensor &sensors)
   //Mean generation for calibration operation
   for(int i = 0; i < maxIterations; i++)
   {
-    delay(1000);
-    printf("%i  ", (maxIterations-i));
-
     //Update sensor analog data readings
-    max11611.getData(sensors.sensorCount, max11611Data);
+    printf("\n%i ", (maxIterations-i));
+    max11611.getData(sensorCount, max11611Data);
 
     //Force analog data readings mean
-    for(int j = 0; j < sensors.sensorCount; j++)
+    for(int j = 0; j < sensorCount; j++)
     {
       sensors.SetAnalogData(max11611Data[j], j);
       sensorMean[j] += sensors.GetAnalogData(j);
@@ -58,12 +70,12 @@ void forceSensor::CalibrateForceSensor(forceSensor &sensors)
         sensorMean[j] /= maxIterations;
       }
     }
+    delay(1000);
    }
-   delay(1000);
-   printf("DONE\n\n");
+   printf("\nDONE\n\n");
 
    //Total sensors analog data readings mean
-   for(int i = 0; i < sensors.sensorCount; i++)
+   for(int i = 0; i < sensorCount; i++)
    {
       sensors.SetAnalogOffset(sensorMean[i], i);
       totalSensorMean += sensorMean[i];
@@ -154,7 +166,7 @@ bool forceSensor::IsUserDetected(forceSensor &sensors)
   /* max11611Data[9]         max11611Data[6]         max11611Data[3] */
   /*******************************************************************/
 
-  sensedPresence = 0;
+  long sensedPresence = 0;
 
   //Total of all sensors reading analog data
   for (int i = 0; i < sensors.sensorCount; i++)

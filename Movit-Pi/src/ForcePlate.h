@@ -1,10 +1,15 @@
 #ifndef _FORCEPLATE_H_
 #define _FORCEPLATE_H_
 
-class forceSensor;
+#include "forceSensor.h"
+
 class forcePlate
 {
   public:
+    forcePlate();
+    ~forcePlate();
+
+    void DetectCOP(forcePlate &globalForcePlate, forceSensor &sensors);
     void CreateForcePlate(forcePlate &newForcePlate, forceSensor &sensors, int sensorNo1, int sensorNo2, int sensorNo3, int sensorNo4);
     void AnalyzeForcePlates(forcePlate &globalForcePlate, forceSensor &sensors, forcePlate &forcePlate1, forcePlate &forcePlate2, forcePlate &forcePlate3, forcePlate &forcePlate4);
 
@@ -26,6 +31,14 @@ class forcePlate
     float GetMy1() { return _My1; }
     float GetCOPx() { return _COPx; }
     float GetCOPy() { return _COPy; }
+    float GetFp1COPx() { return _fp1COPx; }
+    float GetFp1COPy() { return _fp1COPy; }
+    float GetFp2COPx() { return _fp2COPx; }
+    float GetFp2COPy() { return _fp2COPy; }
+    float GetFp3COPx() { return _fp3COPx; }
+    float GetFp3COPy() { return _fp3COPy; }
+    float GetFp4COPx() { return _fp4COPx; }
+    float GetFp4COPy() { return _fp4COPy; }
     float GetCOFx() { return _COFx; }
     float GetCOFy() { return _COFy; }
     float GetCOFxy() { return _COFxy; }
@@ -48,6 +61,14 @@ class forcePlate
     void SetMy1(float My1) { _My1 = My1; }
     void SetCOPx(float COPx) { _COPx = COPx; }
     void SetCOPy(float COPy) { _COPy = COPy; }
+    void SetFp1COPx(float fp1COPx) { _fp1COPx = fp1COPx; }
+    void SetFp1COPy(float fp1COPy) { _fp1COPy = fp1COPy; }
+    void SetFp2COPx(float fp2COPx) { _fp2COPx = fp2COPx; }
+    void SetFp2COPy(float fp2COPy) { _fp2COPy = fp2COPy; }
+    void SetFp3COPx(float fp3COPx) { _fp3COPx = fp3COPx; }
+    void SetFp3COPy(float fp3COPy) { _fp3COPy = fp3COPy; }
+    void SetFp4COPx(float fp4COPx) { _fp4COPx = fp4COPx; }
+    void SetFp4COPy(float fp4COPy) { _fp4COPy = fp4COPy; }
     void SetCOFx(float COFx) { _COFx = COFx; }
     void SetCOFy(float COFy) { _COFy = COFy; }
     void SetCOFxy(float COFxy) { _COFxy = COFxy; }
@@ -55,7 +76,7 @@ class forcePlate
     //Constants - physical montage values
     const float distX = 4.0/2;      //Distance along X axis from SensorNo1 to SensorNo2
     const float distY = 7.5/2;      //Distance along Y axis from SensorNo2 to SensorNo3
-    const float distZ0 = 0.5/2;    //Half of the force plate height : 0.5cm approximate for plexiglass? VALIDATE
+    const float distZ0 = 0.001;    //Half of the force plate height : 0.5cm approximate for plexiglass? VALIDATE
 
   private:
     //Force plate output signals
@@ -81,6 +102,16 @@ class forcePlate
     //Coordinate of the force application point (C.O.P.)
     float _COPx;    //X-Coordinate of the application point
     float _COPy;    //Y-Coordinate of the application point
+
+    //Global ForcePlates Coordinate of the force application point (C.O.P.)
+    float _fp1COPx;    //X-Coordinate of the application point
+    float _fp1COPy;    //Y-Coordinate of the application point
+    float _fp2COPx;    //X-Coordinate of the application point
+    float _fp2COPy;    //Y-Coordinate of the application point
+    float _fp3COPx;    //X-Coordinate of the application point
+    float _fp3COPy;    //Y-Coordinate of the application point
+    float _fp4COPx;    //X-Coordinate of the application point
+    float _fp4COPy;    //Y-Coordinate of the application point
 
     //Coefficients of friction
     float _COFx;    //Coefficient of friction X-Component

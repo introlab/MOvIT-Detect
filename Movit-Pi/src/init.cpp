@@ -18,11 +18,7 @@ extern MPU6050 imuMobile;             //Initialisation of the mobile MPU6050
 extern MPU6050 imuFixe;               //Initialisation of the fixed MPU6050
 extern MAX11611 max11611;             //Initialisation of the 10-bit ADC
 
-extern uint16_t max11611Data[9];     //Data table of size=total sensors
-
 extern void calibrationProcess(MPU6050 &mpu, uint8_t calibrationComplexite);
-
-extern forceSensor sensorMatrix;
 
 void init_accel()
 {
@@ -65,7 +61,7 @@ void init_accel()
     }
 }
 
-void init_ADC()
+void init_ADC(forceSensor &sensorMatrix)
 {
     printf("MAX11611 (ADC) initializing ... ");
     if (max11611.initialize())

@@ -8,10 +8,13 @@ using std::string;
 
 #define DEBUG_SERIAL //Debug trace
 
-bool program_loop(Alarm &alarm);
+#include "forceSensor.h"
+#include "forcePlate.h"
+
+bool program_loop(Alarm &alarm, uint16_t* max11611Data, forceSensor &sensorMatrix, forcePlate &globalForcePlate);
 string& getCmd();
 void sendData(string& request, bool state, bool e);
-void getData();
+void getData(uint16_t* max11611Data, forceSensor &sensorMatrix);
 void formatDateTimeString();
 
 #endif /* _PROGRAM_H_ */

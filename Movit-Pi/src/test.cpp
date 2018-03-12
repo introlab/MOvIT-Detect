@@ -10,8 +10,8 @@
 #include "init.h"         //variables and modules initialisation
 #include "notif_module.h" //variables and modules initialisation
 #include "accel_module.h" //variables and modules initialisation
-#include "forceSensor.h" //variables and modules initialisation
-#include "forcePlate.h" //variables and modules initialisation
+#include "forceSensor.h"  //variables and modules initialisation
+#include "forcePlate.h"   //variables and modules initialisation
 #include "program.h"      //variables and modules initialisation
 #include "test.h"         //variables and modules initialisation
 
@@ -35,18 +35,35 @@ extern double pitchFixe, rollFixe, pitchMobile, rollMobile; //pitch and roll ang
 extern int angle;                                           //Final angle computed between sensors
 // extern int obs;                                             //Debug variable for getAngle function
 
-extern uint16_t max11611Data[9];                     //ADC 10-bit data variable
-extern uint16_t max11611DataArray[9]; //Data table of size=total sensors
-
-extern forceSensor sensorMatrix;
-
-
-bool program_test(Alarm &alarm)
+bool program_test(Alarm &alarm, uint16_t* max11611Data, forceSensor &sensorMatrix, forcePlate &globalForcePlate)
 {
     // Alarm alarm(700, 0.1);
+		printf("\n.-.--..--- TEST MENU .--.---.--.-\n");
+		printf("Select one of the following options.\n");
 
-    //char inSerialChar = (char)Serial.read();
-		printf("Enter user command and press enter \n");
+		printf("\n\nFunction testing :");
+		printf("\n\tTestID\tDescription");
+		printf("\n\t a \t Activate GREEN LED on notification module");
+		printf("\n\t b \t Activate RED LED on notification module");
+		printf("\n\t c \t Activate DC Motor on notification module");
+		printf("\n\t d \t Check Push-button state");
+		printf("\n\t e \t Activate alarm on notification module");
+		printf("\n\t f \t Activate force sensors calibration");
+		printf("\n\t g \t Check force sensors centers of pressure");
+		printf("\n\t h \t De-activate all R&G LED + DC Motor");
+		printf("\n\t i \t Activate IMU calibration");
+		printf("\n\t j \t Activate all on notification module");
+
+		printf("\n\nTest options :");
+		printf("\n\t p \t Stop printing outputs (function print_stuff())");
+		printf("\n\t P \t Start printing outpus (function print_stuff()");
+		printf("\n\t z \t Test sequence start (UNUSED ?)");
+		printf("\n\t y \t Test sequence end (UNUSED ?");
+		printf("\n\t x \t Print date and time");
+		printf("\n\t q \t Return true (USEFULL?)");
+
+		printf("\n\nType in TestID then press the return key\n");
+		//char inSerialChar = (char)Serial.read();
     char inSerialChar = getchar();
 
     //---------------------------------------------------------------------------------------
@@ -54,19 +71,19 @@ bool program_test(Alarm &alarm)
     // DEL Red/Green, MoteurDC, Bouton poussoir
     //---------------------------------------------------------------------------------------
 
-    if (inSerialChar == 'g')
+    if (inSerialChar == 'a')
     {
         printf("Allumer la DEL verte.\n");
         alarm.SetIsGreenLedEnabled(true);
         alarm.SetPinState(GREEN_LED, IO_HIGH, true);
     }
-    else if (inSerialChar == 'r')
+    else if (inSerialChar == 'b')
     {
         printf("Allumer la DEL rouge.\n");
         alarm.SetIsRedLedEnabled(true);
         alarm.SetPinState(RED_LED, IO_HIGH, true);
     }
-    else if (inSerialChar == 'm')
+    else if (inSerialChar == 'c')
     {
         printf("Activer le moteur DC.\n");
         alarm.SetIsDCMotorEnabled(true);
@@ -78,12 +95,12 @@ bool program_test(Alarm &alarm)
         }
         alarm.SetPinState(DC_MOTOR, IO_LOW, true);
     }
-    else if (inSerialChar == 'b')
+    else if (inSerialChar == 'd')
     {
         printf("Verifier l'etat du bouton poussoir.\n");
         printf("Etat du bouton = %i\n", !alarm.GetPinState(PUSH_BUTTON));
     }
-    else if (inSerialChar == 'a')
+    else if (inSerialChar == 'e')
     {
 		printf("Activer une alarme sur le module de notifications.\n");
 		alarm.SetIsGreenLedEnabled(true);
@@ -92,19 +109,28 @@ bool program_test(Alarm &alarm)
 		alarm.TurnOnBlinkLedsAlarm();
         inSerialChar = 'x';
     }
-    else if (inSerialChar == 'c')
+    else if (inSerialChar == 'f')
     {
 			printf("\nDEBUG CALIBRATION FORCE SENSORS START");
+			printf("\nFunction(s) under test:");
+			printf("\n CalibrateForceSensor()");
+			printf("\n IsUserDetected()");
+
 			//Calibration
-	    sensorMatrix.CalibrateForceSensor(sensorMatrix);
+			getData(max11611Data, sensorMatrix);
+	    sensorMatrix.CalibrateForceSensor(max11611Data, sensorMatrix);
 			//Last sensed presence analog reading to compare with calibration
 			long sensedPresence = 0;
 			for (int i = 0; i < sensorMatrix.sensorCount; i++)
 			{
 				sensedPresence += sensorMatrix.GetAnalogData(i);
 			}
+			if(sensorMatrix.sensorCount != 0)
+			{
+				sensedPresence /= sensorMatrix.sensorCount;
+			}
 
-	    printf("\n.-.--..---DERNIERE MESURE DES CAPTEURS EN TEMPS REEL.--.---.--.-");printf("\n");
+	    printf("\n.-.--..---DERNIERE MESURE DES CAPTEURS EN TEMPS REEL.--.---.--.-\n");
 	    printf("Sensor Number \t Analog value \t Voltage (mV) \t Force (N) \n");
 	    printf("Sensor No: 1 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(0), sensorMatrix.GetVoltageData(0), sensorMatrix.GetForceData(0));
 	    printf("Sensor No: 2 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(1), sensorMatrix.GetVoltageData(1), sensorMatrix.GetForceData(1));
@@ -140,6 +166,7 @@ bool program_test(Alarm &alarm)
 	    printf("Detected Presence : %lu \n", sensedPresence);
 	    printf("Detection Threshold : %f \n", sensorMatrix.GetDetectionThreshold());
 	    printf("Presence verification result : ");
+
 	    if(sensorMatrix.IsUserDetected(sensorMatrix))
 	    {
 	       printf("User detected \n");
@@ -153,45 +180,35 @@ bool program_test(Alarm &alarm)
 			inSerialChar = 'x';
     }
 
-		else if (inSerialChar == 'v')
+		else if (inSerialChar == 'g')
 		{
-			getData();
+			printf("\nDEBUG CENTER OF PRESSURE FORCE SENSORS START");
+			printf("\nFunction(s) under test:");
+			printf("\n DetectCOP()");
+			printf("\n\t CreateForcePlate()");
+			printf("\n\t AnalyseForcePlate()");
 
-			printf("\nDEBUG CALIBRATION FORCE SENSORS START\n");
-			//Force plates variables
-			forcePlate forcePlate1;
-			forcePlate forcePlate2;
-			forcePlate forcePlate3;
-			forcePlate forcePlate4;
-
-			//Creation of the 4 ForcePlates
-			forcePlate1.CreateForcePlate(forcePlate1, sensorMatrix, 4, 1, 0, 3);
-			forcePlate2.CreateForcePlate(forcePlate2, sensorMatrix, 7, 4, 3, 6);
-			forcePlate3.CreateForcePlate(forcePlate3, sensorMatrix, 5, 2, 1, 4);
-			forcePlate4.CreateForcePlate(forcePlate4, sensorMatrix, 8, 5, 4, 7);
-
-			//Global analysis of the 4 plates (treated as one plate)
-			forcePlate globalForcePlate;
-			globalForcePlate.AnalyzeForcePlates(globalForcePlate, sensorMatrix, forcePlate1, forcePlate2, forcePlate3, forcePlate4);
+			getData(max11611Data, sensorMatrix);
+			globalForcePlate.DetectCOP(globalForcePlate, sensorMatrix);
 
 			printf("\n.-.--..---MESURE DES CAPTEURS DE FORCE--.---.--.-");printf("\n");
 			printf("Sensor Number \t Analog value \t Voltage (mV) \t Force (N) \n");
-	    printf("Sensor No: 1 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(0), sensorMatrix.GetVoltageData(0), sensorMatrix.GetForceData(0));
-	    printf("Sensor No: 2 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(1), sensorMatrix.GetVoltageData(1), sensorMatrix.GetForceData(1));
-	    printf("Sensor No: 3 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(2), sensorMatrix.GetVoltageData(2), sensorMatrix.GetForceData(2));
-	    printf("Sensor No: 4 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(3), sensorMatrix.GetVoltageData(3), sensorMatrix.GetForceData(3));
-	    printf("Sensor No: 5 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(4), sensorMatrix.GetVoltageData(4), sensorMatrix.GetForceData(4));
-	    printf("Sensor No: 6 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(5), sensorMatrix.GetVoltageData(5), sensorMatrix.GetForceData(5));
-	    printf("Sensor No: 7 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(6), sensorMatrix.GetVoltageData(6), sensorMatrix.GetForceData(6));
-	    printf("Sensor No: 8 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(7), sensorMatrix.GetVoltageData(7), sensorMatrix.GetForceData(7));
-	    printf("Sensor No: 9 \t %i \t\t %lu \t\t  %f \n", sensorMatrix.GetAnalogData(8), sensorMatrix.GetVoltageData(8), sensorMatrix.GetForceData(8));
+	    printf("Sensor No: 1 \t %i \t\t %lu \t\t %f \n", sensorMatrix.GetAnalogData(0), sensorMatrix.GetVoltageData(0), sensorMatrix.GetForceData(0));
+	    printf("Sensor No: 2 \t %i \t\t %lu \t\t %f \n", sensorMatrix.GetAnalogData(1), sensorMatrix.GetVoltageData(1), sensorMatrix.GetForceData(1));
+	    printf("Sensor No: 3 \t %i \t\t %lu \t\t %f \n", sensorMatrix.GetAnalogData(2), sensorMatrix.GetVoltageData(2), sensorMatrix.GetForceData(2));
+	    printf("Sensor No: 4 \t %i \t\t %lu \t\t %f \n", sensorMatrix.GetAnalogData(3), sensorMatrix.GetVoltageData(3), sensorMatrix.GetForceData(3));
+	    printf("Sensor No: 5 \t %i \t\t %lu \t\t %f \n", sensorMatrix.GetAnalogData(4), sensorMatrix.GetVoltageData(4), sensorMatrix.GetForceData(4));
+	    printf("Sensor No: 6 \t %i \t\t %lu \t\t %f \n", sensorMatrix.GetAnalogData(5), sensorMatrix.GetVoltageData(5), sensorMatrix.GetForceData(5));
+	    printf("Sensor No: 7 \t %i \t\t %lu \t\t %f \n", sensorMatrix.GetAnalogData(6), sensorMatrix.GetVoltageData(6), sensorMatrix.GetForceData(6));
+	    printf("Sensor No: 8 \t %i \t\t %lu \t\t %f \n", sensorMatrix.GetAnalogData(7), sensorMatrix.GetVoltageData(7), sensorMatrix.GetForceData(7));
+	    printf("Sensor No: 9 \t %i \t\t %lu \t\t %f \n", sensorMatrix.GetAnalogData(8), sensorMatrix.GetVoltageData(8), sensorMatrix.GetForceData(8));
 			printf(".-.--..---.-.-.--.--.--.---.--.-\n");
 
 			printf("\n.-.--..---MESURE DES CENTRES DE PRESSION.--.---.--.-");printf("\n");
 			printf("Position relative au centre des quadrants sur le siege (cm) \n");
-			printf("COP Axis \t forcePlate1 \t\t forcePlate2 \t\t forcePlate3 \t\t forcePlate4 \n");
-			printf("COP (X): \t %f \t\t %f \t\t %f \t\t %f \n", forcePlate1.GetCOPx(), forcePlate2.GetCOPx(), forcePlate3.GetCOPx(), forcePlate4.GetCOPx());
-			printf("COP (Y): \t %f \t\t %f \t\t %f \t\t %f \n", forcePlate1.GetCOPy(), forcePlate2.GetCOPy(), forcePlate3.GetCOPy(), forcePlate4.GetCOPy());
+			printf("COP Axis \t forcePlate1 \t forcePlate2 \t forcePlate3 \t forcePlate4 \n");
+			printf("COP (X): \t %f \t %f \t %f \t %f \n", globalForcePlate.GetFp1COPx(), globalForcePlate.GetFp2COPx(), globalForcePlate.GetFp3COPx(), globalForcePlate.GetFp4COPx());
+			printf("COP (Y): \t %f \t\%f \t %f \t %f \n", globalForcePlate.GetFp1COPy(), globalForcePlate.GetFp2COPy(), globalForcePlate.GetFp3COPy(), globalForcePlate.GetFp4COPy());
 
 			printf("\nPosition globale relative au centre du siege (cm) \n");
 			printf("COP Axis \t globalForcePlate \n");
@@ -200,7 +217,7 @@ bool program_test(Alarm &alarm)
 			printf(".-.--..---.-.-.--.--.--.---.--.-");printf("\n");
 		}
 
-    else if (inSerialChar == 'z')
+    else if (inSerialChar == 'h')
     {
 		printf("Eteindre les DELs et arrêter le moteur DC.\n");
 		alarm.SetPinState(DC_MOTOR, IO_LOW, true);
@@ -211,37 +228,38 @@ bool program_test(Alarm &alarm)
     // OPTION DE DEBUG : OK
     // Sequence de test ON-OFF, Output print ON-OFF
     //---------------------------------------------------------------------------------------
-    else if (inSerialChar == 'd')
+		else if (inSerialChar == 'p')
+		{
+				printf("Ne pas afficher les sorties.\n");
+				affichageSerial = false;
+		}
+		else if (inSerialChar == 'P')
+		{
+				printf("Afficher les sorties.\n");
+				affichageSerial = true;
+		}
+
+		else if (inSerialChar == 'z')
     {
         printf("Début de séquence de test en cours.\n");
         testSequence = true;
     }
-    else if (inSerialChar == 'f')
+    else if (inSerialChar == 'y')
     {
         printf("Fin de séquence de test en cours.\n");
         testSequence = false;
     }
-    else if (inSerialChar == 'p')
+
+    else if (inSerialChar == 'i')
     {
-        printf("Ne pas afficher les sorties.\n");
-        affichageSerial = false;
-    }
-    else if (inSerialChar == 'P')
-    {
-        printf("Afficher les sorties.\n");
-        affichageSerial = true;
+        calibrationProcess(imuFixe, 0);
+        delay(50);
+        calibrationProcess(imuMobile, 0);
+        printf("Calibration des capteurs effectuée.\n");
+        inSerialChar = 'x';
     }
 
-    // else if (inSerialChar == 'c')
-    // {
-    //     calibrationProcess(imuFixe, 0);
-    //     delay(50);
-    //     calibrationProcess(imuMobile, 0);
-    //     printf("Calibration des capteurs effectuée.\n");
-    //     inSerialChar = 'x';
-    // }
-
-    else if (inSerialChar == 'n')
+    else if (inSerialChar == 'j')
     {
         printf("LightOn(GREEN_LED);\n");
         alarm.SetPinState(GREEN_LED, IO_HIGH, true);
@@ -259,7 +277,7 @@ bool program_test(Alarm &alarm)
         printf("MOTOR OFF\n");
         alarm.StopBuzzer();
     }
-    else if (inSerialChar == 'v')
+    else if (inSerialChar == 'x')
     {
         uint8_t mydateTime[7]; //{s, m, h, w, d, date, month, year}
 
@@ -280,10 +298,6 @@ bool program_test(Alarm &alarm)
         printf(":");
         printf("%X\n", mydateTime[0]);
         printf("\n");
-    }
-    else if (inSerialChar == 'l')
-    {
-        getData();
     }
     else if (inSerialChar == 'q')
     {

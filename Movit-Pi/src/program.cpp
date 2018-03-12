@@ -49,11 +49,6 @@ extern double pitchFixe, rollFixe, pitchMobile, rollMobile; //pitch and roll ang
 extern int angle;                                           //Final angle computed between sensors
 extern int obs;                                             //Debug variable for getAngle function
 
-extern uint16_t max11611Data[9];                     //ADC 10-bit data variable
-extern uint16_t max11611DataArray[9]; //Data table of size=total sensors
-
-extern forceSensor sensorMatrix;
-
 extern bool bIsBtnPushed;
 
 //Functions
@@ -64,12 +59,12 @@ extern void light_state();
 extern void buzzer_state();
 
 
-bool program_loop(Alarm &alarm)
+bool program_loop(Alarm &alarm, uint16_t* max11611Data, forceSensor &sensorMatrix, forcePlate &globalForcePlate)
 {
     bIsBtnPushed = false;
 
     // timer.run();
-    bool ret = program_test(alarm);
+    bool ret = program_test(alarm, max11611Data, sensorMatrix, globalForcePlate);
 
     //     if (sleeping)
     //     {
@@ -400,7 +395,7 @@ void sendData(string &request, bool state, bool e)
 // Date and time, angle (centrales inertielles), pression au coussin (capteurs force)
 //---------------------------------------------------------------------------------------
 
-void getData()
+void getData(uint16_t* max11611Data, forceSensor &sensorMatrix)
 {
     // Data: Date and time
     mcp79410.getDateTime(dateTime);

@@ -20,9 +20,6 @@
 
 using std::string;
 
-forceSensor sensorMatrix;
-
-
 #define SLEEP_TIME 2000000
 
 void sendDataToWebServer(MosquittoBroker *mosquittoBroker)
@@ -37,14 +34,6 @@ MCP79410 mcp79410;       //Initialisation of the MCP79410
 MAX11611 max11611;       //Initialisation of the 10-bit ADC
 
 unsigned char dateTime[7] = {0, 0, 0, 0, 0, 0, 0}; //{s, m, h, w, d, date, month, year}
-
-uint16_t max11611Data[9]; //Data table of size=total sensors
-long detectedPresence = 0;
-long detectionThreshold = 0;
-bool left_shearing = false;
-bool right_shearing = false;
-bool front_shearing = false;
-bool rear_shearing = false;
 
 //Movement detection variables
 const float isMovingTrigger = 1.05;
@@ -68,16 +57,20 @@ int main()
     // timer.setInterval(1000, callback);
     MosquittoBroker *mosquittoBroker = new MosquittoBroker("actionlistener");
 
+    uint16_t max11611Data[9];
+    forceSensor sensorMatrix;
+    forcePlate globalForcePlate;
+
     Alarm alarm(700, 0.1);
     init_accel();
-    init_ADC();
+    init_ADC(sensorMatrix);
     mcp79410.setDateTime();
     printf("Setup Done\n");
 
     bool done = false;
     while (!done)
     {
-        done = program_loop(alarm);
+        done = program_loop(alarm, max11611Data, sensorMatrix, globalForcePlate);
 
         sendDataToWebServer(mosquittoBroker);
         usleep(SLEEP_TIME);
