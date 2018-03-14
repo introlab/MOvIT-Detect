@@ -8,7 +8,7 @@
 
 //Include : Modules
 #include "init.h"         //variables and modules initialisation
-#include "notif_module.h" //variables and modules initialisation
+#include "alarm.h" //variables and modules initialisation
 #include "accel_module.h" //variables and modules initialisation
 #include "program.h"      //variables and modules initialisation
 #include "test.h"         //variables and modules initialisation

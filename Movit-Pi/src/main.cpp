@@ -5,7 +5,7 @@
 
 //Include : Modules
 #include "init.h"         //variables and modules initialisation
-#include "notif_module.h" //variables and modules initialisation
+#include "alarm.h"
 #include "accel_module.h" //variables and modules initialisation
 
 #include "forcePlate.h"
@@ -61,7 +61,7 @@ int main()
     forceSensor sensorMatrix;
     forcePlate globalForcePlate;
 
-    Alarm alarm(700, 0.1);
+	Alarm alarm(700, 0.1);
     init_accel();
     init_ADC(sensorMatrix);
     mcp79410.setDateTime();

@@ -6,7 +6,7 @@ SOURCES = 	src/main.cpp \
 			src/forceSensor.cpp \
 			src/forcePlate.cpp \
 			src/init.cpp \
-			src/notif_module.cpp \
+			src/alarm.cpp \
 			src/program.cpp \
 			src/test.cpp \
 			src/lib/MPU6050.cpp \

@@ -2,7 +2,7 @@
 #define _PROGRAM_H_
 
 #include <string>
-#include "notif_module.h"
+#include "alarm.h"
 
 using std::string;
 

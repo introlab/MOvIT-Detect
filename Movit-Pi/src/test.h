@@ -1,7 +1,7 @@
 #ifndef _TEST_H_
 #define _TEST_H_
 
-#include "notif_module.h"
+#include "alarm.h"
 #include "forceSensor.h"
 #include "forcePlate.h"
 

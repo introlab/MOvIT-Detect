@@ -7,7 +7,7 @@
 #include "MAX11611.h" //10-Bit ADC librairy
 
 #include "init.h"         //variables and modules initialisation
-#include "notif_module.h" //variables and modules initialisation
+#include "alarm.h" //variables and modules initialisation
 #include "accel_module.h" //variables and modules initialisation
 #include "forceSensor.h"   //variables and modules initialisation
 #include "forcePlate.h"   //variables and modules initialisation

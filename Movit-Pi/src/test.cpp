@@ -7,14 +7,12 @@
 #include "MAX11611.h" //10-Bit ADC
 #include "MCP79410.h" //Custom driver that uses I2Cdev.h to get RTC data
 
-#include "init.h"         //variables and modules initialisation
-#include "notif_module.h" //variables and modules initialisation
-#include "accel_module.h" //variables and modules initialisation
-#include "forceSensor.h"  //variables and modules initialisation
-#include "forcePlate.h"   //variables and modules initialisation
-#include "program.h"      //variables and modules initialisation
-#include "test.h"         //variables and modules initialisation
-
+#include "init.h"
+#include "accel_module.h"
+#include "forceSensor.h"
+#include "forcePlate.h"
+#include "program.h"
+#include "test.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -37,7 +35,6 @@ extern int angle;                                           //Final angle comput
 
 bool program_test(Alarm &alarm, uint16_t* max11611Data, forceSensor &sensorMatrix, forcePlate &globalForcePlate)
 {
-    // Alarm alarm(700, 0.1);
 		printf("\n.-.--..--- TEST MENU .--.---.--.-\n");
 		printf("Select one of the following options.\n");
 
@@ -46,8 +43,8 @@ bool program_test(Alarm &alarm, uint16_t* max11611Data, forceSensor &sensorMatri
 		printf("\n\t a \t Activate GREEN LED on notification module");
 		printf("\n\t b \t Activate RED LED on notification module");
 		printf("\n\t c \t Activate DC Motor on notification module");
-		printf("\n\t d \t Check Push-button state");
-		printf("\n\t e \t Activate alarm on notification module");
+		printf("\n\t d \t Activate blink leds alarm.");
+		printf("\n\t e \t Activate red alarm.");
 		printf("\n\t f \t Activate force sensors calibration");
 		printf("\n\t g \t Check force sensors centers of pressure");
 		printf("\n\t h \t De-activate all R&G LED + DC Motor");
@@ -74,39 +71,35 @@ bool program_test(Alarm &alarm, uint16_t* max11611Data, forceSensor &sensorMatri
     if (inSerialChar == 'a')
     {
         printf("Allumer la DEL verte.\n");
-        alarm.SetIsGreenLedEnabled(true);
-        alarm.SetPinState(GREEN_LED, IO_HIGH, true);
+		alarm.TurnOnGreenLed();
     }
     else if (inSerialChar == 'b')
     {
         printf("Allumer la DEL rouge.\n");
-        alarm.SetIsRedLedEnabled(true);
-        alarm.SetPinState(RED_LED, IO_HIGH, true);
+		alarm.TurnOnRedLed();
     }
     else if (inSerialChar == 'c')
     {
         printf("Activer le moteur DC.\n");
-        alarm.SetIsDCMotorEnabled(true);
-        int count = 0;
+
+		int count = 0;
         while (count++ < 70)
         {
-            alarm.SetPinState(DC_MOTOR, IO_HIGH, true);
-            delay(100);
-        }
-        alarm.SetPinState(DC_MOTOR, IO_LOW, true);
-    }
+			alarm.TurnOnDCMotor();
+			usleep(0.1 * 1000 * 1000);
+		}
+		alarm.TurnOffDCMotor();
+	}
     else if (inSerialChar == 'd')
     {
-        printf("Verifier l'etat du bouton poussoir.\n");
-        printf("Etat du bouton = %i\n", !alarm.GetPinState(PUSH_BUTTON));
+		printf("Activer une alarme <rouge/verte>.\n");
+		alarm.TurnOnBlinkLedsAlarm();
+		inSerialChar = 'x';
     }
     else if (inSerialChar == 'e')
     {
-		printf("Activer une alarme sur le module de notifications.\n");
-		alarm.SetIsGreenLedEnabled(true);
-		alarm.SetIsRedLedEnabled(true);
-		alarm.SetIsDCMotorEnabled(true);
-		alarm.TurnOnBlinkLedsAlarm();
+		printf("Activer une alarme <rouge/moteur>.\n");
+		alarm.TurnOnRedAlarm();
         inSerialChar = 'x';
     }
     else if (inSerialChar == 'f')
@@ -220,9 +213,7 @@ bool program_test(Alarm &alarm, uint16_t* max11611Data, forceSensor &sensorMatri
     else if (inSerialChar == 'h')
     {
 		printf("Eteindre les DELs et arrêter le moteur DC.\n");
-		alarm.SetPinState(DC_MOTOR, IO_LOW, true);
-		alarm.SetPinState(RED_LED, IO_LOW, true);
-		alarm.SetPinState(GREEN_LED, IO_LOW, true);
+		alarm.TurnOffAlarm();
     }
     //---------------------------------------------------------------------------------------
     // OPTION DE DEBUG : OK
@@ -257,25 +248,6 @@ bool program_test(Alarm &alarm, uint16_t* max11611Data, forceSensor &sensorMatri
         calibrationProcess(imuMobile, 0);
         printf("Calibration des capteurs effectuée.\n");
         inSerialChar = 'x';
-    }
-
-    else if (inSerialChar == 'j')
-    {
-        printf("LightOn(GREEN_LED);\n");
-        alarm.SetPinState(GREEN_LED, IO_HIGH, true);
-        printf("LightOn(RED_LED);\n");
-        alarm.SetPinState(RED_LED, IO_HIGH, true);
-        usleep(2000000);
-        printf("LightOff(GREEN_LED);\n");
-        alarm.SetPinState(GREEN_LED, IO_LOW, true);
-        usleep(1000000);
-        printf("LightOff(RED_LED);\n");
-        alarm.SetPinState(RED_LED, IO_LOW, true);
-        printf("MOTOR ON\n");
-        alarm.StartBuzzer();
-        usleep(1000000);
-        printf("MOTOR OFF\n");
-        alarm.StopBuzzer();
     }
     else if (inSerialChar == 'x')
     {
