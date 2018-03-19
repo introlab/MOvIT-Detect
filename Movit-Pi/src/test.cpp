@@ -49,7 +49,7 @@ bool program_test(Alarm &alarm, uint16_t* max11611Data, forceSensor &sensorMatri
 		printf("\n\t g \t Check force sensors centers of pressure");
 		printf("\n\t h \t De-activate all R&G LED + DC Motor");
 		printf("\n\t i \t Activate IMU calibration");
-		printf("\n\t j \t Activate all on notification module");
+		printf("\n\t j \t Detect relative pressure in quadrants");
 
 		printf("\n\nTest options :");
 		printf("\n\t p \t Stop printing outputs (function print_stuff())");
@@ -151,7 +151,7 @@ bool program_test(Alarm &alarm, uint16_t* max11611Data, forceSensor &sensorMatri
 	    printf("Sensor No: 9 \t %lu \n", sensorMatrix.GetAnalogOffset(8));
 	    printf(".-.--..---.-.-.--.--.--.---.--.-\n");
 
-	    printf("\n.-.--..---.-.OFFSET INITIAUX.--.---.--.-");printf("\n");
+	    printf("\n.-.--..---.-.OFFSET INITIAUX.--.---.--.-\n");
 	    printf("Total sensor mean : \t %i \n", sensorMatrix.GetTotalSensorMean());
 	    printf(".-.--..---.-.-.--.--.--.---.--.-\n");
 
@@ -177,14 +177,14 @@ bool program_test(Alarm &alarm, uint16_t* max11611Data, forceSensor &sensorMatri
 		{
 			printf("\nDEBUG CENTER OF PRESSURE FORCE SENSORS START");
 			printf("\nFunction(s) under test:");
-			printf("\n DetectCOP()");
+			printf("\n DetectCenterOfPressure()");
 			printf("\n\t CreateForcePlate()");
 			printf("\n\t AnalyseForcePlate()");
 
 			getData(max11611Data, sensorMatrix);
-			globalForcePlate.DetectCOP(globalForcePlate, sensorMatrix);
+			globalForcePlate.DetectCenterOfPressure(globalForcePlate, sensorMatrix);
 
-			printf("\n.-.--..---MESURE DES CAPTEURS DE FORCE--.---.--.-");printf("\n");
+			printf("\n.-.--..---MESURE DES CAPTEURS DE FORCE--.---.--.-\n");
 			printf("Sensor Number \t Analog value \t Voltage (mV) \t Force (N) \n");
 	    printf("Sensor No: 1 \t %i \t\t %lu \t\t %f \n", sensorMatrix.GetAnalogData(0), sensorMatrix.GetVoltageData(0), sensorMatrix.GetForceData(0));
 	    printf("Sensor No: 2 \t %i \t\t %lu \t\t %f \n", sensorMatrix.GetAnalogData(1), sensorMatrix.GetVoltageData(1), sensorMatrix.GetForceData(1));
@@ -197,7 +197,7 @@ bool program_test(Alarm &alarm, uint16_t* max11611Data, forceSensor &sensorMatri
 	    printf("Sensor No: 9 \t %i \t\t %lu \t\t %f \n", sensorMatrix.GetAnalogData(8), sensorMatrix.GetVoltageData(8), sensorMatrix.GetForceData(8));
 			printf(".-.--..---.-.-.--.--.--.---.--.-\n");
 
-			printf("\n.-.--..---MESURE DES CENTRES DE PRESSION.--.---.--.-");printf("\n");
+			printf("\n.-.--..---MESURE DES CENTRES DE PRESSION.--.---.--.-\n");
 			printf("Position relative au centre des quadrants sur le siege (cm) \n");
 			printf("COP Axis \t forcePlate1 \t forcePlate2 \t forcePlate3 \t forcePlate4 \n");
 			printf("COP (X): \t %f \t %f \t %f \t %f \n", globalForcePlate.GetFp1COPx(), globalForcePlate.GetFp2COPx(), globalForcePlate.GetFp3COPx(), globalForcePlate.GetFp4COPx());
@@ -215,6 +215,61 @@ bool program_test(Alarm &alarm, uint16_t* max11611Data, forceSensor &sensorMatri
 		printf("Eteindre les DELs et arrêter le moteur DC.\n");
 		alarm.TurnOffAlarm();
     }
+		else if (inSerialChar == 'i')
+    {
+        calibrationProcess(imuFixe, 0);
+        delay(50);
+        calibrationProcess(imuMobile, 0);
+        printf("Calibration des capteurs effectuée.\n");
+        inSerialChar = 'x';
+    }
+		else if (inSerialChar == 'j')
+		{
+			printf("\nDEBUG RELATIVE PRESSURE IN QUADRANTS START");
+			printf("\nFunction(s) under test:");
+			printf("\n DetectRelativePressure()\n");
+
+			getData(max11611Data, sensorMatrix);
+
+			printf("\n.-.--..---MESURE DES PRESSIONS RELATIVES DES QUADRANTS--.---.--.-\n");
+			int *relativePressureLevel = sensorMatrix.DetectRelativePressure(sensorMatrix);
+			for (int i = 0; i < 4; i++)
+			{
+					printf("\nQuadrant %d : ", (i + 1));
+					//printf(" %d \n", *(relativePressureLevel + i));
+					if (*(relativePressureLevel + i) == 1)
+					{
+						printf("Really low");
+					}
+					else if (*(relativePressureLevel + i) == 2)
+					{
+						printf("Low");
+					}
+					else if (*(relativePressureLevel + i) == 3)
+					{
+						printf("Normal");
+					}
+					else if (*(relativePressureLevel + i) == 4)
+					{
+						printf("High");
+					}
+					else if (*(relativePressureLevel + i) == 5)
+					{
+						printf("Really high");
+					}
+					else if (*(relativePressureLevel + i) == 0)
+					{
+						printf("No pressure data to read");
+					}
+					else
+					{
+						//Reading error
+					}
+			}
+			printf("\n");
+		}
+
+
     //---------------------------------------------------------------------------------------
     // OPTION DE DEBUG : OK
     // Sequence de test ON-OFF, Output print ON-OFF
@@ -239,15 +294,6 @@ bool program_test(Alarm &alarm, uint16_t* max11611Data, forceSensor &sensorMatri
     {
         printf("Fin de séquence de test en cours.\n");
         testSequence = false;
-    }
-
-    else if (inSerialChar == 'i')
-    {
-        calibrationProcess(imuFixe, 0);
-        delay(50);
-        calibrationProcess(imuMobile, 0);
-        printf("Calibration des capteurs effectuée.\n");
-        inSerialChar = 'x';
     }
     else if (inSerialChar == 'x')
     {

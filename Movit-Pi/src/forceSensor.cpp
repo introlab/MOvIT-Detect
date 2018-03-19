@@ -179,3 +179,94 @@ bool forceSensor::IsUserDetected(forceSensor &sensors)
   }
   return (sensedPresence >= sensors.GetDetectionThreshold());
 }
+
+int *forceSensor::DetectRelativePressure(forceSensor &sensors)
+{
+  /*********FORCE PLATES MAP *********** y ********* */
+  /* FRONT LEFT           FRONT RIGHT    |           */
+  /* Quadrant1            Quadrant2      |           */
+  /* Quadrant3            Quadrant4      |------->x  */
+  /***************************************************/
+
+  //Quadrant reference and current (mean values)
+  const int quadrantCount = 4;
+  uint16_t referenceQuadrant[quadrantCount];
+  uint16_t currentQuadrant[quadrantCount];
+  static int relativePressureLevel[quadrantCount]; //return value
+
+  //Threshold levels (5) : really low (RL), low (L), normal (N), high (H), really high (RH)
+  float thresholdFactorRL = 0.25;
+  float thresholdFactorL = 0.5;
+  float thresholdFactorH = 1.5;
+  float thresholdFactorRH = 1.75;
+  float quadrantRLThreshold[quadrantCount];
+  float quadrantLThreshold[quadrantCount];
+  float quadrantHThreshold[quadrantCount];
+  float quadrantRHThreshold[quadrantCount];
+
+  //Quadrants reference values from calibration analog offset measures (mean values)
+  referenceQuadrant[0] = (sensors.GetAnalogOffset(4) + sensors.GetAnalogOffset(1) + sensors.GetAnalogOffset(0) + sensors.GetAnalogOffset(3)) / 4;
+  referenceQuadrant[1] = (sensors.GetAnalogOffset(7) + sensors.GetAnalogOffset(4) + sensors.GetAnalogOffset(3) + sensors.GetAnalogOffset(6)) / 4;
+  referenceQuadrant[2] = (sensors.GetAnalogOffset(5) + sensors.GetAnalogOffset(2) + sensors.GetAnalogOffset(1) + sensors.GetAnalogOffset(4)) / 4;
+  referenceQuadrant[3] = (sensors.GetAnalogOffset(8) + sensors.GetAnalogOffset(5) + sensors.GetAnalogOffset(4) + sensors.GetAnalogOffset(7)) / 4;
+
+  //Pressure levels detection threshold generation from calibration analog offset measures
+  for (int i = 0; i < quadrantCount; i++)
+  {
+    relativePressureLevel[i] = 0;
+    quadrantRLThreshold[i] = thresholdFactorRL * referenceQuadrant[i];    //Really low pressure in quadrant i
+    quadrantLThreshold[i] = thresholdFactorL * referenceQuadrant[i];      //Low pressure in quadrant i                     //Normal pressure in quadrant i
+    quadrantHThreshold[i] = thresholdFactorH * referenceQuadrant[i];      //High pressure in quadrant i
+    quadrantRHThreshold[i] = thresholdFactorRH * referenceQuadrant[i];    //Really high pressure in quadrant i
+  }
+
+  //Quadrants current values (mean values)
+  currentQuadrant[0] = (sensors.GetAnalogData(4) + sensors.GetAnalogData(1) + sensors.GetAnalogData(0) + sensors.GetAnalogData(3)) / 4;
+  currentQuadrant[1] = (sensors.GetAnalogData(7) + sensors.GetAnalogData(4) + sensors.GetAnalogData(3) + sensors.GetAnalogData(6)) / 4;
+  currentQuadrant[2] = (sensors.GetAnalogData(5) + sensors.GetAnalogData(2) + sensors.GetAnalogData(1) + sensors.GetAnalogData(4)) / 4;
+  currentQuadrant[3] = (sensors.GetAnalogData(8) + sensors.GetAnalogData(5) + sensors.GetAnalogData(4) + sensors.GetAnalogData(7)) / 4;
+
+  //Compare current quadrant data with threshold
+  for (int i = 0; i < quadrantCount; i++)
+  {
+    // //Comment-Uncomment for debug
+    // printf("\n Quadrant : %i \n", i);
+    // printf("referenceQuadrant : %i \n", referenceQuadrant[i]);
+    // printf("quadrantRLThreshold : %f \n", quadrantRLThreshold[i]);
+    // printf("quadrantLThreshold : %f \n", quadrantLThreshold[i]);
+    // printf("quadrantHThreshold : %f \n", quadrantHThreshold[i]);
+    // printf("quadrantRHThreshold : %f \n", quadrantRHThreshold[i]);
+    // printf("currentQuadrant : %i \n", currentQuadrant[i]);
+
+    if (quadrantRLThreshold[i] >= currentQuadrant[i] && currentQuadrant[i] > 0)
+    {
+      relativePressureLevel[i] = 1;  //Really low pressure in quadrant i
+    }
+    else if (quadrantLThreshold[i] >= currentQuadrant[i] && currentQuadrant[i] > quadrantRLThreshold[i])
+    {
+      relativePressureLevel[i] = 2;  //Low pressure in quadrant i
+    }
+    else if (quadrantHThreshold[i] >= currentQuadrant[i] && currentQuadrant[i] > quadrantLThreshold[i])
+    {
+      relativePressureLevel[i] = 3;  //Normal pressure in quadrant i
+    }
+    else if (quadrantRHThreshold[i] >= currentQuadrant[i] && currentQuadrant[i] > quadrantHThreshold[i])
+    {
+      relativePressureLevel[i] = 4;  //High pressure in quadrant i
+    }
+    else if (15000 >= currentQuadrant[i] && currentQuadrant[i] > quadrantHThreshold[i])
+    {
+      relativePressureLevel[i] = 5;  //High pressure in quadrant i
+    }
+    else if (currentQuadrant[i] == 0)
+    {
+      relativePressureLevel[i] = 0;
+    }
+    else
+    {
+      //Reading error
+    }
+  }
+
+  return relativePressureLevel;
+}

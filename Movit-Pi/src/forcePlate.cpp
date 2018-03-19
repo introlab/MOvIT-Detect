@@ -47,9 +47,9 @@ forcePlate::forcePlate()
 
 forcePlate::~forcePlate() {}
 
-void forcePlate::DetectCOP(forcePlate &globalForcePlate, forceSensor &sensors)
+void forcePlate::DetectCenterOfPressure(forcePlate &globalForcePlate, forceSensor &sensors)
 //---------------------------------------------------------------------------------------
-//Function: ForcePlate::DetectCOP
+//Function: ForcePlate::DetectCenterOfPressure
 //Centor of Pressure calculation for each quadrant and global system
 //Reference: Kistler force plate formulae PDF
 //---------------------------------------------------------------------------------------
@@ -179,34 +179,3 @@ void forcePlate::AnalyzeForcePlates(forcePlate &globalForcePlate, forceSensor &s
     globalForcePlate.SetCOPy(globalForcePlate.GetMx1()/globalForcePlate.GetFz());   //Y-Coordinate of the global application point
   }
 }
-
-//float shearing_detection1()  {
-//
-////Shearing detection variables
-//  float left_sensors = 0, right_sensors = 0, front_sensors = 0, rear_sensors = 0;
-//  float center_LR_sensors = 0, center_FR_sensors = 0;
-//  left_shearing = false;
-//  right_shearing = false;
-//  front_shearing = false;
-//  rear_shearing = false;
-//
-////Left-Right values
-//  center_LR_sensors = max11611Data[1] + max11611Data[4] + max11611Data[7];
-//  left_sensors = max11611Data[2] + max11611Data[5] + max11611Data[8];
-//  right_sensors = max11611Data[9] + max11611Data[3] + max11611Data[6];
-//
-////Front-Rear values
-//  center_FR_sensors = max11611Data[5] + max11611Data[4] + max11611Data[3];
-//  front_sensors = max11611Data[2] + max11611Data[1] + max11611Data[9];
-//  rear_sensors = max11611Data[8] + max11611Data[7] + max11611Data[6];
-//
-////Left-Right (LR) shearing detection
-//  if (isUserDetected()) {
-//    if (left_sensors > (right_sensors + 0.05*right_sensors)) {left_shearing = true;}
-//    else if (right_sensors > (left_sensors + 0.05*left_sensors)) {right_shearing = true;}
-//
-//  //Front-Rear (FR) shearing detection
-//    if (front_sensors > (rear_sensors + 0.05*rear_sensors)) {front_shearing = true;}
-//    else if (rear_sensors > (front_sensors + 0.05*front_sensors)) {rear_shearing = true;}
-//  }
-//}

@@ -10,6 +10,7 @@ class forceSensor
     void CalibrateForceSensor(uint16_t* max11611Data, forceSensor &sensors);
     void GetForceSensorData(forceSensor &sensors);
     bool IsUserDetected(forceSensor &sensors);
+    int *DetectRelativePressure(forceSensor &sensors);
 
     uint16_t GetAnalogData(int index) { return _analogData[index]; }
     long GetVoltageData(int index) { return _voltageData[index]; };
