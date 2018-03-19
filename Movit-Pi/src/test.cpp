@@ -7,12 +7,14 @@
 #include "MAX11611.h" //10-Bit ADC
 #include "MCP79410.h" //Custom driver that uses I2Cdev.h to get RTC data
 
-#include "init.h"
-#include "accel_module.h"
-#include "forceSensor.h"
-#include "forcePlate.h"
-#include "program.h"
-#include "test.h"
+#include "init.h"         //variables and modules initialisation
+#include "accel_module.h" //variables and modules initialisation
+#include "forceSensor.h"  //variables and modules initialisation
+#include "forcePlate.h"   //variables and modules initialisation
+#include "humiditySensor.h"
+#include "program.h"      //variables and modules initialisation
+#include "test.h"         //variables and modules initialisation
+
 
 #include <stdio.h>
 #include <unistd.h>

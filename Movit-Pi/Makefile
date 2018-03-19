@@ -5,6 +5,7 @@ SOURCES = 	src/main.cpp \
 			src/accel_module.cpp \
 			src/forceSensor.cpp \
 			src/forcePlate.cpp \
+			src/humiditySensor.cpp \
 			src/init.cpp \
 			src/alarm.cpp \
 			src/program.cpp \
