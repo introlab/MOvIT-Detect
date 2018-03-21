@@ -22,20 +22,12 @@
 extern bool testSequence;
 extern bool affichageSerial;
 
-extern float isMovingValue;
-
 extern unsigned char dateTime[7]; //{s, m, h, w, d, date, month, year}
 
-extern MPU6050 imuMobile; //Initialisation of the mobile MPU6050
-extern MPU6050 imuFixe;   //Initialisation of the fixed MPU6050
 extern MCP79410 mcp79410; //Initialisation of the MCP79410
 
-extern double aRealFixe[3], aRealMobile[3];                 //computed acceleration
-extern double pitchFixe, rollFixe, pitchMobile, rollMobile; //pitch and roll angle values
-extern int angle;                                           //Final angle computed between sensors
-// extern int obs;                                             //Debug variable for getAngle function
 
-bool program_test(Alarm &alarm, uint16_t* max11611Data, forceSensor &sensorMatrix, forcePlate &globalForcePlate)
+bool program_test(Alarm &alarm, BackSeatAngleTracker &imu, uint16_t* max11611Data, forceSensor &sensorMatrix, forcePlate &globalForcePlate)
 {
 		printf("\n.-.--..--- TEST MENU .--.---.--.-\n");
 		printf("Select one of the following options.\n");
@@ -215,7 +207,8 @@ bool program_test(Alarm &alarm, uint16_t* max11611Data, forceSensor &sensorMatri
     else if (inSerialChar == 'h')
     {
 		printf("Eteindre les DELs et arrêter le moteur DC.\n");
-		alarm.TurnOffAlarm();
+		// alarm.TurnOffAlarm();
+		imu.GetBackSeatAngle();
     }
 		else if (inSerialChar == 'i')
     {
@@ -297,6 +290,14 @@ bool program_test(Alarm &alarm, uint16_t* max11611Data, forceSensor &sensorMatri
         printf("Fin de séquence de test en cours.\n");
         testSequence = false;
     }
+    else if (inSerialChar == 'i')
+    {
+        //imu.SetCalibrationArray(fixedImu, 0);
+        delay(50);
+        //imu.SetCalibrationArray(imuMobile, 0);
+        printf("Calibration des capteurs effectuée.\n");
+        inSerialChar = 'x';
+    }
     else if (inSerialChar == 'x')
     {
         uint8_t mydateTime[7]; //{s, m, h, w, d, date, month, year}
@@ -372,61 +373,34 @@ void printStuff()
 
     // Verifier si le fauteuil est en mouvement
     printf("\nDetection si la chaise est en mouvement");
-    if (isMoving())
+    /*
+	if (imu.IsMoving())
     {
-        printf("The chair is moving\n");
-        printf("Value m/s^2:");
-        printf("\t");
-        printf("%f\n", isMovingValue);
-    }
+        printf("The chair is moving.\n");    }
     else
     {
-        printf("\nThe chair is not moving\n");
+        printf("\nThe chair is not moving.\n");
     }
-
+	*/
     // Detection de l'angle de la chaise
     printf("\nValeurs centrales inertielles et angle de la chaise - DEBUG\n");
 
+	/*
     printf("Acceleration Mobile: \t");
-    printf("%f", aRealMobile[0]);
+    printf("%f", realMobileAccelerations[0]);
     printf("\t");
-    printf("%f", aRealMobile[1]);
+    printf("%f", realMobileAccelerations[1]);
     printf("\t");
-    printf("%f\n", aRealMobile[2]);
+    printf("%f\n", realMobileAccelerations[2]);
 
     printf("Acceleration Fixe: \t");
-    printf("%f", aRealFixe[0]);
+    printf("%f", realFixedAccelerations[0]);
     printf("\t");
-    printf("%f", aRealFixe[1]);
+    printf("%f", realFixedAccelerations[1]);
     printf("\t");
-    printf("%f\n", aRealFixe[2]);
-
-    printf("pitch/roll Mobile \t");
-    printf("%f", pitchMobile);
-    printf("\t");
-    printf("%f\n", rollMobile);
-
-    printf("pitch/roll Fixe \t");
-    printf("%f", pitchFixe);
-    printf("\t");
-    printf("%f\n", rollFixe);
+    printf("%f\n", realFixedAccelerations[2]);
+	*/
 
     printf("Angle entre les capteurs : ");
-    printf("%i\n", angle);
-
-    printf("\n.-.--..---.-.-.--.--.--.---.--.-");
-    printf("\n");
-    printf("CASE 1");
-    printf("\t");
-    printf("%f\n", pitchFixe - pitchMobile);
-    printf("CASE 2");
-    printf("\t");
-    printf("%f\n", rollFixe - pitchMobile);
-    printf("CASE 3");
-    printf("\t");
-    printf("%f\n", 90.0f - pitchFixe - pitchMobile);
-    printf("CASE 4");
-    printf("\t");
-    printf("%f\n", rollFixe - rollMobile);
-    printf(".-.--..---.-.-.--.--.--.---.--.-\n");
+    // printf("%i\n", imu.GetBackSeatAngle());
 }

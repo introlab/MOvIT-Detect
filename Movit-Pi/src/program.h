@@ -11,7 +11,7 @@ using std::string;
 #include "forceSensor.h"
 #include "forcePlate.h"
 
-bool program_loop(Alarm &alarm, uint16_t* max11611Data, forceSensor &sensorMatrix, forcePlate &globalForcePlate);
+bool program_loop(Alarm &alarm, BackSeatAngleTracker &imu, uint16_t* max11611Data, forceSensor &sensorMatrix, forcePlate &globalForcePlate);
 string& getCmd();
 void sendData(string& request, bool state, bool e);
 void getData(uint16_t* max11611Data, forceSensor &sensorMatrix);

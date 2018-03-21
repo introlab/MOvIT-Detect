@@ -28,8 +28,6 @@ void sendDataToWebServer(MosquittoBroker *mosquittoBroker)
     mosquittoBroker->sendDistanceTraveled(1000);
 }
 
-MPU6050 imuMobile(0x68); //Initialisation of the mobile MPU6050
-MPU6050 imuFixe(0x69);   //Initialisation of the fixed MPU6050
 MCP79410 mcp79410;       //Initialisation of the MCP79410
 MAX11611 max11611;       //Initialisation of the 10-bit ADC
 
@@ -40,7 +38,6 @@ const float isMovingTrigger = 1.05;
 float isMovingValue;
 
 //Event variables
-double tempArray[3], dump[3], tempAcc[3] = {0, 0, 0};
 bool sleeping = false;
 int alertNotification = 0;
 bool testSequence = true;
@@ -56,13 +53,13 @@ int main()
 
     // timer.setInterval(1000, callback);
     MosquittoBroker *mosquittoBroker = new MosquittoBroker("actionlistener");
+    BackSeatAngleTracker imu;
 
     uint16_t max11611Data[9];
     forceSensor sensorMatrix;
     forcePlate globalForcePlate;
 
 	Alarm alarm(700, 0.1);
-    init_accel();
     init_ADC(sensorMatrix);
     mcp79410.setDateTime();
     printf("Setup Done\n");
@@ -70,7 +67,7 @@ int main()
     bool done = false;
     while (!done)
     {
-        done = program_loop(alarm, max11611Data, sensorMatrix, globalForcePlate);
+        done = program_loop(alarm, imu, max11611Data, sensorMatrix, globalForcePlate);
 
         sendDataToWebServer(mosquittoBroker);
         usleep(SLEEP_TIME);

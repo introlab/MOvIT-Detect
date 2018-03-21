@@ -32,39 +32,29 @@ extern bool sleeping;
 extern bool testSequence;
 extern bool affichageSerial;
 
-extern float isMovingValue;
-
 extern unsigned char dateTime[7]; //{s, m, h, w, d, date, month, year}
 
-extern MPU6050 imuMobile; //Initialisation of the mobile MPU6050
-extern MPU6050 imuFixe;   //Initialisation of the fixed MPU6050
 extern MAX11611 max11611; //Initialisation of the 10-bit ADC
 extern MCP79410 mcp79410; //Initialisation of the MCP79410
 
-extern int aRange;                                          //maximal measurable g-force
-extern int16_t ax, ay, az;                                  //axis accelerations
-extern double aRawFixe[3], aRawMobile[3];                   //raw acceleration
-extern double aRealFixe[3], aRealMobile[3];                 //computed acceleration
-extern double pitchFixe, rollFixe, pitchMobile, rollMobile; //pitch and roll angle values
-extern int angle;                                           //Final angle computed between sensors
-extern int obs;                                             //Debug variable for getAngle function
+extern float realFixedAccelerations[3];
+//extern float realMobileAccelerations[3];
 
 extern bool bIsBtnPushed;
 
 //Functions
 extern bool isSomeoneThere();
-extern bool isMoving();
 extern void printStuff();
 extern void light_state();
 extern void buzzer_state();
 
 
-bool program_loop(Alarm &alarm, uint16_t* max11611Data, forceSensor &sensorMatrix, forcePlate &globalForcePlate)
+bool program_loop(Alarm &alarm, BackSeatAngleTracker &imu, uint16_t* max11611Data, forceSensor &sensorMatrix, forcePlate &globalForcePlate)
 {
     bIsBtnPushed = false;
 
     // timer.run();
-    bool ret = program_test(alarm, max11611Data, sensorMatrix, globalForcePlate);
+    bool ret = program_test(alarm, imu, max11611Data, sensorMatrix, globalForcePlate);
 
     //     if (sleeping)
     //     {
@@ -401,11 +391,11 @@ void getData(uint16_t* max11611Data, forceSensor &sensorMatrix)
     mcp79410.getDateTime(dateTime);
 
     // Data: Angle (centrales intertielles mobile/fixe)
-    getMPUAccData(imuMobile, aRawMobile, aRealMobile);
-    getMPUypr(&pitchMobile, &rollMobile, aRealMobile);
-    getMPUAccData(imuFixe, aRawFixe, aRealFixe);
-    getMPUypr(&pitchFixe, &rollFixe, aRealFixe);
-    getAngle();
+    // getMPUAccData(imuMobile, realMobileAccelerations);
+    // getMPUypr(&pitchMobile, &rollMobile, realMobileAccelerations);
+    // getMPUAccData(imuFixe, realFixedAccelerations);
+    // getMPUypr(&pitchFixe, &rollFixe, realFixedAccelerations);
+    // GetBackSeatAngle();
 
     // Data: Capteur de force
     max11611.getData(sensorMatrix.sensorCount, max11611Data);

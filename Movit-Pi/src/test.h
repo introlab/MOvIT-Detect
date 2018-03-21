@@ -5,7 +5,7 @@
 #include "forceSensor.h"
 #include "forcePlate.h"
 
-bool program_test(Alarm &alarm,  uint16_t* max11611Data, forceSensor &sensorMatrix, forcePlate &globalForcePlate);
+bool program_test(Alarm &alarm,  BackSeatAngleTracker &imu, uint16_t* max11611Data, forceSensor &sensorMatrix, forcePlate &globalForcePlate);
 void printStuff();
 
 #endif /* _TEST_H_ */
