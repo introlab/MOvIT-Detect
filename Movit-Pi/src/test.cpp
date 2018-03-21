@@ -5,7 +5,6 @@
 
 #include "MPU6050.h"  //Implementation of Jeff Rowberg's driver
 #include "MAX11611.h" //10-Bit ADC
-#include "MCP79410.h" //Custom driver that uses I2Cdev.h to get RTC data
 
 #include "init.h"         //variables and modules initialisation
 #include "accel_module.h" //variables and modules initialisation
@@ -14,7 +13,6 @@
 #include "humiditySensor.h"
 #include "program.h"      //variables and modules initialisation
 #include "test.h"         //variables and modules initialisation
-
 
 #include <stdio.h>
 #include <unistd.h>
@@ -27,7 +25,7 @@ extern unsigned char dateTime[7]; //{s, m, h, w, d, date, month, year}
 extern MCP79410 mcp79410; //Initialisation of the MCP79410
 
 
-bool program_test(Alarm &alarm, BackSeatAngleTracker &imu, uint16_t* max11611Data, forceSensor &sensorMatrix, forcePlate &globalForcePlate)
+bool program_test(Alarm &alarm, DateTimeRTC *datetimeRTC, BackSeatAngleTracker &imu, uint16_t* max11611Data, forceSensor &sensorMatrix, forcePlate &globalForcePlate)
 {
 		printf("\n.-.--..--- TEST MENU .--.---.--.-\n");
 		printf("Select one of the following options.\n");
@@ -65,17 +63,16 @@ bool program_test(Alarm &alarm, BackSeatAngleTracker &imu, uint16_t* max11611Dat
     if (inSerialChar == 'a')
     {
         printf("Allumer la DEL verte.\n");
-		alarm.TurnOnGreenLed();
+		    alarm.TurnOnGreenLed();
     }
     else if (inSerialChar == 'b')
     {
         printf("Allumer la DEL rouge.\n");
-		alarm.TurnOnRedLed();
+		    alarm.TurnOnRedLed();
     }
     else if (inSerialChar == 'c')
     {
         printf("Activer le moteur DC.\n");
-
 		int count = 0;
         while (count++ < 70)
         {
@@ -269,18 +266,18 @@ bool program_test(Alarm &alarm, BackSeatAngleTracker &imu, uint16_t* max11611Dat
     // OPTION DE DEBUG : OK
     // Sequence de test ON-OFF, Output print ON-OFF
     //---------------------------------------------------------------------------------------
-		else if (inSerialChar == 'p')
-		{
-				printf("Ne pas afficher les sorties.\n");
-				affichageSerial = false;
-		}
-		else if (inSerialChar == 'P')
-		{
-				printf("Afficher les sorties.\n");
-				affichageSerial = true;
-		}
+    else if (inSerialChar == 'p')
+    {
+        printf("Ne pas afficher les sorties.\n");
+        affichageSerial = false;
+    }
+    else if (inSerialChar == 'P')
+    {
+        printf("Afficher les sorties.\n");
+        affichageSerial = true;
+    }
 
-		else if (inSerialChar == 'z')
+    else if (inSerialChar == 'z')
     {
         printf("Début de séquence de test en cours.\n");
         testSequence = true;
@@ -300,25 +297,10 @@ bool program_test(Alarm &alarm, BackSeatAngleTracker &imu, uint16_t* max11611Dat
     }
     else if (inSerialChar == 'x')
     {
-        uint8_t mydateTime[7]; //{s, m, h, w, d, date, month, year}
-
-        mcp79410.getDateTime(mydateTime);
+        std::string dt = datetimeRTC->getFormattedDateTime();
 
         // Date and time
-        printf("\nAffichage de la date + heure\n");
-        printf("20");
-        printf("%X\n", mydateTime[6]);
-        printf(".");
-        printf("%X\n", mydateTime[5]);
-        printf(".");
-        printf("%X\n", mydateTime[4]);
-        printf(" ");
-        printf("%X\n", mydateTime[2]);
-        printf(":");
-        printf("%X\n", mydateTime[1]);
-        printf(":");
-        printf("%X\n", mydateTime[0]);
-        printf("\n");
+        printf("Affichage de la date + heure: %s\n", dt.c_str());
     }
     else if (inSerialChar == 'q')
     {
@@ -337,20 +319,20 @@ bool program_test(Alarm &alarm, BackSeatAngleTracker &imu, uint16_t* max11611Dat
 void printStuff()
 {
     // Date and time
-    printf("\nAffichage de la date + heure\n");
-    printf("20");
-    printf("%X\n", dateTime[6]);
-    printf(".");
-    printf("%X\n", dateTime[5]);
-    printf(".");
-    printf("%X\n", dateTime[4]);
-    printf(" ");
-    printf("%X\n", dateTime[2]);
-    printf(":");
-    printf("%X\n", dateTime[1]);
-    printf(":");
-    printf("%X\n", dateTime[0]);
-    printf("\n");
+    // printf("\nAffichage de la date + heure\n");
+    // printf("20");
+    // printf("%X\n", dateTime[6]);
+    // printf(".");
+    // printf("%X\n", dateTime[5]);
+    // printf(".");
+    // printf("%X\n", dateTime[4]);
+    // printf(" ");
+    // printf("%X\n", dateTime[2]);
+    // printf(":");
+    // printf("%X\n", dateTime[1]);
+    // printf(":");
+    // printf("%X\n", dateTime[0]);
+    // printf("\n");
 
     // Capteurs de force
     //Analog values
@@ -362,14 +344,12 @@ void printStuff()
     //for (uint16_t capteurNo = 0; capteurNo < capteurForceNb; capteurNo++)
     //{
 
-
     //Force values
     printf("\nValeurs Capteurs de force : Force reading (N)- DEBUG\n");
     //for (uint16_t capteurNo = 0; capteurNo < capteurForceNb; capteurNo++)
     //{
 
     //Verifier le positionnement de la personne
-
 
     // Verifier si le fauteuil est en mouvement
     printf("\nDetection si la chaise est en mouvement");

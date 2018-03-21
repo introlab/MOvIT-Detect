@@ -1,4 +1,4 @@
-CFLAGS=-Wall -ggdb -Isrc/lib -Isrc/lib/mosquitto_broker -Isrc/lib/mosquitto_broker/cpp
+CFLAGS=-Wall -ggdb -Isrc -Isrc/lib -Isrc/lib/mosquitto_broker -Isrc/lib/mosquitto_broker/cpp
 LDFLAGS=-Lsrc/lib -Lsrc/lib/mosquitto_broker src/lib/mosquitto_broker/cpp/libmosquittopp.so.1 src/lib/mosquitto_broker/libmosquitto.so.1
 
 SOURCES = 	src/main.cpp \
@@ -10,6 +10,8 @@ SOURCES = 	src/main.cpp \
 			src/alarm.cpp \
 			src/program.cpp \
 			src/test.cpp \
+			src/Utils.cpp \
+			src/DateTimeRTC.cpp \
 			src/lib/MPU6050.cpp \
 			src/lib/MAX11611.cpp \
 			src/lib/MCP79410.cpp \

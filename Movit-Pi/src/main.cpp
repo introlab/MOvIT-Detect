@@ -1,6 +1,5 @@
 #include "I2Cdev.h"   //I2C librairy
 #include "MPU6050.h"  //Implementation of Jeff Rowberg's driver
-#include "MCP79410.h" //Custom driver that uses I2Cdev.h to get RTC data
 #include "MAX11611.h" //10-Bit ADC librairy
 
 //Include : Modules
@@ -12,6 +11,7 @@
 #include "forceSensor.h"
 #include "program.h"      //variables and modules initialisation
 #include "test.h"         //variables and modules initialisation
+#include "DateTimeRTC.h"
 
 #include <string>
 #include <stdio.h>
@@ -20,7 +20,7 @@
 
 using std::string;
 
-#define SLEEP_TIME 2000000
+#define SLEEP_TIME 5000000
 
 void sendDataToWebServer(MosquittoBroker *mosquittoBroker)
 {
@@ -28,10 +28,9 @@ void sendDataToWebServer(MosquittoBroker *mosquittoBroker)
     mosquittoBroker->sendDistanceTraveled(1000);
 }
 
+
 MCP79410 mcp79410;       //Initialisation of the MCP79410
 MAX11611 max11611;       //Initialisation of the 10-bit ADC
-
-unsigned char dateTime[7] = {0, 0, 0, 0, 0, 0, 0}; //{s, m, h, w, d, date, month, year}
 
 //Movement detection variables
 const float isMovingTrigger = 1.05;
@@ -51,7 +50,6 @@ int main()
 {
     I2Cdev::initialize();
 
-    // timer.setInterval(1000, callback);
     MosquittoBroker *mosquittoBroker = new MosquittoBroker("actionlistener");
     BackSeatAngleTracker imu;
 
@@ -59,18 +57,23 @@ int main()
     forceSensor sensorMatrix;
     forcePlate globalForcePlate;
 
-	Alarm alarm(700, 0.1);
+    DateTimeRTC *datetimeRTC = DateTimeRTC::getInstance();
+    datetimeRTC->set24HourFormat(true);
+
+    unsigned char currentDateTime[DATE_TIME_SIZE] = {0x50, 0x59, 0x21, 0x00, 0x11, 0x03, 0x18}; //{seconds, minutes, hours, AM = 0 PM = 1, day, date, month, year}
+    datetimeRTC->setDateTime(currentDateTime);
+
+    Alarm alarm(700, 0.1);
     init_ADC(sensorMatrix);
-    mcp79410.setDateTime();
     printf("Setup Done\n");
 
     bool done = false;
     while (!done)
     {
-        done = program_loop(alarm, imu, max11611Data, sensorMatrix, globalForcePlate);
+        done = program_loop(alarm, datetimeRTC, imu, max11611Data, sensorMatrix, globalForcePlate);
 
-        sendDataToWebServer(mosquittoBroker);
-        usleep(SLEEP_TIME);
+        // sendDataToWebServer(mosquittoBroker);
+        // usleep(SLEEP_TIME);
     }
 
     delete mosquittoBroker;

@@ -6,7 +6,6 @@
 //Include : Drivers
 #include "MPU6050.h"  //Implementation of Jeff Rowberg's driver
 #include "MAX11611.h" //10-Bit ADC
-#include "MCP79410.h" //Custom driver that uses I2Cdev.h to get RTC data
 
 //Include : Modules
 #include "init.h"         //variables and modules initialisation
@@ -32,10 +31,7 @@ extern bool sleeping;
 extern bool testSequence;
 extern bool affichageSerial;
 
-extern unsigned char dateTime[7]; //{s, m, h, w, d, date, month, year}
-
 extern MAX11611 max11611; //Initialisation of the 10-bit ADC
-extern MCP79410 mcp79410; //Initialisation of the MCP79410
 
 extern float realFixedAccelerations[3];
 //extern float realMobileAccelerations[3];
@@ -49,12 +45,12 @@ extern void light_state();
 extern void buzzer_state();
 
 
-bool program_loop(Alarm &alarm, BackSeatAngleTracker &imu, uint16_t* max11611Data, forceSensor &sensorMatrix, forcePlate &globalForcePlate)
+
+bool program_loop(Alarm &alarm, DateTimeRTC *datetimeRTC, BackSeatAngleTracker &imu, uint16_t* max11611Data, forceSensor &sensorMatrix, forcePlate &globalForcePlate)
 {
     bIsBtnPushed = false;
 
-    // timer.run();
-    bool ret = program_test(alarm, imu, max11611Data, sensorMatrix, globalForcePlate);
+    bool ret = program_test(alarm, datetimeRTC, imu, max11611Data, sensorMatrix, globalForcePlate);
 
     //     if (sleeping)
     //     {
@@ -388,7 +384,7 @@ void sendData(string &request, bool state, bool e)
 void getData(uint16_t* max11611Data, forceSensor &sensorMatrix)
 {
     // Data: Date and time
-    mcp79410.getDateTime(dateTime);
+    // mcp79410.getDateTime(dateTime);
 
     // Data: Angle (centrales intertielles mobile/fixe)
     // getMPUAccData(imuMobile, realMobileAccelerations);
@@ -404,59 +400,4 @@ void getData(uint16_t* max11611Data, forceSensor &sensorMatrix)
         sensorMatrix.SetAnalogData(max11611Data[i], i);
     }
     sensorMatrix.GetForceSensorData(sensorMatrix);
-
-    if (affichageSerial)
-    {
-        //printStuff();
-    }
-}
-
-void formatDateTimeString()
-{
-    string date;
-    string mytime;
-
-    string year, month, day, hour, minute, second;
-
-    year = "20";
-    if (dateTime[6] < 10)
-    {
-        year += "0";
-    }
-    year += std::to_string(int(dateTime[6]));
-    month = std::to_string(int(dateTime[5]));
-    if (dateTime[5] < 10)
-    {
-        month = "0" + month;
-    }
-    day = std::to_string(int(dateTime[4]));
-    if (dateTime[4] < 10)
-    {
-        day = "0" + day;
-    }
-
-    hour = std::to_string(int(dateTime[2]));
-    if (dateTime[2] < 10)
-    {
-        hour = "0" + hour;
-    }
-    minute = std::to_string(int(dateTime[1]));
-    if (dateTime[1] < 10)
-    {
-        minute = "0" + minute;
-    }
-    second = std::to_string(int(dateTime[0]));
-    if (dateTime[0] < 10)
-    {
-        second = "0" + second;
-    }
-
-    date = year + "-" + month + "-" + day;
-    mytime = hour + ":" + minute + ":" + second;
-
-#ifdef DEBUG_SERIAL
-    printf("%s", date.c_str());
-    printf(" - ");
-    printf("%s\n", mytime.c_str());
-#endif
 }
