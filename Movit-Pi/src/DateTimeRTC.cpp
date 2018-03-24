@@ -16,33 +16,19 @@ using std::string;
 
 DateTimeRTC::DateTimeRTC()
 {
-    // _year.reserve(YEAR_LENGTH);
     _year = "";
-
-    // _month.reserve(MONTH_LENGTH);
     _month = "";
-
-    // _day.reserve(DAY_LENGTH);
     _day = "";
-
-    // _hour.reserve(HOUR_LENGTH);
     _hour = "";
-
-    // _minute.reserve(MINUTE_LENGTH);
     _minute = "";
-
-    // _second.reserve(SECOND_LENGTH);
     _second = "";
-
-    // _date.reserve(DATE_LENGTH);
     _date = "";
-
-    // _time.reserve(TIME_LENGTH);
     _time = "";
-
-    // _dateTime.reserve(DATETIME_LENGTH);
     _dateTime = "";
+}
 
+void DateTimeRTC::setDefaultDateTime()
+{
     _mcp79410.setDefaultDateTime();
 }
 

@@ -4,7 +4,8 @@
 
 BackSeatAngleTracker::BackSeatAngleTracker()
 {
-	Initialize();
+	// Sorry Ben j'ai pas le choix de l'enlever
+	// Initialize();
 }
 
 void BackSeatAngleTracker::Initialize()
@@ -15,9 +16,11 @@ void BackSeatAngleTracker::Initialize()
 
 void BackSeatAngleTracker::InitializeFixedImu()
 {
+	printf("MPU6050 (imuFixe) initializing ... ");
+	fflush(stdout);
 	if (!_fixedImu.testConnection())
 	{
-		printf("Failed to initialize the fixed imu...\n");
+		printf("FAIL\n");
 		return;
 	}
 
@@ -29,7 +32,7 @@ void BackSeatAngleTracker::InitializeFixedImu()
 	Calibrate(_fixedImu);
 	CalculateAccelerationsMean(_fixedImu);
 
-	printf("FINISHED!\n");
+	printf("success\n");
 	printf("Your offsets:\t");
 	printf("%i", _accelerationOffsets[0]);
 	printf("\t");
@@ -48,9 +51,11 @@ void BackSeatAngleTracker::InitializeFixedImu()
 
 void BackSeatAngleTracker::InitializeMobileImu()
 {
+	printf("MPU6050 (imuMobile) initializing ... ");
+	fflush(stdout);
 	if (!_mobileImu.testConnection())
 	{
-		printf("Failed to initialize the mobile imu...\n");
+		printf("FAIL\n");
 		return;
 	}
 
@@ -60,11 +65,11 @@ void BackSeatAngleTracker::InitializeMobileImu()
 	ResetIMUOffsets(_mobileImu);
 	CalculateAccelerationsMean(_mobileImu);
 
-	// Calculating offsets: 
+	// Calculating offsets:
 	Calibrate(_mobileImu);
 	CalculateAccelerationsMean(_mobileImu);
 
-	printf("FINISHED!\n");
+	printf("success\n");
 	printf("Your offsets:\t");
 	printf("%i", _accelerationOffsets[0]);
 	printf("\t");
@@ -83,35 +88,35 @@ void BackSeatAngleTracker::InitializeMobileImu()
 
 void BackSeatAngleTracker::SetCalibrationArray(uint8_t axis)
 {
-    if (axis == _axis::x) // if X axis is pointing down
-    { 
-        _calibrationArray[_axis::x] = -16384;
-        _calibrationArray[_axis::y] = 0;
-        _calibrationArray[_axis::z] = 0;
-    }
-    else if (axis == _axis::y) // if Y axis is pointing down
-    { 
-        _calibrationArray[_axis::x] = 0;
-        _calibrationArray[_axis::y] = -16384;
-        _calibrationArray[_axis::z] = 0;
-    }
-    else if (axis == _axis::z) // if Z axis is pointing down
-    { 
-        _calibrationArray[_axis::x] = 0;
-        _calibrationArray[_axis::y] = 0;
-        _calibrationArray[_axis::z] = -16384;
-    }
+	if (axis == _axis::x) // if X axis is pointing down
+	{
+		_calibrationArray[_axis::x] = -16384;
+		_calibrationArray[_axis::y] = 0;
+		_calibrationArray[_axis::z] = 0;
+	}
+	else if (axis == _axis::y) // if Y axis is pointing down
+	{
+		_calibrationArray[_axis::x] = 0;
+		_calibrationArray[_axis::y] = -16384;
+		_calibrationArray[_axis::z] = 0;
+	}
+	else if (axis == _axis::z) // if Z axis is pointing down
+	{
+		_calibrationArray[_axis::x] = 0;
+		_calibrationArray[_axis::y] = 0;
+		_calibrationArray[_axis::z] = -16384;
+	}
 }
 
 void BackSeatAngleTracker::ResetIMUOffsets(MPU6050 &mpu)
 {
-    mpu.setXAccelOffset(0);
-    mpu.setYAccelOffset(0);
-    mpu.setZAccelOffset(0);
+	mpu.setXAccelOffset(0);
+	mpu.setYAccelOffset(0);
+	mpu.setZAccelOffset(0);
 
-    mpu.setXGyroOffset(0);
-    mpu.setYGyroOffset(0);
-    mpu.setZGyroOffset(0);
+	mpu.setXGyroOffset(0);
+	mpu.setYGyroOffset(0);
+	mpu.setZGyroOffset(0);
 }
 
 void BackSeatAngleTracker::SetImuOffsets(MPU6050 &mpu)
@@ -172,9 +177,9 @@ void BackSeatAngleTracker::Calibrate(MPU6050 &mpu)
 
 	uint8_t ready = 0;
 
-    while (ready < 6)
-    {
-        ready = 0;
+	while (ready < 6)
+	{
+		ready = 0;
 
 		SetImuOffsets(mpu);
 		CalculateAccelerationsMean(mpu);
@@ -202,7 +207,7 @@ void BackSeatAngleTracker::Calibrate(MPU6050 &mpu)
 				_gyroOffsets[i] = _gyroOffsets[i] - _gyroMeans[i] / (GYROSCOPE_DEADZONE + 1);
 			}
 		}
-    }
+	}
 }
 
 void BackSeatAngleTracker::GetMPUAccelations(MPU6050 &mpu, double *realAccelerations)
@@ -238,7 +243,7 @@ double BackSeatAngleTracker::GetRoll(double accelerations[])
 int BackSeatAngleTracker::GetBackSeatAngle()
 {
 	double fixedImuAccelerations[3] = {0, 0, 0};
-	double mobileImuAccelerations[3] = { 0, 0, 0 };
+	double mobileImuAccelerations[3] = {0, 0, 0};
 
 	GetMPUAccelations(_fixedImu, fixedImuAccelerations);
 	GetMPUAccelations(_mobileImu, mobileImuAccelerations);

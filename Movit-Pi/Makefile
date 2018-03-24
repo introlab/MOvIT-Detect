@@ -2,14 +2,13 @@ CFLAGS=-Wall -ggdb -Isrc -Isrc/lib -Isrc/lib/mosquitto_broker -Isrc/lib/mosquitt
 LDFLAGS=-Lsrc/lib -Lsrc/lib/mosquitto_broker src/lib/mosquitto_broker/cpp/libmosquittopp.so.1 src/lib/mosquitto_broker/libmosquitto.so.1
 
 SOURCES = 	src/main.cpp \
+			src/DeviceManager.cpp \
+			src/ChairManager.cpp \
 			src/accel_module.cpp \
 			src/forceSensor.cpp \
 			src/forcePlate.cpp \
 			src/humiditySensor.cpp \
-			src/init.cpp \
 			src/alarm.cpp \
-			src/program.cpp \
-			src/test.cpp \
 			src/Utils.cpp \
 			src/DateTimeRTC.cpp \
 			src/lib/MPU6050.cpp \

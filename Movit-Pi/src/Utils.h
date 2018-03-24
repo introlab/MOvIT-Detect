@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#define DEBUG_SERIAL //Debug trace
+
 #define ONES_MASK 0x0F
 #define TENS_MASK 0xF0
 

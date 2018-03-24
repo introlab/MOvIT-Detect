@@ -8,12 +8,10 @@ class DateTimeRTC
 {
   public:
     void setDateTime(unsigned char dt[]);
+    void setDefaultDateTime();
 
     void getDateTime(unsigned char dt[]);
     std::string getFormattedDateTime();
-
-    void set24HourFormat(bool state) { _mcp79410.set24HourFormat(state); }
-    bool get24HourFormat() { return _mcp79410.get24HourFormat(); }
 
     // Singleton
     static DateTimeRTC *getInstance()

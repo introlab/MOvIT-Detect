@@ -62,11 +62,7 @@ public:
     void setDateTime(unsigned char dt[]);
     void getDateTime(unsigned char dt[]);
 
-    void set24HourFormat(bool state) { _24HourFormat = state; }
-    bool get24HourFormat() { return _24HourFormat; }
-
 private:
-    bool _24HourFormat = true;
     uint8_t _devAddr;
     uint8_t _buffer[14];
     int _validBits[DATE_TIME_SIZE] = {7,7,6,8,6,5,8};
