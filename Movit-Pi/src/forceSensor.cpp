@@ -9,8 +9,6 @@
 #include <stdio.h>
 #include <unistd.h>
 
-extern MAX11611 max11611;                    //Initialisation of the 10-bit ADC
-
 forceSensor::forceSensor()
 {
   for(int i = 0; i < sensorCount; i++)
@@ -28,7 +26,7 @@ forceSensor::forceSensor()
 
 forceSensor::~forceSensor() {}
 
-void forceSensor::CalibrateForceSensor(uint16_t* max11611Data, forceSensor &sensors)
+void forceSensor::CalibrateForceSensor(uint16_t* max11611Data, forceSensor &sensors, MAX11611 &max11611)
 //---------------------------------------------------------------------------------------
 //Function: ForceSensor::CalibrateForceSensor
 //Force sensor individual calibration - establish initial offset

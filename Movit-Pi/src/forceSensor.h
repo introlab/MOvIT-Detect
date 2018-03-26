@@ -1,13 +1,15 @@
 #ifndef _FORCESENSOR_H_
 #define _FORCESENSOR_H_
 
+#include"MAX11611.h"
+
 class forceSensor
 {
   public:
     forceSensor();
     ~forceSensor();
 
-    void CalibrateForceSensor(uint16_t* max11611Data, forceSensor &sensors);
+    void CalibrateForceSensor(uint16_t* max11611Data, forceSensor &sensors, MAX11611 &max11611);
     void GetForceSensorData(forceSensor &sensors);
     bool IsUserDetected(forceSensor &sensors);
     int *DetectRelativePressure(forceSensor &sensors);

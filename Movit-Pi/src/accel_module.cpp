@@ -4,24 +4,21 @@
 
 BackSeatAngleTracker::BackSeatAngleTracker()
 {
-	// Sorry Ben j'ai pas le choix de l'enlever
-	// Initialize();
 }
 
-void BackSeatAngleTracker::Initialize()
+bool BackSeatAngleTracker::Initialize()
 {
-	InitializeFixedImu();
-	InitializeMobileImu();
+	return InitializeMobileImu() && InitializeFixedImu();
 }
 
-void BackSeatAngleTracker::InitializeFixedImu()
+bool BackSeatAngleTracker::InitializeFixedImu()
 {
 	printf("MPU6050 (imuFixe) initializing ... ");
 	fflush(stdout);
 	if (!_fixedImu.testConnection())
 	{
 		printf("FAIL\n");
-		return;
+		return false;
 	}
 
 	_fixedImu.initialize();
@@ -47,16 +44,18 @@ void BackSeatAngleTracker::InitializeFixedImu()
 	printf("%i\n", _gyroOffsets[2]);
 
 	SetImuOffsets(_fixedImu);
+
+	return true;
 }
 
-void BackSeatAngleTracker::InitializeMobileImu()
+bool BackSeatAngleTracker::InitializeMobileImu()
 {
 	printf("MPU6050 (imuMobile) initializing ... ");
 	fflush(stdout);
 	if (!_mobileImu.testConnection())
 	{
 		printf("FAIL\n");
-		return;
+		return false;
 	}
 
 	_mobileImu.initialize();
@@ -64,8 +63,6 @@ void BackSeatAngleTracker::InitializeMobileImu()
 	SetCalibrationArray(_axis::x);
 	ResetIMUOffsets(_mobileImu);
 	CalculateAccelerationsMean(_mobileImu);
-
-	// Calculating offsets:
 	Calibrate(_mobileImu);
 	CalculateAccelerationsMean(_mobileImu);
 
@@ -84,6 +81,8 @@ void BackSeatAngleTracker::InitializeMobileImu()
 	printf("%i\n", _gyroOffsets[2]);
 
 	SetImuOffsets(_mobileImu);
+
+	return true;
 }
 
 void BackSeatAngleTracker::SetCalibrationArray(uint8_t axis)
@@ -186,7 +185,7 @@ void BackSeatAngleTracker::Calibrate(MPU6050 &mpu)
 
 		for (uint8_t i = 0; i < 3; i++)
 		{
-			printf("%i\n", abs(_calibrationArray[i] - _accelerationMeans[i]));
+			printf("%i\t", abs(_calibrationArray[i] - _accelerationMeans[i]));
 			printf("%i\n", abs(_gyroMeans[i]));
 
 			if (abs(_calibrationArray[i] - _accelerationMeans[i]) <= ACCELEROMETER_DEADZONE)
@@ -217,9 +216,10 @@ void BackSeatAngleTracker::GetMPUAccelations(MPU6050 &mpu, double *realAccelerat
 
 	// TODO: Add low-pass filter
 
-	printf("ax: %i\n", _ax);
-	printf("ay: %i\n", _ay);
-	printf("az: %i\n", _az);
+	// Décomenter pour debug
+	// printf("ax: %i\n", _ax);
+	// printf("ay: %i\n", _ay);
+	// printf("az: %i\n", _az);
 
 	realAccelerations[_axis::x] = double(_ax) * 2 / 32768.0f;
 	realAccelerations[_axis::y] = double(_ay) * 2 / 32768.0f;
@@ -228,9 +228,10 @@ void BackSeatAngleTracker::GetMPUAccelations(MPU6050 &mpu, double *realAccelerat
 
 double BackSeatAngleTracker::GetPitch(double accelerations[])
 {
-	printf("datatable ax: %f\n", accelerations[0]);
-	printf("datatable ay: %f\n", accelerations[1]);
-	printf("datatable az: %f\n", accelerations[2]);
+	// Décomenter pour debug
+	// printf("datatable ax: %f\n", accelerations[0]);
+	// printf("datatable ay: %f\n", accelerations[1]);
+	// printf("datatable az: %f\n", accelerations[2]);
 
 	return (atan2(accelerations[0], sqrt(accelerations[1] * accelerations[1] + accelerations[2] * accelerations[2])) * 180.0) / M_PI;
 }
@@ -250,10 +251,12 @@ int BackSeatAngleTracker::GetBackSeatAngle()
 
 	double fixedPitch = GetPitch(fixedImuAccelerations);
 	double mobilePitch = GetPitch(mobileImuAccelerations);
-	int angle = int(fixedPitch - mobilePitch);
+	// Valeur absolue est temporaire en attendant que l'acceleromètre soit fixé.
+	// TODO remove abs
+	int angle = abs(int(fixedPitch - mobilePitch));
 
-	printf("The mobile pitch: %f\n", mobilePitch);
-	printf("The fixed pitch is: %f\n", fixedPitch);
-	printf("The backseat angle is: %i\n", angle);
+	// printf("The mobile pitch: %f\n", mobilePitch);
+	// printf("The fixed pitch is: %f\n", fixedPitch);
+	// printf("The backseat angle is: %i\n", angle);
 	return angle;
 }

@@ -16,19 +16,22 @@ class ChairManager
 
     void UpdateDevices();
     void ReadFromServer();
-    void CheckNotification(uint8_t &state);
+    void CheckNotification();
 
   private:
     MosquittoBroker *_mosquittoBroker;
     DeviceManager *_devicemgr;
 
     uint32_t _secondsCounter = 0;
+    uint8_t state = 0;
 
     int _currentChairAngle = 0;
     int _prevChairAngle = 0;
     Coord_t _copCoord;
     std::string _currentDatetime = "";
     bool _isSomeoneThere = false;
+
+    bool _overrideNotificationPattern = false;
 
     bool setAlarmOn = false;
     uint32_t requiredBackRestAngle = 0;

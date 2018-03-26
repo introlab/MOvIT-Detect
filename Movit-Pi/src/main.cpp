@@ -20,14 +20,10 @@ int main()
 
     devicemgr->InitializeDevices();
 
-    std::clock_t start;
-    double duration;
+    // Pour usage éventuel
+    // std::clock_t start;
+    // double duration;
 
-    // uint32_t secondsCounter = 0;
-
-    // int angle = 0;
-    // int prevangle = 0;
-    uint8_t state = 1;
     bool done = false;
     while (!done)
     {
@@ -37,7 +33,7 @@ int main()
         // Real thing
         chairmgr.UpdateDevices();
         chairmgr.ReadFromServer();
-        chairmgr.CheckNotification(state);
+        chairmgr.CheckNotification();
 
         //TODO trouver une facon d'attendre vraiment EXACTEMENT 1 sec
         usleep(EXECUTION_PERIOD);

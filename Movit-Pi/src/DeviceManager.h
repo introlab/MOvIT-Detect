@@ -12,8 +12,8 @@
 //Center of pressure coordinate
 struct Coord_t
 {
-    uint16_t x;
-    uint16_t y;
+    float x;
+    float y;
 };
 
 class DeviceManager
@@ -47,6 +47,10 @@ class DeviceManager
     void operator=(DeviceManager const &); // Don't implement.
 
     void updateForcePlateData();
+    bool initializeForcePlate();
+
+    bool _imuValid = false;
+    bool _forcePlateValid = false;
 
     bool _isSomeoneThere = false;
     Coord_t _COPCoord;

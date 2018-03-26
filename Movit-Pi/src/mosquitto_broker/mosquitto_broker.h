@@ -3,6 +3,7 @@
 
 #include <mosquittopp.h>
 #include <stdint.h>
+#include <string>
 
 // Pour reference
 // struct mosquitto_message
@@ -26,10 +27,10 @@ class MosquittoBroker : public mosqpp::mosquittopp
 	void on_subcribe(int mid, int qos_count, const int *granted_qos);
 	void on_message(const mosquitto_message *message);
 
-	void sendBackRestAngle(const int angle);
-	void sendCenterOfPressure(const unsigned int x, const unsigned int y);
-	void sendIsSomeoneThere(const bool state);
-	void sendSpeed(const float speed);
+	void sendBackRestAngle(const int angle, const std::string datetime);
+	void sendCenterOfPressure(const float x, const float y, const std::string datetime);
+	void sendIsSomeoneThere(const bool state, const std::string datetime);
+	void sendSpeed(const float speed, const std::string datetime);
 
 	bool getSetAlarmOn();
 	uint32_t getRequiredBackRestAngle();

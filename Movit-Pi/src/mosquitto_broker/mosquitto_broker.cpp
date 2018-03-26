@@ -74,7 +74,7 @@ void MosquittoBroker::on_connect(int rc)
 
 void MosquittoBroker::on_publish(int mid)
 {
-	printf("Message published with id %d.\n", mid);
+	// printf("Message published with id %d.\n", mid);
 	// uncomment for debug
 }
 
@@ -85,7 +85,7 @@ void MosquittoBroker::on_subcribe(int mid, int qos_count, const int *granted_qos
 
 void MosquittoBroker::on_message(const mosquitto_message *msg)
 {
-	printf("Subscriber received message mid: %i of topic: %s Data: %s\n", msg->mid, msg->topic, reinterpret_cast<char *>(msg->payload));
+	// printf("Subscriber received message mid: %i of topic: %s Data: %s\n", msg->mid, msg->topic, reinterpret_cast<char *>(msg->payload));
 
 	std::string message(reinterpret_cast<char *>(msg->payload));
 	std::string topic(msg->topic);
@@ -152,32 +152,36 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
 	}
 }
 
-void MosquittoBroker::sendBackRestAngle(const int angle)
+void MosquittoBroker::sendBackRestAngle(const int angle, const std::string datetime)
 {
 	std::string strAngle = std::to_string(angle);
+	std::string strMsg = "[" + strAngle + "],[" + datetime + "]";
 
-	publish(NULL, "data/current_back_rest_angle", strAngle.length(), strAngle.c_str());
+	publish(NULL, "data/current_back_rest_angle", strMsg.length(), strMsg.c_str());
 }
 
-void MosquittoBroker::sendCenterOfPressure(const unsigned int x, const unsigned int y)
+void MosquittoBroker::sendCenterOfPressure(const float x, const float y, const std::string datetime)
 {
 	std::string strCoord = "X:" + std::to_string(x) + ",Y:" + std::to_string(y);
+	std::string strMsg = "[" + strCoord + "],[" + datetime + "]";
 
-	publish(NULL, "data/current_center_of_pressure", strCoord.length(), strCoord.c_str());
+	publish(NULL, "data/current_center_of_pressure", strMsg.length(), strMsg.c_str());
 }
 
-void MosquittoBroker::sendIsSomeoneThere(const bool state)
+void MosquittoBroker::sendIsSomeoneThere(const bool state, const std::string datetime)
 {
 	std::string strState = std::to_string(state);
+	std::string strMsg = "[" + strState + "],[" + datetime + "]";
 
-	publish(NULL, "data/current_is_someone_there", strState.length(), strState.c_str());
+	publish(NULL, "data/current_is_someone_there", strMsg.length(), strMsg.c_str());
 }
 
-void MosquittoBroker::sendSpeed(const float speed)
+void MosquittoBroker::sendSpeed(const float speed, const std::string datetime)
 {
 	std::string strSpeed = std::to_string(speed);
+	std::string strMsg = "[" + strSpeed + "],[" + datetime + "]";
 
-	publish(NULL, "data/current_chair_speed", strSpeed.length(), strSpeed.c_str());
+	publish(NULL, "data/current_chair_speed", strMsg.length(), strMsg.c_str());
 }
 
 bool MosquittoBroker::getSetAlarmOn()

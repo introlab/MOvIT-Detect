@@ -1,7 +1,7 @@
 #ifndef _ACCEL_MODULE_H_
 #define _ACCEL_MODULE_H_
 
-#include "MPU6050.h" 
+#include "MPU6050.h"
 
 #define ACCELEROMETER_DEADZONE 8 // Accelerometer error allowed, make it lower to get more precision, but sketch may not converge (default: 8)
 #define BUFFER_SIZE 1000 // Amount of readings used to average, make it higher to get more precision but sketch will be slower (default: 1000)
@@ -23,12 +23,12 @@ class BackSeatAngleTracker
 		int _gyroMeans[3] = { 0, 0, 0 };
 		int _gyroOffsets[3] = { 0, 0, 0 };
 
-		void InitializeFixedImu();
-		void InitializeMobileImu();
+		bool InitializeFixedImu();
+		bool InitializeMobileImu();
 
 	public:
 		BackSeatAngleTracker();
-		void Initialize();
+		bool Initialize();
 
 		void SetCalibrationArray(uint8_t axis);
 		void ResetIMUOffsets(MPU6050 &mpu);

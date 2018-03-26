@@ -1,5 +1,6 @@
 #include "DeviceManager.h"
 #include "I2Cdev.h"
+#include <unistd.h>
 
 DeviceManager::DeviceManager() : _alarm(700, 0.1)
 {
@@ -12,12 +13,19 @@ void DeviceManager::InitializeDevices()
 {
     I2Cdev::initialize();
     _alarm.Initialize();
-    _imu.Initialize();
+    _imuValid = _imu.Initialize();
 
     // TODO: Pour vérifier l'init il faut setter une date et vérifier
     // si elle est tenu par le RTC
     _datetimeRTC->setDateTime(_dateTimeRaw);
 
+    _forcePlateValid = initializeForcePlate();
+
+    printf("Setup Done\n");
+}
+
+bool DeviceManager::initializeForcePlate()
+{
     printf("MAX11611 (ADC) initializing ... ");
     if (max11611.initialize())
     {
@@ -33,12 +41,13 @@ void DeviceManager::InitializeDevices()
         sensorMatrix.CalibrateForceSensor(max11611Data, sensorMatrix, max11611);
 
         printf("success\n");
+        return true;
     }
     else
     {
         printf("FAIL\n");
+        return false;
     }
-    printf("Setup Done\n");
 }
 
 void DeviceManager::update()
@@ -46,26 +55,24 @@ void DeviceManager::update()
     // Data: Date and time
     _currentDateTimeStr = _datetimeRTC->getFormattedDateTime();
 
-    // Data: Angle (centrales intertielles mobile/fixe)
-    _backSeatAngle = _imu.GetBackSeatAngle();
-
-    // Data: Capteur de force
-    // max11611.getData(sensorMatrix.sensorCount, max11611Data);
-    // for (int i = 0; i < sensorMatrix.sensorCount; i++)
-    // {
-    //     sensorMatrix.SetAnalogData(max11611Data[i], i);
-    // }
-    // sensorMatrix.GetForceSensorData(sensorMatrix);
-    updateForcePlateData();
-
-    // Valider les lignes suivantes avec LP. Le but ici est de savoir
-    // s'il y a quelqu'un sur la chaise et ou il est
-    _isSomeoneThere = sensorMatrix.IsUserDetected(sensorMatrix);
-    if (_isSomeoneThere)
+    if (_imuValid)
     {
-        globalForcePlate.DetectCenterOfPressure(globalForcePlate, sensorMatrix);
-        _COPCoord.x = globalForcePlate.GetCOPx();
-        _COPCoord.y = globalForcePlate.GetCOPy();
+        // Data: Angle (centrales intertielles mobile/fixe)
+        _backSeatAngle = _imu.GetBackSeatAngle();
+    }
+
+    if (_forcePlateValid)
+    {
+        // Data: Capteur de force
+        updateForcePlateData();
+
+        _isSomeoneThere = sensorMatrix.IsUserDetected(sensorMatrix);
+        if (_isSomeoneThere)
+        {
+            globalForcePlate.DetectCenterOfPressure(globalForcePlate, sensorMatrix);
+            _COPCoord.x = globalForcePlate.GetCOPx();
+            _COPCoord.y = globalForcePlate.GetCOPy();
+        }
     }
 }
 

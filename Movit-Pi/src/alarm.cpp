@@ -32,8 +32,6 @@ void Alarm::Initialize()
 	{
 		printf("success\n");
 	}
-	// Sorry Ben j'ai pas le choix de l'enlever
-	// Alarm::Initialize();
 	TurnOffRedLed();
 	TurnOffGreenLed();
 	TurnOffDCMotor();
