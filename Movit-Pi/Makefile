@@ -23,7 +23,7 @@ OBJECTS = $(SOURCES:%.c=%.o)
 TARGET = movit-plus
 
 $(TARGET): $(OBJECTS)
-	gcc $^ -o $@ -lm -lbcm2835 -lstdc++ ${LDFLAGS} ${CFLAGS}
+	gcc $^ -o $@ -lm -lbcm2835 -lstdc++ -pthread ${LDFLAGS} ${CFLAGS}
 
 %.o: %.c
 	gcc -c $< -o $@

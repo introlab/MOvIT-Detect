@@ -123,3 +123,15 @@ void Alarm::TurnOnRedAlarm()
 	TurnOffRedLed();
 	TurnOffDCMotor();
 }
+
+// TODO: Use this function when mutex is implemented
+std::thread Alarm::TurnOnRedAlarmThread()
+{
+	return std::thread([=] { TurnOnRedAlarm(); });
+}
+
+// TODO: Use this function when mutex is implemented
+std::thread Alarm::TurnOnBlinkLedsAlarmThread()
+{
+	return std::thread([=] { TurnOnBlinkLedsAlarm(); });
+}
