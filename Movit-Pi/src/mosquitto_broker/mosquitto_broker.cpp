@@ -155,15 +155,13 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
 void MosquittoBroker::sendBackRestAngle(const int angle, const std::string datetime)
 {
 	std::string strAngle = std::to_string(angle);
-	std::string strMsg = "[" + strAngle + "],[" + datetime + "]";
-
+	std::string strMsg = "{\"datetime\":" + datetime + ",\"angle\":" + strAngle + "}";
 	publish(NULL, "data/current_back_rest_angle", strMsg.length(), strMsg.c_str());
 }
 
 void MosquittoBroker::sendCenterOfPressure(const float x, const float y, const std::string datetime)
 {
-	std::string strCoord = "X:" + std::to_string(x) + ",Y:" + std::to_string(y);
-	std::string strMsg = "[" + strCoord + "],[" + datetime + "]";
+	std::string strMsg = "{\"datetime\":" + datetime + ",\"pos_x\":" + std::to_string(x) + ",\"pos_y\":" + std::to_string(x) + "}";
 
 	publish(NULL, "data/current_center_of_pressure", strMsg.length(), strMsg.c_str());
 }
@@ -171,7 +169,7 @@ void MosquittoBroker::sendCenterOfPressure(const float x, const float y, const s
 void MosquittoBroker::sendIsSomeoneThere(const bool state, const std::string datetime)
 {
 	std::string strState = std::to_string(state);
-	std::string strMsg = "[" + strState + "],[" + datetime + "]";
+	std::string strMsg = "{\"datetime\":" + datetime + ",\"IsSomeoneThere\":" + strState + "}";
 
 	publish(NULL, "data/current_is_someone_there", strMsg.length(), strMsg.c_str());
 }
@@ -179,7 +177,7 @@ void MosquittoBroker::sendIsSomeoneThere(const bool state, const std::string dat
 void MosquittoBroker::sendSpeed(const float speed, const std::string datetime)
 {
 	std::string strSpeed = std::to_string(speed);
-	std::string strMsg = "[" + strSpeed + "],[" + datetime + "]";
+	std::string strMsg = "{\"datetime\":" + datetime + ",\"vitesse\":" + strSpeed + "}";
 
 	publish(NULL, "data/current_chair_speed", strMsg.length(), strMsg.c_str());
 }

@@ -23,7 +23,7 @@ class ChairManager
     DeviceManager *_devicemgr;
 
     uint32_t _secondsCounter = 0;
-    uint8_t state = 0;
+    uint8_t _state = 0;
 
     int _currentChairAngle = 0;
     int _prevChairAngle = 0;
@@ -33,10 +33,10 @@ class ChairManager
 
     bool _overrideNotificationPattern = false;
 
-    bool setAlarmOn = false;
-    uint32_t requiredBackRestAngle = 0;
-    uint32_t requiredPeriod = 0;
-    uint32_t requiredDuration = 0;
+    bool _setAlarmOn = false;
+    uint32_t _requiredBackRestAngle = 0;
+    uint32_t _requiredPeriod = 0;
+    uint32_t _requiredDuration = 0;
 };
 
 #endif //CHAIR_MANAGER
