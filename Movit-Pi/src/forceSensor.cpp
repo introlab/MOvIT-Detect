@@ -24,8 +24,6 @@ forceSensor::forceSensor()
   _detectionThreshold = 0;
 }
 
-forceSensor::~forceSensor() {}
-
 //---------------------------------------------------------------------------------------
 //Function: ForceSensor::CalibrateForceSensor
 //Force sensor individual calibration - establish initial offset
@@ -170,7 +168,7 @@ bool forceSensor::IsUserDetected()
   {
     sensedPresence /= _sensorCount;
   }
-  return (sensedPresence >= GetDetectionThreshold());
+  return (sensedPresence > GetDetectionThreshold());
 }
 
 int *forceSensor::DetectRelativePressure()
