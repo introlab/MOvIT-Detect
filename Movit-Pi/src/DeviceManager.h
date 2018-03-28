@@ -65,10 +65,10 @@ class DeviceManager
     BackSeatAngleTracker _imu;
     int _backSeatAngle = 0;
 
-    uint16_t max11611Data[9];
-    forceSensor sensorMatrix;
-    forcePlate globalForcePlate;
-    MAX11611 max11611;
+    uint16_t _max11611Data[9];
+    forceSensor _sensorMatrix;
+    forcePlate _globalForcePlate;
+    MAX11611 _max11611;
 };
 
 #endif //DEVICE_MANAGER
