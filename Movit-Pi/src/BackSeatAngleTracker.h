@@ -1,5 +1,5 @@
-#ifndef _ACCEL_MODULE_H_
-#define _ACCEL_MODULE_H_
+#ifndef _BACK_SEAT_ANGLE_TRACKER_H_
+#define _BACK_SEAT_ANGLE_TRACKER_H_
 
 #include "MPU6050.h"
 

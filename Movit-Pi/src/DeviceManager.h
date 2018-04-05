@@ -4,8 +4,8 @@
 #include "alarm.h"
 #include "forcePlate.h"
 #include "forceSensor.h"
-#include "MAX11611.h" //10-Bit ADC librairy
-#include "accel_module.h"
+#include "MAX11611.h" 
+#include "BackSeatAngleTracker.h"
 #include "DateTimeRTC.h"
 #include <string>
 

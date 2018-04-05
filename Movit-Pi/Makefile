@@ -4,7 +4,7 @@ LDFLAGS=-Lsrc/lib -Lsrc/lib/mosquitto_broker src/lib/mosquitto_broker/cpp/libmos
 SOURCES = 	src/main.cpp \
 			src/DeviceManager.cpp \
 			src/ChairManager.cpp \
-			src/accel_module.cpp \
+			src/BackSeatAngleTracker.cpp \
 			src/forceSensor.cpp \
 			src/forcePlate.cpp \
 			src/humiditySensor.cpp \
