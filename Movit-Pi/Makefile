@@ -16,6 +16,8 @@ SOURCES = 	src/main.cpp \
 			src/lib/MCP79410.cpp \
 			src/lib/PCA9536.cpp \
 			src/lib/I2Cdev.cpp \
+			src/lib/VL53L0X/VL53L0X.cpp \
+			src/lib/BCM2835/bcm2835.c \
 			src/mosquitto_broker/mosquitto_broker.cpp \
 
 OBJECTS = $(SOURCES:%.c=%.o)

@@ -34,8 +34,8 @@ THE SOFTWARE.
 ===============================================
 */
 
-#ifndef _MPU6050_H_
-#define _MPU6050_H_
+#ifndef MPU6050_H
+#define MPU6050_H
 
 #include "I2Cdev.h"
 

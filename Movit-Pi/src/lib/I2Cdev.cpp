@@ -67,7 +67,7 @@ char recvBuf[256];
  */
 bool I2Cdev::readBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data)
 {
-	std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
 
     bcm2835_i2c_setSlaveAddress(devAddr);
     sendBuf[0] = regAddr;
@@ -86,7 +86,7 @@ bool I2Cdev::readBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *
  */
 bool I2Cdev::readBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data)
 {
-	std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
 
     // 01101001 read byte
     // 76543210 bit numbers
@@ -115,7 +115,7 @@ bool I2Cdev::readBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_
  */
 bool I2Cdev::readByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data)
 {
-	std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
 
     bcm2835_i2c_setSlaveAddress(devAddr);
     sendBuf[0] = regAddr;
@@ -133,7 +133,7 @@ bool I2Cdev::readByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data)
  */
 bool I2Cdev::readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data)
 {
-	std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
 
     bcm2835_i2c_setSlaveAddress(devAddr);
     sendBuf[0] = regAddr;
@@ -148,7 +148,7 @@ bool I2Cdev::readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t
 
 bool I2Cdev::readBytes(uint8_t devAddr, uint8_t length, uint8_t *data)
 {
-	std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
 
     bcm2835_i2c_setSlaveAddress(devAddr);
     // sendBuf[0] = regAddr;
@@ -170,7 +170,7 @@ bool I2Cdev::readBytes(uint8_t devAddr, uint8_t length, uint8_t *data)
  */
 bool I2Cdev::writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data)
 {
-	std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
 
     bcm2835_i2c_setSlaveAddress(devAddr);
     //first reading registery value
@@ -196,7 +196,7 @@ bool I2Cdev::writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t 
  */
 bool I2Cdev::writeBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data)
 {
-	std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
 
     //      010 value to write
     // 76543210 bit numbers
@@ -231,7 +231,7 @@ bool I2Cdev::writeBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8
  */
 bool I2Cdev::writeByte(uint8_t devAddr, uint8_t regAddr, uint8_t data)
 {
-	std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
 
     bcm2835_i2c_setSlaveAddress(devAddr);
     sendBuf[0] = regAddr;
@@ -248,7 +248,7 @@ bool I2Cdev::writeByte(uint8_t devAddr, uint8_t regAddr, uint8_t data)
  */
 bool I2Cdev::readWord(uint8_t devAddr, uint8_t regAddr, uint16_t *data)
 {
-	std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
 
     bcm2835_i2c_setSlaveAddress(devAddr);
     sendBuf[0] = regAddr;
@@ -266,7 +266,7 @@ bool I2Cdev::readWord(uint8_t devAddr, uint8_t regAddr, uint16_t *data)
  */
 bool I2Cdev::readWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data)
 {
-	std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
 
     bcm2835_i2c_setSlaveAddress(devAddr);
     sendBuf[0] = regAddr;
@@ -281,7 +281,7 @@ bool I2Cdev::readWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_
 
 bool I2Cdev::writeWord(uint8_t devAddr, uint8_t regAddr, uint16_t data)
 {
-	std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
 
     bcm2835_i2c_setSlaveAddress(devAddr);
     sendBuf[0] = regAddr;
@@ -293,7 +293,7 @@ bool I2Cdev::writeWord(uint8_t devAddr, uint8_t regAddr, uint16_t data)
 
 bool I2Cdev::writeBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data)
 {
-	std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
 
     bcm2835_i2c_setSlaveAddress(devAddr);
     sendBuf[0] = regAddr;
@@ -308,7 +308,7 @@ bool I2Cdev::writeBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_
 
 bool I2Cdev::writeByte(uint8_t devAddr, uint8_t data)
 {
-	std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
 
     bcm2835_i2c_setSlaveAddress(devAddr);
     // sendBuf[0] = regAddr;
@@ -319,7 +319,7 @@ bool I2Cdev::writeByte(uint8_t devAddr, uint8_t data)
 
 bool I2Cdev::writeWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data)
 {
-	std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
 
     bcm2835_i2c_setSlaveAddress(devAddr);
     sendBuf[0] = regAddr;

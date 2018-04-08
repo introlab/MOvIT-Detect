@@ -6,10 +6,9 @@ class humiditySensor
   public:
     humiditySensor();
     ~humiditySensor();
-  private:
-};
-
-
     void DetectHumidity();
+
+};
+    
 
 #endif /* _HUMIDITYSENSOR_H_ */

@@ -7,8 +7,8 @@ DATASHEET: https://datasheets.maximintegrated.com/en/ds/MAX11606-MAX11611.pdf
 ===============================================
 */
 
-#ifndef _MAX11611_H_
-#define _MAX11611_H_
+#ifndef MAX11611_H
+#define MAX11611_H
 
 #include "I2Cdev.h"
 
@@ -29,4 +29,4 @@ class MAX11611
     uint8_t buffer[14];
 };
 
-#endif /* _MAX11611_H_ */
+#endif /* _MAX11611_H */

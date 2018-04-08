@@ -1,5 +1,5 @@
-#ifndef _MCP79410_H_
-#define _MCP79410_H_
+#ifndef MCP79410_H
+#define MCP79410_H
 
 #include "I2Cdev.h"
 

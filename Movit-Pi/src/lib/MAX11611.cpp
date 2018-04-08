@@ -1,7 +1,7 @@
 /* ============================================
 PROGRAMME PAR: FRANCIS BOUCHER
 POUR: MOVITPLUS
-DATE: SEPTEMBRE 2017 � DECEMBRE 2017
+DATE: SEPTEMBRE 2017 DECEMBRE 2017
 
 DATASHEET: https://datasheets.maximintegrated.com/en/ds/MAX11606-MAX11611.pdf
 ===============================================
