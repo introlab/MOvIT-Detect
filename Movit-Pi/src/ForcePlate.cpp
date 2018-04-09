@@ -126,7 +126,7 @@ void ForcePlate::CreateForcePlate(ForcePlate &newForcePlate, ForceSensor &sensor
   }
 }
 
-void ForcePlate::AnalyzeForcePlates(ForcePlate &globalForcePlate, ForceSensor &sensors, ForcePlate &forcePlate1, ForcePlate &forcePlate2, ForcePlate &forcePlate3, ForcePlate &orcePlate4)
+void ForcePlate::AnalyzeForcePlates(ForcePlate &globalForcePlate, ForceSensor &sensors, ForcePlate &forcePlate1, ForcePlate &forcePlate2, ForcePlate &forcePlate3, ForcePlate &forcePlate4)
 //---------------------------------------------------------------------------------------
 //Function: ForcePlate::AnalyzeForcePlates
 //Global coordinate system (treat multiple force plates as one)

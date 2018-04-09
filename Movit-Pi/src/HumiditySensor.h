@@ -8,4 +8,6 @@ class humiditySensor
     ~humiditySensor();
     void DetectHumidity();
 
+};
+
 #endif // HUMIDITY_SENSOR_H
