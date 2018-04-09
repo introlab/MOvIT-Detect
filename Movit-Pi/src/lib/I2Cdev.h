@@ -65,4 +65,4 @@ class I2Cdev {
         static bool writeWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data);
 };
 
-#endif /* _I2CDEV_H */
+#endif // I2CDEV_H

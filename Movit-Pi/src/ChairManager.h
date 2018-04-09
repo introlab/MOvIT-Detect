@@ -1,7 +1,7 @@
-#ifndef CHAIR_MANAGER
-#define CHAIR_MANAGER
+#ifndef CHAIR_MANAGER_H
+#define CHAIR_MANAGER_H
 
-#include "mosquitto_broker/mosquitto_broker.h"
+#include "MosquittoBroker/MosquittoBroker.h"
 #include "DeviceManager.h"
 #include <string>
 #include <unistd.h>
@@ -12,7 +12,7 @@ class ChairManager
   public:
     ChairManager(MosquittoBroker *mosquittoBroker, DeviceManager *devicemgr);
 
-    bool TestPattern() { return _devicemgr->testDevices(); }
+    bool TestPattern() { return _devicemgr->TestDevices(); }
 
     void UpdateDevices();
     void ReadFromServer();
@@ -39,4 +39,4 @@ class ChairManager
     uint32_t _requiredDuration = 0;
 };
 
-#endif //CHAIR_MANAGER
+#endif // CHAIR_MANAGER_H

@@ -192,4 +192,4 @@ namespace Pca9536 {
 
 using namespace Pca9536;
 
-#endif
+#endif // PCA9536_H

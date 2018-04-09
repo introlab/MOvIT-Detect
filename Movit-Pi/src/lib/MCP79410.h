@@ -68,4 +68,4 @@ private:
     int _validBits[DATE_TIME_SIZE] = {7,7,6,8,6,5,8};
 };
 
-#endif
+#endif // MCP79410_H

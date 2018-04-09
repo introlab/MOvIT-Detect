@@ -1,13 +1,15 @@
-#ifndef DEVICE_MANAGER
-#define DEVICE_MANAGER
+#ifndef DEVICE_MANAGER_H
+#define DEVICE_MANAGER_H
 
-#include "alarm.h"
-#include "forcePlate.h"
-#include "forceSensor.h"
+#include "Alarm.h"
+#include "ForcePlate.h"
+#include "ForceSensor.h"
 #include "MAX11611.h" 
 #include "BackSeatAngleTracker.h"
 #include "DateTimeRTC.h"
 #include <string>
+
+#define NUMBER_OF_CAPTOR 9
 
 //Center of pressure coordinate
 struct Coord_t
@@ -22,19 +24,19 @@ class DeviceManager
     void InitializeDevices();
 
     // Called periodicaly to update all the data
-    void update();
+    void Update();
 
-    Alarm *getAlarm() { return &_alarm; }
+    Alarm *GetAlarm() { return &_alarm; }
 
-    bool isSomeoneThere() { return _isSomeoneThere; }
-    Coord_t getCenterOfPressure() { return _COPCoord; }
+    bool IsSomeoneThere() { return _isSomeoneThere; }
+    Coord_t GetCenterOfPressure() { return _COPCoord; }
     int GetBackSeatAngle() { return _backSeatAngle; }
-    std::string getDateTime() { return _currentDateTimeStr; }
+    std::string GetDateTime() { return _currentDateTimeStr; }
 
-    bool testDevices();
+    bool TestDevices();
 
     // Singleton
-    static DeviceManager *getInstance()
+    static DeviceManager *GetInstance()
     {
         static DeviceManager instance;
         return &instance;
@@ -46,8 +48,8 @@ class DeviceManager
     DeviceManager(DeviceManager const &);  // Don't Implement.
     void operator=(DeviceManager const &); // Don't implement.
 
-    void updateForcePlateData();
-    bool initializeForcePlate();
+    void UpdateForcePlateData();
+    bool InitializeForcePlate();
 
     bool _imuValid = false;
     bool _forcePlateValid = false;
@@ -66,9 +68,9 @@ class DeviceManager
     int _backSeatAngle = 0;
 
     uint16_t _max11611Data[9];
-    forceSensor _sensorMatrix;
-    forcePlate _globalForcePlate;
+    ForceSensor _sensorMatrix;
+    ForcePlate _globalForcePlate;
     MAX11611 _max11611;
 };
 
-#endif //DEVICE_MANAGER
+#endif // DEVICE_MANAGER_H

@@ -1,5 +1,5 @@
-#ifndef _HUMIDITYSENSOR_H_
-#define _HUMIDITYSENSOR_H_
+#ifndef HUMIDITY_SENSOR_H
+#define HUMIDITY_SENSOR_H
 
 class humiditySensor
 {
@@ -8,7 +8,4 @@ class humiditySensor
     ~humiditySensor();
     void DetectHumidity();
 
-};
-    
-
-#endif /* _HUMIDITYSENSOR_H_ */
+#endif // HUMIDITY_SENSOR_H

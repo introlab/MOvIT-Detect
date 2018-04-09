@@ -29,4 +29,4 @@ class MAX11611
     uint8_t buffer[14];
 };
 
-#endif /* _MAX11611_H */
+#endif // MAX11611_H

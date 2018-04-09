@@ -1,14 +1,14 @@
-CFLAGS=-Wall -ggdb -Isrc -Isrc/lib -Isrc/lib/mosquitto_broker -Isrc/lib/mosquitto_broker/cpp
-LDFLAGS=-Lsrc/lib -Lsrc/lib/mosquitto_broker src/lib/mosquitto_broker/cpp/libmosquittopp.so.1 src/lib/mosquitto_broker/libmosquitto.so.1
+CFLAGS=-Wall -ggdb -Isrc -Isrc/lib -Isrc/lib/MosquittoBroker -Isrc/lib/MosquittoBroker/cpp
+LDFLAGS=-Lsrc/lib -Lsrc/lib/MosquittoBroker src/lib/MosquittoBroker/cpp/libmosquittopp.so.1 src/lib/MosquittoBroker/libmosquitto.so.1
 
 SOURCES = 	src/main.cpp \
 			src/DeviceManager.cpp \
 			src/ChairManager.cpp \
 			src/BackSeatAngleTracker.cpp \
-			src/forceSensor.cpp \
-			src/forcePlate.cpp \
-			src/humiditySensor.cpp \
-			src/alarm.cpp \
+			src/ForceSensor.cpp \
+			src/ForcePlate.cpp \
+			src/HumiditySensor.cpp \
+			src/Alarm.cpp \
 			src/Utils.cpp \
 			src/DateTimeRTC.cpp \
 			src/lib/MPU6050.cpp \
@@ -18,7 +18,7 @@ SOURCES = 	src/main.cpp \
 			src/lib/I2Cdev.cpp \
 			src/lib/VL53L0X/VL53L0X.cpp \
 			src/lib/BCM2835/bcm2835.c \
-			src/mosquitto_broker/mosquitto_broker.cpp \
+			src/MosquittoBroker/MosquittoBroker.cpp \
 
 OBJECTS = $(SOURCES:%.c=%.o)
 

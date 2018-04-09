@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <ctime>
-#include "mosquitto_broker/mosquitto_broker.h"
+#include "MosquittoBroker/MosquittoBroker.h"
 #include "DeviceManager.h"
 #include "ChairManager.h"
 
@@ -15,7 +15,7 @@ int main()
     I2Cdev::initialize();
 
     MosquittoBroker *mosquittoBroker = new MosquittoBroker("embedded");
-    DeviceManager *devicemgr = DeviceManager::getInstance();
+    DeviceManager *devicemgr = DeviceManager::GetInstance();
     ChairManager chairmgr(mosquittoBroker, devicemgr);
 
     devicemgr->InitializeDevices();

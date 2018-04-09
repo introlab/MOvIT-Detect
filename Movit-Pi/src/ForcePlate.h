@@ -1,17 +1,17 @@
-#ifndef _FORCEPLATE_H_
-#define _FORCEPLATE_H_
+#ifndef FORCE_PLATE_H
+#define FORCE_PLATE_H
 
-#include "forceSensor.h"
+#include "ForceSensor.h"
 
-class forcePlate
+class ForcePlate
 {
   public:
-    forcePlate();
-    ~forcePlate();
+    ForcePlate();
+    ~ForcePlate();
 
-    void DetectCenterOfPressure(forcePlate &globalForcePlate, forceSensor &sensors);
-    void CreateForcePlate(forcePlate &newForcePlate, forceSensor &sensors, int sensorNo1, int sensorNo2, int sensorNo3, int sensorNo4);
-    void AnalyzeForcePlates(forcePlate &globalForcePlate, forceSensor &sensors, forcePlate &forcePlate1, forcePlate &forcePlate2, forcePlate &forcePlate3, forcePlate &forcePlate4);
+    void DetectCenterOfPressure(ForcePlate &globalForcePlate, ForceSensor &sensors);
+    void CreateForcePlate(ForcePlate &newForcePlate, ForceSensor &sensors, int sensorNo1, int sensorNo2, int sensorNo3, int sensorNo4);
+    void AnalyzeForcePlates(ForcePlate &globalForcePlate, ForceSensor &sensors, ForcePlate &forcePlate1, ForcePlate &forcePlate2, ForcePlate &forcePlate3, ForcePlate &forcePlate4);
 
     float GetFx12() { return _fx12; }
     float GetFx34() { return _fx12; }
@@ -120,4 +120,4 @@ class forcePlate
 };
 
 
-#endif /* _FORCEPLATE_H_ */
+#endif // FORCE_PLATE_H

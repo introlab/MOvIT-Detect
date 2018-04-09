@@ -19,12 +19,12 @@ void DeviceManager::InitializeDevices()
     // si elle est tenu par le RTC
     _datetimeRTC->setDateTime(_dateTimeRaw);
 
-    _forcePlateValid = initializeForcePlate();
+    _forcePlateValid = InitializeForcePlate();
 
     printf("Setup Done\n");
 }
 
-bool DeviceManager::initializeForcePlate()
+bool DeviceManager::InitializeForcePlate()
 {
     printf("MAX11611 (ADC) initializing ... ");
     if (_max11611.initialize())
@@ -37,7 +37,7 @@ bool DeviceManager::initializeForcePlate()
 
         // les lignes suivantes peuvent être mal utilisé
         // getData(max11611Data, sensorMatrix);
-        updateForcePlateData();
+        UpdateForcePlateData();
         _sensorMatrix.CalibrateForceSensor(_max11611Data, _max11611);
 
         printf("success\n");
@@ -50,7 +50,7 @@ bool DeviceManager::initializeForcePlate()
     }
 }
 
-void DeviceManager::update()
+void DeviceManager::Update()
 {
     // Data: Date and time
     _currentDateTimeStr = _datetimeRTC->getFormattedDateTime();
@@ -64,7 +64,7 @@ void DeviceManager::update()
     if (_forcePlateValid)
     {
         // Data: Capteur de force
-        updateForcePlateData();
+        UpdateForcePlateData();
 
         _isSomeoneThere = _sensorMatrix.IsUserDetected();
         if (_isSomeoneThere)
@@ -76,7 +76,7 @@ void DeviceManager::update()
     }
 }
 
-void DeviceManager::updateForcePlateData()
+void DeviceManager::UpdateForcePlateData()
 {
     _max11611.getData(_sensorMatrix._sensorCount, _max11611Data);
     for (uint8_t i = 0; i < _sensorMatrix._sensorCount; i++)
@@ -86,7 +86,7 @@ void DeviceManager::updateForcePlateData()
     _sensorMatrix.GetForceSensorData();
 }
 
-bool DeviceManager::testDevices()
+bool DeviceManager::TestDevices()
 {
     printf("\n.-.--..--- TEST MENU .--.---.--.-\n");
     printf("Select one of the following options.\n");
@@ -155,8 +155,7 @@ bool DeviceManager::testDevices()
         printf("\n IsUserDetected()");
 
         //Calibration
-        // getData(max11611Data, sensorMatrix);
-        updateForcePlateData();
+        UpdateForcePlateData();
         _sensorMatrix.CalibrateForceSensor(_max11611Data, _max11611);
         //Last sensed presence analog reading to compare with calibration
         uint16_t sensedPresence = 0;
@@ -171,30 +170,19 @@ bool DeviceManager::testDevices()
 
         printf("\n.-.--..---DERNIERE MESURE DES CAPTEURS EN TEMPS REEL.--.---.--.-\n");
         printf("Sensor Number \t Analog value \t Voltage (mV) \t Force (N) \n");
-        printf("Sensor No: 1 \t %i \t\t %u \t\t  %f \n", _sensorMatrix.GetAnalogData(0), _sensorMatrix.GetVoltageData(0), _sensorMatrix.GetForceData(0));
-        printf("Sensor No: 2 \t %i \t\t %u \t\t  %f \n", _sensorMatrix.GetAnalogData(1), _sensorMatrix.GetVoltageData(1), _sensorMatrix.GetForceData(1));
-        printf("Sensor No: 3 \t %i \t\t %u \t\t  %f \n", _sensorMatrix.GetAnalogData(2), _sensorMatrix.GetVoltageData(2), _sensorMatrix.GetForceData(2));
-        printf("Sensor No: 4 \t %i \t\t %u \t\t  %f \n", _sensorMatrix.GetAnalogData(3), _sensorMatrix.GetVoltageData(3), _sensorMatrix.GetForceData(3));
-        printf("Sensor No: 5 \t %i \t\t %u \t\t  %f \n", _sensorMatrix.GetAnalogData(4), _sensorMatrix.GetVoltageData(4), _sensorMatrix.GetForceData(4));
-        printf("Sensor No: 6 \t %i \t\t %u \t\t  %f \n", _sensorMatrix.GetAnalogData(5), _sensorMatrix.GetVoltageData(5), _sensorMatrix.GetForceData(5));
-        printf("Sensor No: 7 \t %i \t\t %u \t\t  %f \n", _sensorMatrix.GetAnalogData(6), _sensorMatrix.GetVoltageData(6), _sensorMatrix.GetForceData(6));
-        printf("Sensor No: 8 \t %i \t\t %u \t\t  %f \n", _sensorMatrix.GetAnalogData(7), _sensorMatrix.GetVoltageData(7), _sensorMatrix.GetForceData(7));
-        printf("Sensor No: 9 \t %i \t\t %u \t\t  %f \n", _sensorMatrix.GetAnalogData(8), _sensorMatrix.GetVoltageData(8), _sensorMatrix.GetForceData(8));
+        for (uint8_t i = 0; i < _sensorMatrix._sensorCount; i++)
+        {
+            printf("Sensor No: %i \t %i \t\t %u \t\t  %f \n", i + 1, _sensorMatrix.GetAnalogData(i), _sensorMatrix.GetVoltageData(i), _sensorMatrix.GetForceData(i));
+        }
         printf(".-.--..---.-.-.--.--.--.---.--.-\n");
 
         printf("\n.-.--..---.-.OFFSET INITIAUX.--.---.--.-\n");
         printf("Sensor Number\t");
         printf("Analog value\n");
-
-        printf("Sensor No: 1 \t %u \n", _sensorMatrix.GetAnalogOffset(0));
-        printf("Sensor No: 2 \t %u \n", _sensorMatrix.GetAnalogOffset(1));
-        printf("Sensor No: 3 \t %u \n", _sensorMatrix.GetAnalogOffset(2));
-        printf("Sensor No: 4 \t %u \n", _sensorMatrix.GetAnalogOffset(3));
-        printf("Sensor No: 5 \t %u \n", _sensorMatrix.GetAnalogOffset(4));
-        printf("Sensor No: 6 \t %u \n", _sensorMatrix.GetAnalogOffset(5));
-        printf("Sensor No: 7 \t %u \n", _sensorMatrix.GetAnalogOffset(6));
-        printf("Sensor No: 8 \t %u \n", _sensorMatrix.GetAnalogOffset(7));
-        printf("Sensor No: 9 \t %u \n", _sensorMatrix.GetAnalogOffset(8));
+        for (uint8_t i = 0; i < _sensorMatrix._sensorCount; i++)
+        {
+            printf("Sensor No: %i \t %u \n", i + 1, _sensorMatrix.GetAnalogOffset(i));
+        }
         printf(".-.--..---.-.-.--.--.--.---.--.-\n");
 
         printf("\n.-.--..---.-.OFFSET INITIAUX.--.---.--.-\n");
@@ -224,21 +212,15 @@ bool DeviceManager::testDevices()
         printf("\n\t CreateForcePlate()");
         printf("\n\t AnalyseForcePlate()");
 
-        //getData(max11611Data, sensorMatrix);
-        updateForcePlateData();
+        UpdateForcePlateData();
         _globalForcePlate.DetectCenterOfPressure(_globalForcePlate, _sensorMatrix);
 
         printf("\n.-.--..---MESURE DES CAPTEURS DE FORCE--.---.--.-\n");
         printf("Sensor Number \t Analog value \t Voltage (mV) \t Force (N) \n");
-        printf("Sensor No: 1 \t %i \t\t %u \t\t %f \n", _sensorMatrix.GetAnalogData(0), _sensorMatrix.GetVoltageData(0), _sensorMatrix.GetForceData(0));
-        printf("Sensor No: 2 \t %i \t\t %u \t\t %f \n", _sensorMatrix.GetAnalogData(1), _sensorMatrix.GetVoltageData(1), _sensorMatrix.GetForceData(1));
-        printf("Sensor No: 3 \t %i \t\t %u \t\t %f \n", _sensorMatrix.GetAnalogData(2), _sensorMatrix.GetVoltageData(2), _sensorMatrix.GetForceData(2));
-        printf("Sensor No: 4 \t %i \t\t %u \t\t %f \n", _sensorMatrix.GetAnalogData(3), _sensorMatrix.GetVoltageData(3), _sensorMatrix.GetForceData(3));
-        printf("Sensor No: 5 \t %i \t\t %u \t\t %f \n", _sensorMatrix.GetAnalogData(4), _sensorMatrix.GetVoltageData(4), _sensorMatrix.GetForceData(4));
-        printf("Sensor No: 6 \t %i \t\t %u \t\t %f \n", _sensorMatrix.GetAnalogData(5), _sensorMatrix.GetVoltageData(5), _sensorMatrix.GetForceData(5));
-        printf("Sensor No: 7 \t %i \t\t %u \t\t %f \n", _sensorMatrix.GetAnalogData(6), _sensorMatrix.GetVoltageData(6), _sensorMatrix.GetForceData(6));
-        printf("Sensor No: 8 \t %i \t\t %u \t\t %f \n", _sensorMatrix.GetAnalogData(7), _sensorMatrix.GetVoltageData(7), _sensorMatrix.GetForceData(7));
-        printf("Sensor No: 9 \t %i \t\t %u \t\t %f \n", _sensorMatrix.GetAnalogData(8), _sensorMatrix.GetVoltageData(8), _sensorMatrix.GetForceData(8));
+        for (uint8_t i = 0; i < NUMBER_OF_CAPTOR; i++)
+        {
+            printf("Sensor No: %i \t %i \t\t %u \t\t %f \n", i + 1, _sensorMatrix.GetAnalogData(i), _sensorMatrix.GetVoltageData(i), _sensorMatrix.GetForceData(i));
+        }
         printf(".-.--..---.-.-.--.--.--.---.--.-\n");
 
         printf("\n.-.--..---MESURE DES CENTRES DE PRESSION.--.---.--.-\n");
@@ -275,7 +257,7 @@ bool DeviceManager::testDevices()
         printf("\n DetectRelativePressure()\n");
 
         //getData(max11611Data, sensorMatrix);
-        updateForcePlateData();
+        UpdateForcePlateData();
 
         printf("\n.-.--..---MESURE DES PRESSIONS RELATIVES DES QUADRANTS--.---.--.-\n");
         int *relativePressureLevel = _sensorMatrix.DetectRelativePressure();

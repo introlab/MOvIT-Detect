@@ -1,5 +1,5 @@
-#ifndef _ALARM_H_
-#define _ALARM_H_
+#ifndef ALARM_H
+#define ALARM_H
 
 #include "PCA9536.h"
 #include <thread>
@@ -38,4 +38,4 @@ class Alarm
 	std::thread TurnOnBlinkLedsAlarmThread();
 };
 
-#endif
+#endif // ALARM_H

@@ -4,12 +4,12 @@
 //---------------------------------------------------------------------------------------
 
 #include "MAX11611.h"    //10-Bit ADC
-#include "forceSensor.h" //variables and modules initialisation
+#include "ForceSensor.h" //variables and modules initialisation
 
 #include <stdio.h>
 #include <unistd.h>
 
-forceSensor::forceSensor()
+ForceSensor::ForceSensor()
 {
   for (uint8_t i = 0; i < _sensorCount; i++)
   {
@@ -24,14 +24,14 @@ forceSensor::forceSensor()
   _detectionThreshold = 0;
 }
 
-forceSensor::~forceSensor() {}
+ForceSensor::~ForceSensor() {}
 
 //---------------------------------------------------------------------------------------
 //Function: ForceSensor::CalibrateForceSensor
 //Force sensor individual calibration - establish initial offset
 //Used by presence detection and center of pressure displacement functions
 //---------------------------------------------------------------------------------------
-void forceSensor::CalibrateForceSensor(uint16_t *max11611Data, MAX11611 &max11611)
+void ForceSensor::CalibrateForceSensor(uint16_t *max11611Data, MAX11611 &max11611)
 {
   /***************************** FRS MAP *****************************/
   /* FRONT LEFT                                          FRONT RIGHT */
@@ -93,7 +93,7 @@ void forceSensor::CalibrateForceSensor(uint16_t *max11611Data, MAX11611 &max1161
 //Centor of Pressure calculation and Coefficient of Friction
 //Reference: Kistler force plate formulae PDF
 //---------------------------------------------------------------------------------------
-void forceSensor::GetForceSensorData()
+void ForceSensor::GetForceSensorData()
 {
   /***************************** FRS MAP *****************************/
   /* FRONT LEFT                                          FRONT RIGHT */
@@ -151,7 +151,7 @@ void forceSensor::GetForceSensorData()
 //Function: ForceSensor::IsUserDetected
 //
 //---------------------------------------------------------------------------------------
-bool forceSensor::IsUserDetected()
+bool ForceSensor::IsUserDetected()
 {
   /***************************** FRS MAP *****************************/
   /* FRONT LEFT                                          FRONT RIGHT */
@@ -173,7 +173,7 @@ bool forceSensor::IsUserDetected()
   return (sensedPresence > GetDetectionThreshold());
 }
 
-int *forceSensor::DetectRelativePressure()
+int *ForceSensor::DetectRelativePressure()
 {
   /*********FORCE PLATES MAP *********** y ********* */
   /* FRONT LEFT           FRONT RIGHT    |           */

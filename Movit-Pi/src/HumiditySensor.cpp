@@ -3,7 +3,7 @@
 // Description
 //---------------------------------------------------------------------------------------
 
-#include "humiditySensor.h"
+#include "HumiditySensor.h"
 #include <bcm2835.h>
 #include <stdio.h>
 #include <stdlib.h>

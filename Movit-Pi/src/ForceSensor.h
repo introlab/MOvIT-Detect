@@ -1,13 +1,13 @@
-#ifndef _FORCESENSOR_H_
-#define _FORCESENSOR_H_
+#ifndef FORCE_SENSOR_H
+#define FORCE_SENSOR_H
 
 #include"MAX11611.h"
 
-class forceSensor
+class ForceSensor
 {
   public:
-    forceSensor();
-    ~forceSensor();
+    ForceSensor();
+    ~ForceSensor();
 
     void CalibrateForceSensor(uint16_t* max11611Data, MAX11611 &max11611);
     void GetForceSensorData();
@@ -46,4 +46,4 @@ class forceSensor
     float _detectionThreshold;
 };
 
-#endif /* _FORCESENSOR_H_ */
+#endif // FORCE_SENSOR_H

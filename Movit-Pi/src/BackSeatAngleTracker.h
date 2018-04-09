@@ -1,5 +1,5 @@
-#ifndef _BACK_SEAT_ANGLE_TRACKER_H_
-#define _BACK_SEAT_ANGLE_TRACKER_H_
+#ifndef BACK_SEAT_ANGLE_TRACKER_H
+#define BACK_SEAT_ANGLE_TRACKER_H
 
 #include "MPU6050.h"
 
@@ -42,4 +42,4 @@ class BackSeatAngleTracker
 		int GetBackSeatAngle();
 };
 
-#endif
+#endif // BACK_SEAT_ANGLE_TRACKER_H
