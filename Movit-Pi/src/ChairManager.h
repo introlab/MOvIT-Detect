@@ -6,6 +6,7 @@
 #include <string>
 #include <unistd.h>
 #include "Utils.h"
+#include "Timer.h"
 
 class ChairManager
 {
@@ -30,6 +31,7 @@ class ChairManager
     Coord_t _copCoord;
     std::string _currentDatetime = "";
     bool _isSomeoneThere = false;
+    bool _prevIsSomeoneThere = false;
 
     bool _overrideNotificationPattern = false;
 
@@ -37,6 +39,8 @@ class ChairManager
     uint32_t _requiredBackRestAngle = 0;
     uint32_t _requiredPeriod = 0;
     uint32_t _requiredDuration = 0;
+
+    Timer _timer;
 };
 
 #endif // CHAIR_MANAGER_H

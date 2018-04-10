@@ -42,11 +42,15 @@ class MosquittoBroker : public mosqpp::mosquittopp
 	bool isRequiredPeriodNew() { return _requiredPeriodNew; }
 	bool isRequiredDurationNew() { return _requiredDurationNew; }
 
+	bool calibPressureMatRequired();
+
   private:
 	bool _setAlarmOn = false;
 	uint32_t _requiredBackRestAngle = 0;
 	uint32_t _requiredPeriod = 0;
 	uint32_t _requiredDuration = 0;
+
+	bool _calibPressureMatRequired = false;
 
 	bool _setAlarmOnNew = false;
 	bool _requiredBackRestAngleNew = false;

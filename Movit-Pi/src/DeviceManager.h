@@ -4,7 +4,7 @@
 #include "Alarm.h"
 #include "ForcePlate.h"
 #include "ForceSensor.h"
-#include "MAX11611.h" 
+#include "MAX11611.h"
 #include "BackSeatAngleTracker.h"
 #include "DateTimeRTC.h"
 #include <string>
@@ -32,6 +32,8 @@ class DeviceManager
     Coord_t GetCenterOfPressure() { return _COPCoord; }
     int GetBackSeatAngle() { return _backSeatAngle; }
     int GetTimeSinceEpoch() { return _timeSinceEpoch; }
+
+    void CalibratePressureMat();
 
     bool TestDevices();
 

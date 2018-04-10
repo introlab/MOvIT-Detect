@@ -14,11 +14,17 @@ void DeviceManager::InitializeDevices()
     I2Cdev::initialize();
     _alarm.Initialize();
     _imuValid = _imu.Initialize();
-    _forcePlateValid = initializeForcePlate();
+    _forcePlateValid = InitializeForcePlate();
 
     _datetimeRTC->SetCurrentDateTime();
 
     printf("Setup Done\n");
+}
+
+void DeviceManager::CalibratePressureMat()
+{
+    UpdateForcePlateData();
+    _sensorMatrix.CalibrateForceSensor(_max11611Data, _max11611);
 }
 
 bool DeviceManager::InitializeForcePlate()
@@ -32,10 +38,8 @@ bool DeviceManager::InitializeForcePlate()
         }
         _sensorMatrix.GetForceSensorData();
 
-        // les lignes suivantes peuvent être mal utilisé
-        // getData(max11611Data, sensorMatrix);
-        UpdateForcePlateData();
-        _sensorMatrix.CalibrateForceSensor(_max11611Data, _max11611);
+        // TODO tester avec le tapis pour savoir si ce call devrait rester ici
+        CalibratePressureMat();
 
         printf("success\n");
         return true;

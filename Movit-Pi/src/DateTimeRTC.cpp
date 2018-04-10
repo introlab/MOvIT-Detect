@@ -30,7 +30,7 @@ void DateTimeRTC::SetCurrentDateTime()
 		DECToBCD(ptm->tm_year % 100),
 	};
 
-	time_t timeSinceEpoch = mktime(ptm);
+	// time_t timeSinceEpoch = mktime(ptm);
 
     _mcp79410.setDateTime(dt);
 }
@@ -41,7 +41,7 @@ int DateTimeRTC::GetTimeSinceEpoch()
 	unsigned char datetime[DATE_TIME_SIZE] = { 0, 0, 0, 0, 0, 0, 0 };
 
 	_mcp79410.getDateTime(datetime);
-	
+
 	struct tm t = { 0 };
 
 	t.tm_year = BCDToDEC(datetime[6]) + numberOfYearsToAdd;

@@ -4,6 +4,8 @@
 #define POSITIVE_ANGLE_RATE_THRESHOLD 3
 #define ACCEPTABLE_ANGLE_RANGE 10
 
+#define CENTER_OF_PRESSURE_EMISSION_PERIOD 5 * 60
+
 ChairManager::ChairManager(MosquittoBroker *mosquittoBroker, DeviceManager *devicemgr)
     : _mosquittoBroker(mosquittoBroker), _devicemgr(devicemgr)
 {
@@ -13,18 +15,50 @@ ChairManager::ChairManager(MosquittoBroker *mosquittoBroker, DeviceManager *devi
 
 void ChairManager::UpdateDevices()
 {
+    if (_mosquittoBroker->calibPressureMatRequired())
+    {
+        printf("debut de la calibration \n");
+        _devicemgr->CalibratePressureMat();
+        printf("FIN de la calibration \n");
+    }
+
+    _prevIsSomeoneThere = _isSomeoneThere;
     _devicemgr->Update();
-    _currentDatetime = std::to_string(_devicemgr->GetTimeSinceEpoch());
+    _currentDatetime = _devicemgr->GetTimeSinceEpoch();
     _isSomeoneThere = _devicemgr->IsSomeoneThere();
-    _copCoord = _devicemgr->GetCenterOfPressure();
+    Coord_t tempCoord = _devicemgr->GetCenterOfPressure();
+    _copCoord.x += tempCoord.x;
+    _copCoord.y += tempCoord.y;
     _prevChairAngle = _currentChairAngle;
     _currentChairAngle = _devicemgr->GetBackSeatAngle();
 
-    // printf("getDateTime = %s\n", _currentDatetime.c_str());
-    // printf("isSomeoneThere = %i\n", _devicemgr->isSomeoneThere());
-    // printf("getCenterOfPressure x = %f, y = %f\n", _copCoord.x, _copCoord.y);
-    printf("\n _currentChairAngle = %i\n", _currentChairAngle);
+#ifdef DEBUG_PRINT
+    printf("getDateTime = %s\n", _currentDatetime.c_str());
+    printf("isSomeoneThere = %i\n", _devicemgr->isSomeoneThere());
+    printf("getCenterOfPressure x = %f, y = %f\n", _copCoord.x, _copCoord.y);
+    printf("_currentChairAngle = %i\n", _currentChairAngle);
     printf("_prevChairAngle = %i\n\n", _prevChairAngle);
+#endif
+
+    // Envoi de la moyenne de la position dans les 5 dernieres minutes.
+    // TODO Ceci est temporaire, il va falloir envoyer le centre de pression quand il y a un changement majeur.
+    // Ceci sera revue en même temps que tous le scheduling
+    if (_timer.elapsed() >= CENTER_OF_PRESSURE_EMISSION_PERIOD * 1000)
+    {
+        _timer.reset();
+        // Tester cette ligne avec la chaise
+        // _mosquittoBroker->sendCenterOfPressure(_copCoord.x/CENTER_OF_PRESSURE_EMISSION_PERIOD, _copCoord.y/CENTER_OF_PRESSURE_EMISSION_PERIOD, _currentDatetime);
+
+        _copCoord.x = 0;
+        _copCoord.y = 0;
+    }
+
+    if (_prevIsSomeoneThere != _isSomeoneThere)
+    {
+        _mosquittoBroker->sendIsSomeoneThere(_isSomeoneThere, _currentDatetime);
+    }
+    // A rajouter quand le moment sera venu
+    //_mosquittoBroker->sendSpeed(0, _currentDatetime);
 }
 
 void ChairManager::ReadFromServer()
@@ -54,16 +88,11 @@ void ChairManager::ReadFromServer()
     if (_mosquittoBroker->isRequiredDurationNew())
     {
         _requiredDuration = _mosquittoBroker->getRequiredDuration();
-       _secondsCounter = 0;
+        _secondsCounter = 0;
         // TODO valider que c'est le bon _state
         _state = 1;
         printf("Something new for _requiredDuration = %i\n", _requiredDuration);
     }
-
-    _mosquittoBroker->sendBackRestAngle(_currentChairAngle, _currentDatetime);
-    _mosquittoBroker->sendCenterOfPressure(_copCoord.x, _copCoord.y, _currentDatetime);
-    _mosquittoBroker->sendIsSomeoneThere(_isSomeoneThere, _currentDatetime);
-    _mosquittoBroker->sendSpeed(0, _currentDatetime);
 }
 
 void ChairManager::CheckNotification()
@@ -99,7 +128,6 @@ void ChairManager::CheckNotification()
                 // TODO
                 // L'ancienne équipe attendait un autre 60 secondes sans bougé soit passé
                 // Faudrais considerer un autre solution car ca me semble wack
-
 
                 //TODO: Valider que c'est le bon genre d'alarme
                 printf("_state 3\n");

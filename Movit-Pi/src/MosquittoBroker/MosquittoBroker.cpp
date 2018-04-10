@@ -21,6 +21,8 @@ const char *ALARM_TOPIC = "data/set_alarm";
 const char *REQUIRED_ANGLE_TOPIC = "data/required_back_rest_angle";
 const char *REQUIRED_PERIOD_TOPIC = "data/required_period";
 const char *REQUIRED_DURATION_TOPIC = "data/required_duration";
+const char *CALIB_PRESSURE_MAT_TOPIC = "config/calib_pressure_mat";
+
 
 MosquittoBroker::MosquittoBroker(const char *id) : mosquittopp(id)
 {
@@ -69,6 +71,7 @@ void MosquittoBroker::on_connect(int rc)
 		subscribe(NULL, REQUIRED_ANGLE_TOPIC);
 		subscribe(NULL, REQUIRED_PERIOD_TOPIC);
 		subscribe(NULL, REQUIRED_DURATION_TOPIC);
+		subscribe(NULL, CALIB_PRESSURE_MAT_TOPIC);
 	}
 }
 
@@ -85,8 +88,6 @@ void MosquittoBroker::on_subcribe(int mid, int qos_count, const int *granted_qos
 
 void MosquittoBroker::on_message(const mosquitto_message *msg)
 {
-	// printf("Subscriber received message mid: %i of topic: %s Data: %s\n", msg->mid, msg->topic, reinterpret_cast<char *>(msg->payload));
-
 	std::string message(reinterpret_cast<char *>(msg->payload));
 	std::string topic(msg->topic);
 
@@ -150,6 +151,19 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
 			_requiredDurationNew = false;
 		}
 	}
+	if (topic == CALIB_PRESSURE_MAT_TOPIC)
+	{
+		try
+		{
+			_calibPressureMatRequired = std::stoi(message);
+		}
+		catch (const std::exception &e)
+		{
+			printf("Exception thrown by %s()\n", e.what());
+			printf("Setting _requiredDuration to 0\n");
+			_calibPressureMatRequired = false;
+		}
+	}
 }
 
 void MosquittoBroker::sendBackRestAngle(const int angle, const std::string datetime)
@@ -204,4 +218,17 @@ uint32_t MosquittoBroker::getRequiredDuration()
 {
 	_requiredDurationNew = false;
 	return _requiredDuration;
+}
+
+bool MosquittoBroker::calibPressureMatRequired()
+{
+	if(_calibPressureMatRequired)
+	{
+		_calibPressureMatRequired = false;
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
