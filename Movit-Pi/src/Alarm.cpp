@@ -120,7 +120,7 @@ void Alarm::TurnOnRedAlarm()
 		usleep(_blinkFrequency * 1000 * 1000);
 	}
 
-	TurnOffRedLed();
+	TurnOnRedLed();
 	TurnOffDCMotor();
 }
 

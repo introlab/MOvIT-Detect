@@ -103,8 +103,7 @@ void ChairManager::CheckNotification()
 
                 //TODO: Valider que c'est le bon genre d'alarme
                 printf("_state 3\n");
-                _devicemgr->GetAlarm()->TurnOnDCMotor();
-                _devicemgr->GetAlarm()->TurnOnRedLed();
+                _devicemgr->GetAlarm()->TurnOnRedAlarmThread().detach();
                 _state = 4;
                 break;
             // Gestion de la monté de la bascule
@@ -145,9 +144,7 @@ void ChairManager::CheckNotification()
                     // On utilise l'alarme pour dire au patient de s'arrêter.
                     // Temporairement, on alume les deux LED.
                     // TODO: Il faudrait que les deux LEDs clignottent
-                    _devicemgr->GetAlarm()->TurnOffDCMotor();
-                    _devicemgr->GetAlarm()->TurnOnGreenLed();
-                    _devicemgr->GetAlarm()->TurnOnRedLed();
+                    _devicemgr->GetAlarm()->TurnOnBlinkLedsAlarmThread().detach();
                     _secondsCounter++;
                     printf("_state 5\t_secondsCounter: %i\n", _secondsCounter);
                     if (_secondsCounter >= _requiredDuration)
@@ -159,9 +156,7 @@ void ChairManager::CheckNotification()
                 else
                 {
                     printf("_state 5 il faut remonter\n");
-                    _devicemgr->GetAlarm()->TurnOnDCMotor();
-                    _devicemgr->GetAlarm()->TurnOnRedLed();
-                    _devicemgr->GetAlarm()->TurnOffGreenLed();
+                    _devicemgr->GetAlarm()->TurnOnRedAlarmThread().detach();
                     _state = 4;
                     _secondsCounter = 0;
                 }
@@ -177,9 +172,8 @@ void ChairManager::CheckNotification()
                     _state = 2;
                     _secondsCounter = 0;
                     _mosquittoBroker->sendBackRestAngle(_currentChairAngle, _currentDatetime);
-                    _devicemgr->GetAlarm()->TurnOffDCMotor();
-                    _devicemgr->GetAlarm()->TurnOffRedLed();
-                    _devicemgr->GetAlarm()->TurnOffGreenLed();
+                    _devicemgr->GetAlarm()->TurnOffAlarm();
+
                     //TODO: Considerer envoyer le temps passé à l'angle aussi
                 }
                 break;
@@ -206,9 +200,7 @@ void ChairManager::CheckNotification()
         }
         else
         {
-            _devicemgr->GetAlarm()->TurnOffDCMotor();
-            _devicemgr->GetAlarm()->TurnOffRedLed();
-            _devicemgr->GetAlarm()->TurnOffGreenLed();
+            _devicemgr->GetAlarm()->TurnOffAlarm();
         }
         _overrideNotificationPattern = false;
     }
