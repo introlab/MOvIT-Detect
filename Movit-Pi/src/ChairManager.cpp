@@ -14,7 +14,7 @@ ChairManager::ChairManager(MosquittoBroker *mosquittoBroker, DeviceManager *devi
 void ChairManager::UpdateDevices()
 {
     _devicemgr->Update();
-    _currentDatetime = _devicemgr->GetDateTime();
+    _currentDatetime = std::to_string(_devicemgr->GetTimeSinceEpoch());
     _isSomeoneThere = _devicemgr->IsSomeoneThere();
     _copCoord = _devicemgr->GetCenterOfPressure();
     _prevChairAngle = _currentChairAngle;

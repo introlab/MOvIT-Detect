@@ -31,7 +31,7 @@ class DeviceManager
     bool IsSomeoneThere() { return _isSomeoneThere; }
     Coord_t GetCenterOfPressure() { return _COPCoord; }
     int GetBackSeatAngle() { return _backSeatAngle; }
-    std::string GetDateTime() { return _currentDateTimeStr; }
+    int GetTimeSinceEpoch() { return _timeSinceEpoch; }
 
     bool TestDevices();
 
@@ -57,8 +57,7 @@ class DeviceManager
     bool _isSomeoneThere = false;
     Coord_t _COPCoord;
 
-    unsigned char _dateTimeRaw[DATE_TIME_SIZE] = {0x45, 0x59, 0x12, 0x00, 0x11, 0x03, 0x18}; //En BCD {seconds, minutes, hours, day, date, month, year}
-    std::string _currentDateTimeStr = "";
+    int _timeSinceEpoch;
 
     DateTimeRTC *_datetimeRTC;
 

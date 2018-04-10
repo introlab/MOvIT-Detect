@@ -14,12 +14,9 @@ void DeviceManager::InitializeDevices()
     I2Cdev::initialize();
     _alarm.Initialize();
     _imuValid = _imu.Initialize();
+    _forcePlateValid = initializeForcePlate();
 
-    // TODO: Pour vérifier l'init il faut setter une date et vérifier
-    // si elle est tenu par le RTC
-    _datetimeRTC->setDateTime(_dateTimeRaw);
-
-    _forcePlateValid = InitializeForcePlate();
+    _datetimeRTC->SetCurrentDateTime();
 
     printf("Setup Done\n");
 }
@@ -52,8 +49,7 @@ bool DeviceManager::InitializeForcePlate()
 
 void DeviceManager::Update()
 {
-    // Data: Date and time
-    _currentDateTimeStr = _datetimeRTC->getFormattedDateTime();
+	_timeSinceEpoch = _datetimeRTC->GetTimeSinceEpoch();
 
     if (_imuValid)
     {
@@ -298,10 +294,8 @@ bool DeviceManager::TestDevices()
     }
     else if (inSerialChar == 'k')
     {
-        std::string dt = _datetimeRTC->getFormattedDateTime();
-
-        // Date and time
-        printf("Affichage de la date + heure: %s\n", dt.c_str());
+        int timeSinceEpoch = _datetimeRTC->GetTimeSinceEpoch();
+        printf("Time since epoch: %d\n", timeSinceEpoch);
     }
     else if (inSerialChar == 'q')
     {
