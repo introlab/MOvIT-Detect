@@ -2,7 +2,7 @@
 
 #define INITIAL_VALIDATING_TIME 5 // Temps initial d'attente avant de commencer la séquence de bascule
 #define POSITIVE_ANGLE_RATE_THRESHOLD 3
-#define ACCEPTABLE_ANGLE_RANGE 10
+#define ACCEPTABLE_ANGLE_RANGE 5
 
 #define CENTER_OF_PRESSURE_EMISSION_PERIOD 5 * 60
 
@@ -24,7 +24,7 @@ void ChairManager::UpdateDevices()
 
     _prevIsSomeoneThere = _isSomeoneThere;
     _devicemgr->Update();
-    _currentDatetime = _devicemgr->GetTimeSinceEpoch();
+    _currentDatetime = std::to_string(_devicemgr->GetTimeSinceEpoch());
     _isSomeoneThere = _devicemgr->IsSomeoneThere();
     Coord_t tempCoord = _devicemgr->GetCenterOfPressure();
     _copCoord.x += tempCoord.x;
@@ -200,6 +200,7 @@ void ChairManager::CheckNotification()
                     _state = 2;
                     _secondsCounter = 0;
                     _mosquittoBroker->sendBackRestAngle(_currentChairAngle, _currentDatetime);
+					printf("_state 4 SEND ANGLE\t _currentChairAngle: %i\n", _currentChairAngle);
                     _devicemgr->GetAlarm()->TurnOffAlarm();
 
                     //TODO: Considerer envoyer le temps passé à l'angle aussi
@@ -222,9 +223,7 @@ void ChairManager::CheckNotification()
     {
         if (_setAlarmOn)
         {
-            _devicemgr->GetAlarm()->TurnOnDCMotor();
-            _devicemgr->GetAlarm()->TurnOnRedLed();
-            _devicemgr->GetAlarm()->TurnOnGreenLed();
+            _devicemgr->GetAlarm()->TurnOnRedAlarmThread().detach();
         }
         else
         {

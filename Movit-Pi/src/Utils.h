@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-// #define DEBUG_PRINT //Debug trace
+#define DEBUG_PRINT //Debug trace
 
 #define ONES_MASK 0x0F
 #define TENS_MASK 0xF0

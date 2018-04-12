@@ -91,12 +91,18 @@ void Alarm::TurnOffAlarm()
 
 void Alarm::TurnOnBlinkLedsAlarm()
 {
+	if (_isBlinkLedsAlarmOn == true)
+	{
+		return;
+	}
+
+	_isBlinkLedsAlarmOn = true;
 	int count = 0;
 	TurnOffDCMotor();
 	TurnOffRedLed();
 	TurnOnGreenLed();
 
-	while (GetPinState(PUSH_BUTTON) && (count++ <= (int)(_blinkFrequency * _blinkDuration)))
+	while (count++ <= (int)(_blinkFrequency * _blinkDuration))
 	{
 		_pca9536.toggleState(RED_LED);
 		_pca9536.toggleState(GREEN_LED);
@@ -105,10 +111,17 @@ void Alarm::TurnOnBlinkLedsAlarm()
 
 	TurnOffRedLed();
 	TurnOffGreenLed();
+	_isBlinkLedsAlarmOn = false;
 }
 
 void Alarm::TurnOnRedAlarm()
 {
+	if (_isRedAlarmOn == true)
+	{
+		return;
+	}
+
+	_isRedAlarmOn = true;
 	int count = 0;
 	TurnOnDCMotor();
 	TurnOnRedLed();
@@ -122,6 +135,7 @@ void Alarm::TurnOnRedAlarm()
 
 	TurnOnRedLed();
 	TurnOffDCMotor();
+	_isRedAlarmOn = false;
 }
 
 // TODO: Use this function when mutex is implemented

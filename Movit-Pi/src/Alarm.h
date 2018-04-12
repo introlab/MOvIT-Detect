@@ -11,6 +11,10 @@ class Alarm
 {
   private:
 	PCA9536 _pca9536;
+
+	bool _isRedAlarmOn = false;
+	bool _isBlinkLedsAlarmOn = false;
+
 	double _blinkFrequency;
 	int _blinkDuration;
 
