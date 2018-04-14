@@ -2,6 +2,7 @@ CFLAGS=-Wall -ggdb -Isrc -Isrc/lib -Isrc/lib/MosquittoBroker -Isrc/lib/Mosquitto
 LDFLAGS=-Lsrc/lib -Lsrc/lib/MosquittoBroker src/lib/MosquittoBroker/cpp/libmosquittopp.so.1 src/lib/MosquittoBroker/libmosquitto.so.1
 
 SOURCES = 	src/main.cpp \
+			src/FileManager.cpp \
 			src/DeviceManager.cpp \
 			src/ChairManager.cpp \
 			src/BackSeatAngleTracker.cpp \

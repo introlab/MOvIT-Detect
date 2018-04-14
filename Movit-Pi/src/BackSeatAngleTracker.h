@@ -2,6 +2,7 @@
 #define BACK_SEAT_ANGLE_TRACKER_H
 
 #include "MPU6050.h"
+#include "FileManager.h"
 
 #define ACCELEROMETER_DEADZONE 8 // Accelerometer error allowed, make it lower to get more precision, but sketch may not converge (default: 8)
 #define BUFFER_SIZE 1000 // Amount of readings used to average, make it higher to get more precision but sketch will be slower (default: 1000)
@@ -25,6 +26,8 @@ class BackSeatAngleTracker
 
 		bool InitializeFixedImu();
 		bool InitializeMobileImu();
+
+		FileManager _fileManager;
 
 	public:
 		BackSeatAngleTracker();

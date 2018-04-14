@@ -1,6 +1,11 @@
 #include "BackSeatAngleTracker.h"
+#include <algorithm> 
 #include <unistd.h>
 #include <math.h>
+#include <string>
+
+const std::string fixedImuName = "fixedImu";
+const std::string mobileImuName = "mobileImu";
 
 BackSeatAngleTracker::BackSeatAngleTracker()
 {
@@ -8,6 +13,7 @@ BackSeatAngleTracker::BackSeatAngleTracker()
 
 bool BackSeatAngleTracker::Initialize()
 {
+	_fileManager.ReadImuCalibrationOffsetsFromFile(fixedImuName, mobileImuName);
 	return InitializeMobileImu() && InitializeFixedImu();
 }
 
@@ -23,28 +29,26 @@ bool BackSeatAngleTracker::InitializeFixedImu()
 
 	_fixedImu.initialize();
 
-	SetCalibrationArray(_axis::x);
-	ResetIMUOffsets(_fixedImu);
-	CalculateAccelerationsMean(_fixedImu);
-	Calibrate(_fixedImu);
-	CalculateAccelerationsMean(_fixedImu);
+	int * accelOffsets = _fileManager.GetFixedImuAccelOffsets();
+	int * gyroOffsets = _fileManager.GetFixedImuGyroOffsets();
 
-	printf("success\n");
-	printf("Your offsets:\t");
-	printf("%i", _accelerationOffsets[0]);
-	printf("\t");
-	printf("%i", _accelerationOffsets[1]);
-	printf("\t");
-	printf("%i", _accelerationOffsets[2]);
-	printf("\t");
-	printf("%i", _gyroOffsets[0]);
-	printf("\t");
-	printf("%i", _gyroOffsets[1]);
-	printf("\t");
-	printf("%i\n", _gyroOffsets[2]);
+	if (accelOffsets == NULL || gyroOffsets == NULL)
+	{
+		SetCalibrationArray(_axis::x);
+		ResetIMUOffsets(_fixedImu);
+		CalculateAccelerationsMean(_fixedImu);
+		Calibrate(_fixedImu);
+		CalculateAccelerationsMean(_fixedImu);
+
+		_fileManager.WriteImuCalibrationOffsetsToFile(_accelerationOffsets, _gyroOffsets, fixedImuName);
+	}
+	else
+	{
+		std::copy(accelOffsets, accelOffsets + 3, std::begin(_accelerationOffsets));
+		std::copy(gyroOffsets, gyroOffsets + 3, std::begin(_gyroOffsets));
+	}
 
 	SetImuOffsets(_fixedImu);
-
 	return true;
 }
 
@@ -60,28 +64,26 @@ bool BackSeatAngleTracker::InitializeMobileImu()
 
 	_mobileImu.initialize();
 
-	SetCalibrationArray(_axis::x);
-	ResetIMUOffsets(_mobileImu);
-	CalculateAccelerationsMean(_mobileImu);
-	Calibrate(_mobileImu);
-	CalculateAccelerationsMean(_mobileImu);
+	int * accelOffsets = _fileManager.GetMobileImuAccelOffsets();
+	int * gyroOffsets = _fileManager.GetMobileImuGyroOffsets();
 
-	printf("success\n");
-	printf("Your offsets:\t");
-	printf("%i", _accelerationOffsets[0]);
-	printf("\t");
-	printf("%i", _accelerationOffsets[1]);
-	printf("\t");
-	printf("%i", _accelerationOffsets[2]);
-	printf("\t");
-	printf("%i", _gyroOffsets[0]);
-	printf("\t");
-	printf("%i", _gyroOffsets[1]);
-	printf("\t");
-	printf("%i\n", _gyroOffsets[2]);
+	if (accelOffsets == NULL || gyroOffsets == NULL)
+	{
+		SetCalibrationArray(_axis::x);
+		ResetIMUOffsets(_mobileImu);
+		CalculateAccelerationsMean(_mobileImu);
+		Calibrate(_mobileImu);
+		CalculateAccelerationsMean(_mobileImu);
+
+		_fileManager.WriteImuCalibrationOffsetsToFile(_accelerationOffsets, _gyroOffsets, mobileImuName);
+	}
+	else
+	{
+		std::copy(accelOffsets, accelOffsets + 3, std::begin(_accelerationOffsets));
+		std::copy(gyroOffsets, gyroOffsets + 3, std::begin(_gyroOffsets));
+	}
 
 	SetImuOffsets(_mobileImu);
-
 	return true;
 }
 
