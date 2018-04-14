@@ -1,8 +1,7 @@
 #include "ChairManager.h"
 
 #define INITIAL_VALIDATING_TIME 5 // Temps initial d'attente avant de commencer la séquence de bascule
-#define POSITIVE_ANGLE_RATE_THRESHOLD 3
-#define ACCEPTABLE_ANGLE_RANGE 5
+#define DELTA_ANGLE_THRESHOLD 5
 
 #define CENTER_OF_PRESSURE_EMISSION_PERIOD 5 * 60
 
@@ -34,7 +33,7 @@ void ChairManager::UpdateDevices()
 
 #ifdef DEBUG_PRINT
     printf("getDateTime = %s\n", _currentDatetime.c_str());
-    printf("isSomeoneThere = %i\n", _devicemgr->isSomeoneThere());
+    printf("isSomeoneThere = %i\n", _devicemgr->IsSomeoneThere());
     printf("getCenterOfPressure x = %f, y = %f\n", _copCoord.x, _copCoord.y);
     printf("_currentChairAngle = %i\n", _currentChairAngle);
     printf("_prevChairAngle = %i\n\n", _prevChairAngle);
@@ -53,10 +52,16 @@ void ChairManager::UpdateDevices()
         _copCoord.y = 0;
     }
 
+    if (_currentChairAngle != _prevChairAngle)
+    {
+        _mosquittoBroker->sendBackRestAngle(_currentChairAngle, _currentDatetime);
+    }
+
     if (_prevIsSomeoneThere != _isSomeoneThere)
     {
         _mosquittoBroker->sendIsSomeoneThere(_isSomeoneThere, _currentDatetime);
     }
+
     // A rajouter quand le moment sera venu
     //_mosquittoBroker->sendSpeed(0, _currentDatetime);
 }
@@ -136,27 +141,11 @@ void ChairManager::CheckNotification()
                 break;
             // Gestion de la monté de la bascule
             case 4:
-                printf("_state 4\t _currentChairAngle - _prevChairAngle: %i\n", _currentChairAngle - _prevChairAngle);
-                //Quand une positive rate est détecté sur l'angle, il faut l'envoyer
-                //TODO: ajouter une variable de threshol et la tuner
-                if (_currentChairAngle - _prevChairAngle >= POSITIVE_ANGLE_RATE_THRESHOLD)
-                {
-                    //TODO: Peut-être implémenté quelque chose qui valide qu'on a deux
-                    // échantillion de suite qui ont un positive rate ?
-                    printf("_state 4 SEND ANGLE\t _currentChairAngle: %i\n", _currentChairAngle);
-                    _mosquittoBroker->sendBackRestAngle(_currentChairAngle, _currentDatetime);
-                }
 
                 printf("_state 4\t abs(requiredBackRestAngle - _currentChairAngle): %i\n", abs(int(_requiredBackRestAngle) - int(_currentChairAngle)));
-                // Si le patient est rendu a l'angle +- ACCEPTABLE_ANGLE_RANGE deg et il s'arrête
-                // TODO reconsiderer si le patient dépasse l'angle
-                if (abs(int(_requiredBackRestAngle) - int(_currentChairAngle)) < ACCEPTABLE_ANGLE_RANGE)
+
+                if ((_requiredBackRestAngle - _currentChairAngle) < DELTA_ANGLE_THRESHOLD)
                 {
-                    // Quand on s'arrête, on envoi l'angle au back end
-                    _mosquittoBroker->sendBackRestAngle(_currentChairAngle, _currentDatetime);
-
-                    printf("_state 4 SEND ANGLE\t _currentChairAngle: %i\n", _currentChairAngle);
-
                     _devicemgr->GetAlarm()->TurnOffDCMotor();
                     _devicemgr->GetAlarm()->TurnOffRedLed();
                     _devicemgr->GetAlarm()->TurnOnGreenLed();
@@ -167,11 +156,8 @@ void ChairManager::CheckNotification()
             case 5:
                 printf("_state 5\n");
                 // Si l'angle est maintenu
-                if (abs(_requiredBackRestAngle - _currentChairAngle) < ACCEPTABLE_ANGLE_RANGE)
+                if ((_requiredBackRestAngle - _currentChairAngle) < DELTA_ANGLE_THRESHOLD)
                 {
-                    // On utilise l'alarme pour dire au patient de s'arrêter.
-                    // Temporairement, on alume les deux LED.
-                    // TODO: Il faudrait que les deux LEDs clignottent
                     _devicemgr->GetAlarm()->TurnOnBlinkLedsAlarmThread().detach();
                     _secondsCounter++;
                     printf("_state 5\t_secondsCounter: %i\n", _secondsCounter);
@@ -194,16 +180,12 @@ void ChairManager::CheckNotification()
                 _secondsCounter++;
                 printf("_state 6\t_secondsCounter: %i\n", _secondsCounter);
                 _devicemgr->GetAlarm()->TurnOffRedLed();
-                // On quitte quand l'angle requis - ACCEPTABLE_ANGLE_RANGE n'est plus maintenue. Par contre, on laisse la possibilité de continuer
-                if ((_requiredBackRestAngle - _currentChairAngle) > ACCEPTABLE_ANGLE_RANGE)
+                // On quitte quand l'angle requis - DELTA_ANGLE_THRESHOLD n'est plus maintenue. Par contre, on laisse la possibilité de continuer
+                if ((_requiredBackRestAngle - _currentChairAngle) > DELTA_ANGLE_THRESHOLD)
                 {
                     _state = 2;
                     _secondsCounter = 0;
-                    _mosquittoBroker->sendBackRestAngle(_currentChairAngle, _currentDatetime);
-					printf("_state 4 SEND ANGLE\t _currentChairAngle: %i\n", _currentChairAngle);
                     _devicemgr->GetAlarm()->TurnOffAlarm();
-
-                    //TODO: Considerer envoyer le temps passé à l'angle aussi
                 }
                 break;
             default:
@@ -214,9 +196,7 @@ void ChairManager::CheckNotification()
         {
             _state = 1;
             _secondsCounter = 0;
-            // _devicemgr->GetAlarm()->TurnOffDCMotor();
-            // _devicemgr->GetAlarm()->TurnOffRedLed();
-            // _devicemgr->GetAlarm()->TurnOffGreenLed();
+            _devicemgr->GetAlarm()->TurnOffAlarm();
         }
     }
     else
