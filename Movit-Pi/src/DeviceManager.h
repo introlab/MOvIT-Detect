@@ -7,9 +7,8 @@
 #include "MAX11611.h"
 #include "BackSeatAngleTracker.h"
 #include "DateTimeRTC.h"
+#include "MotionSensor.h"
 #include <string>
-
-#define NUMBER_OF_CAPTOR 9
 
 //Center of pressure coordinate
 struct Coord_t
@@ -32,9 +31,8 @@ class DeviceManager
     Coord_t GetCenterOfPressure() { return _COPCoord; }
     int GetBackSeatAngle() { return _backSeatAngle; }
     int GetTimeSinceEpoch() { return _timeSinceEpoch; }
-
+    float GetIsMoving() { return _isMoving; }
     void CalibratePressureMat();
-
     bool TestDevices();
 
     // Singleton
@@ -55,22 +53,21 @@ class DeviceManager
 
     bool _imuValid = false;
     bool _forcePlateValid = false;
-
+    bool _isMoving = false;
     bool _isSomeoneThere = false;
-    Coord_t _COPCoord;
 
-    int _timeSinceEpoch;
+    Coord_t _COPCoord;
+    int _timeSinceEpoch = 0;
 
     DateTimeRTC *_datetimeRTC;
-
     Alarm _alarm;
-
     BackSeatAngleTracker _imu;
     int _backSeatAngle = 0;
 
     uint16_t _max11611Data[9];
     ForceSensor _sensorMatrix;
     ForcePlate _globalForcePlate;
+    MotionSensor _motionSensor;
     MAX11611 _max11611;
 };
 

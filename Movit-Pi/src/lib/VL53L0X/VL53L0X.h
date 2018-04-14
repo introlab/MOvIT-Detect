@@ -95,40 +95,30 @@ class VL53L0X
 
     enum vcselPeriodType { VcselPeriodPreRange, VcselPeriodFinalRange };
 
-    VL53L0X(void);
+    VL53L0X();
 
-    void setAddress(uint8_t new_addr);
-    inline uint8_t getAddress(void) { return address; }
+    void SetAddress(uint8_t new_addr);
+    inline uint8_t GetAddress() { return address; }
 
-    bool init(bool io_2v8 = true);
+    bool Initialize(bool io_2v8 = true);
 
-    void writeReg(uint8_t reg, uint8_t value);
-    void writeReg16Bit(uint8_t reg, uint16_t value);
-    void writeReg32Bit(uint8_t reg, uint32_t value);
-    uint8_t readReg(uint8_t reg);
-    uint16_t readReg16Bit(uint8_t reg);
-    uint32_t readReg32Bit(uint8_t reg);
+    bool SetSignalRateLimit(float limit_Mcps);
+    float GetSignalRateLimit();
 
-    void writeMulti(uint8_t reg, uint8_t * src, uint8_t count);
-    void readMulti(uint8_t reg, uint8_t * dst, uint8_t count);
+    bool SetMeasurementTimingBudget(uint32_t budget_us);
+    uint32_t GetMeasurementTimingBudget();
 
-    bool setSignalRateLimit(float limit_Mcps);
-    float getSignalRateLimit(void);
+    bool SetVcselPulsePeriod(vcselPeriodType type, uint8_t period_pclks);
+    uint8_t GetVcselPulsePeriod(vcselPeriodType type);
 
-    bool setMeasurementTimingBudget(uint32_t budget_us);
-    uint32_t getMeasurementTimingBudget(void);
+    void StartContinuous(uint16_t period_ms = 0);
+    void StopContinuous();
+    uint16_t ReadRangeContinuousMillimeters();
+    uint16_t ReadRangeSingleMillimeters();
 
-    bool setVcselPulsePeriod(vcselPeriodType type, uint8_t period_pclks);
-    uint8_t getVcselPulsePeriod(vcselPeriodType type);
-
-    void startContinuous(uint16_t period_ms = 0);
-    void stopContinuous(void);
-    uint16_t readRangeContinuousMillimeters(void);
-    uint16_t readRangeSingleMillimeters(void);
-
-    inline void setTimeout(uint16_t timeout) { io_timeout = timeout; }
-    inline uint16_t getTimeout(void) { return io_timeout; }
-    bool timeoutOccurred(void);
+    inline void SetTimeout(uint16_t timeout) { io_timeout = timeout; }
+    inline uint16_t GetTimeout() { return io_timeout; }
+    bool TimeoutOccurred();
 
   private:
     // TCC: Target CentreCheck
@@ -147,7 +137,6 @@ class VL53L0X
     struct SequenceStepTimeouts
     {
       uint16_t pre_range_vcsel_period_pclks, final_range_vcsel_period_pclks;
-
       uint16_t msrc_dss_tcc_mclks, pre_range_mclks, final_range_mclks;
       uint32_t msrc_dss_tcc_us,    pre_range_us,    final_range_us;
     };
@@ -160,17 +149,24 @@ class VL53L0X
     uint8_t stop_variable; // read by init and used when starting measurement; is StopVariable field of VL53L0X_DevData_t structure in API
     uint32_t measurement_timing_budget_us;
 
-    bool getSpadInfo(uint8_t * count, bool * type_is_aperture);
+    bool GetSpadInfo(uint8_t * count, bool * type_is_aperture);
+    bool PerformSingleRefCalibration(uint8_t vhv_init_byte);
 
-    void getSequenceStepEnables(SequenceStepEnables * enables);
-    void getSequenceStepTimeouts(SequenceStepEnables const * enables, SequenceStepTimeouts * timeouts);
+    void GetSequenceStepEnables(SequenceStepEnables * enables);
+    void GetSequenceStepTimeouts(SequenceStepEnables const * enables, SequenceStepTimeouts * timeouts);
 
-    bool performSingleRefCalibration(uint8_t vhv_init_byte);
+    void WriteReg(uint8_t reg, uint8_t value);
+    void WriteReg16Bit(uint8_t reg, uint16_t value);
+    uint8_t ReadReg(uint8_t reg);
+    uint16_t ReadReg16Bit(uint8_t reg);
 
-    static uint16_t decodeTimeout(uint16_t value);
-    static uint16_t encodeTimeout(uint16_t timeout_mclks);
-    static uint32_t timeoutMclksToMicroseconds(uint16_t timeout_period_mclks, uint8_t vcsel_period_pclks);
-    static uint32_t timeoutMicrosecondsToMclks(uint32_t timeout_period_us, uint8_t vcsel_period_pclks);
+    void WriteMulti(uint8_t reg, uint8_t * src, uint8_t count);
+    void ReadMulti(uint8_t reg, uint8_t * dst, uint8_t count);
+    
+    static uint16_t DecodeTimeout(uint16_t value);
+    static uint16_t EncodeTimeout(uint16_t timeout_mclks);
+    static uint32_t TimeoutMclksToMicroseconds(uint16_t timeout_period_mclks, uint8_t vcsel_period_pclks);
+    static uint32_t TimeoutMicrosecondsToMclks(uint32_t timeout_period_us, uint8_t vcsel_period_pclks);
 };
 
 #endif

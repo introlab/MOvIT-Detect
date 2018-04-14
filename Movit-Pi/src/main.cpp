@@ -19,7 +19,6 @@ int main()
     ChairManager chairmgr(mosquittoBroker, devicemgr);
 
     devicemgr->InitializeDevices();
-
     // Pour usage éventuel
     // std::clock_t start;
     // double duration;

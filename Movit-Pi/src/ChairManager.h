@@ -13,7 +13,7 @@ class ChairManager
   public:
     ChairManager(MosquittoBroker *mosquittoBroker, DeviceManager *devicemgr);
 
-    bool TestPattern() { return _devicemgr->TestDevices(); }
+    inline bool TestPattern() { return _devicemgr->TestDevices(); }
 
     void UpdateDevices();
     void ReadFromServer();
@@ -30,12 +30,13 @@ class ChairManager
     int _prevChairAngle = 0;
     Coord_t _copCoord;
     std::string _currentDatetime = "";
+
     bool _isSomeoneThere = false;
     bool _prevIsSomeoneThere = false;
-
+    bool _isMoving = false;
     bool _overrideNotificationPattern = false;
-
     bool _setAlarmOn = false;
+    
     uint32_t _requiredBackRestAngle = 0;
     uint32_t _requiredPeriod = 0;
     uint32_t _requiredDuration = 0;

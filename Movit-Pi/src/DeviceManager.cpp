@@ -14,6 +14,7 @@ void DeviceManager::InitializeDevices()
     I2Cdev::initialize();
     _alarm.Initialize();
     _imuValid = _imu.Initialize();
+	_motionSensor.Initialize();
     _forcePlateValid = InitializeForcePlate();
 
     _datetimeRTC->SetCurrentDateTime();
@@ -54,6 +55,7 @@ bool DeviceManager::InitializeForcePlate()
 void DeviceManager::Update()
 {
 	_timeSinceEpoch = _datetimeRTC->GetTimeSinceEpoch();
+    _isMoving = _motionSensor.GetIsMoving();
 
     if (_imuValid)
     {
@@ -217,7 +219,7 @@ bool DeviceManager::TestDevices()
 
         printf("\n.-.--..---MESURE DES CAPTEURS DE FORCE--.---.--.-\n");
         printf("Sensor Number \t Analog value \t Voltage (mV) \t Force (N) \n");
-        for (uint8_t i = 0; i < NUMBER_OF_CAPTOR; i++)
+        for (uint8_t i = 0; i < _sensorMatrix._sensorCount; i++)
         {
             printf("Sensor No: %i \t %i \t\t %u \t\t %f \n", i + 1, _sensorMatrix.GetAnalogData(i), _sensorMatrix.GetVoltageData(i), _sensorMatrix.GetForceData(i));
         }

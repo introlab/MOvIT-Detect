@@ -1,35 +1,27 @@
 #ifndef PMW3901_H
 #define PMW3901_H
 
-#include "BCM2835\bcm2835.h"
+#include <bcm2835.h>
 #include <stdint.h>
+#include "Utils.h"
 
 class PMW3901
 {
 public:
-  PMW3901(uint8_t cspin);
+  ~PMW3901();
 
-  void spi_init();
-
-  bool begin();
-
-  void readMotionCount(int16_t *deltaX, int16_t *deltaY);
+  bool Initialize();
+  void ReadMotionCount(int16_t *deltaX, int16_t *deltaY);
 
 private:
-  uint8_t _cs;
+  void RegisterWrite(uint8_t reg, uint8_t value);
+  uint8_t RegisterRead(uint8_t reg);
 
-  void registerWrite(uint8_t reg, uint8_t value);
-  uint8_t registerRead(uint8_t reg);
+  void BeginTransaction();
+  void EndTransaction();
+  void SetChipSelect(uint8_t active);
 
-  void sleepForMicroseconds(uint32_t microseconds);
-  void sleepForMilliseconds(uint32_t milliseconds);
-
-  void beginTransaction();
-  void endTransaction();
-
-  void initRegisters();
-  void setupSPI();
-  void initSPI();
+  void InitRegisters();
 };
 
 #endif //PMW3901_H
