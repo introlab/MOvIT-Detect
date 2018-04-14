@@ -33,12 +33,12 @@ void ChairManager::UpdateDevices()
     _isMoving = _devicemgr->GetIsMoving();
 
 #ifdef DEBUG_PRINT
-    printf("getDateTime = %s\n", _currentDatetime.c_str());
-    printf("isSomeoneThere = %i\n", _devicemgr->IsSomeoneThere());
-    printf("getCenterOfPressure x = %f, y = %f\n", _copCoord.x, _copCoord.y);
+    //printf("getDateTime = %s\n", _currentDatetime.c_str());
+    //printf("isSomeoneThere = %i\n", _devicemgr->IsSomeoneThere());
+    //printf("getCenterOfPressure x = %f, y = %f\n", _copCoord.x, _copCoord.y);
     printf("_currentChairAngle = %i\n", _currentChairAngle);
-    printf("_prevChairAngle = %i\n\n", _prevChairAngle);
-    printf("Current Speed = %f\n\n", _currentSpeed);
+    //printf("_prevChairAngle = %i\n\n", _prevChairAngle);
+    //printf("Current Speed = %f\n\n", _currentSpeed);
 #endif
 
     // Envoi de la moyenne de la position dans les 5 dernieres minutes.
@@ -146,7 +146,8 @@ void ChairManager::CheckNotification()
 
                 printf("_state 4\t abs(requiredBackRestAngle - _currentChairAngle): %i\n", abs(int(_requiredBackRestAngle) - int(_currentChairAngle)));
 
-                if ((_requiredBackRestAngle - _currentChairAngle) < DELTA_ANGLE_THRESHOLD)
+                //if ((_requiredBackRestAngle - _currentChairAngle) < DELTA_ANGLE_THRESHOLD)
+                if (_currentChairAngle > (_requiredBackRestAngle - DELTA_ANGLE_THRESHOLD))
                 {
                     _devicemgr->GetAlarm()->TurnOffDCMotor();
                     _devicemgr->GetAlarm()->TurnOffRedLed();
@@ -158,13 +159,14 @@ void ChairManager::CheckNotification()
             case 5:
                 printf("_state 5\n");
                 // Si l'angle est maintenu
-                if ((_requiredBackRestAngle - _currentChairAngle) < DELTA_ANGLE_THRESHOLD)
+                //if ((_requiredBackRestAngle - _currentChairAngle) < DELTA_ANGLE_THRESHOLD)
+                if (_currentChairAngle > (_requiredBackRestAngle - DELTA_ANGLE_THRESHOLD))
                 {
-                    _devicemgr->GetAlarm()->TurnOnBlinkLedsAlarmThread().detach();
                     _secondsCounter++;
                     printf("_state 5\t_secondsCounter: %i\n", _secondsCounter);
                     if (_secondsCounter >= _requiredDuration)
                     {
+                        _devicemgr->GetAlarm()->TurnOnBlinkLedsAlarmThread().detach();
                         _state = 6;
                     }
                 }
@@ -183,7 +185,8 @@ void ChairManager::CheckNotification()
                 printf("_state 6\t_secondsCounter: %i\n", _secondsCounter);
                 _devicemgr->GetAlarm()->TurnOffRedLed();
                 // On quitte quand l'angle requis - DELTA_ANGLE_THRESHOLD n'est plus maintenue. Par contre, on laisse la possibilité de continuer
-                if ((_requiredBackRestAngle - _currentChairAngle) > DELTA_ANGLE_THRESHOLD)
+                //if ((_requiredBackRestAngle - _currentChairAngle) > DELTA_ANGLE_THRESHOLD)
+                if (_currentChairAngle < 2)
                 {
                     _state = 2;
                     _secondsCounter = 0;

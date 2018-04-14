@@ -20,26 +20,26 @@ bool MotionSensor::InitializeRangeSensor()
     if (_rangeSensor.Initialize(false))
     {
         printf("FAIL \n");
-        return true;
+        return false;
     }
     _rangeSensor.SetTimeout(TIMEOUT);
     _rangeSensor.SetMeasurementTimingBudget(TIMING_BUDGET);
 
     printf("SUCCESS \n");
-    return false;
+    return true;
 }
 
 bool MotionSensor::InitializeOpticalFlowSensor()
 {
     printf("Initialization of the flow sensor... ");
-    if (_opticalFLowSensor.Initialize())
+    if (!_opticalFLowSensor.Initialize())
     {
         printf("FAIL \n");
-        return true;
+        return false;
     }
     
     printf("SUCCESS \n");
-    return false;
+    return true;
 }
 
 void MotionSensor::UpdateTravel(int16_t deltaX, int16_t deltaY)
