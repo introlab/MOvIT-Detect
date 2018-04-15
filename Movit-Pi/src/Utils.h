@@ -10,6 +10,7 @@
 #define TENS_MASK 0xF0
 
 const double radiansToDegrees = 180.0 / M_PI;
+const int secondsToMicroseconds = 1000000;
 
 uint8_t BCDToDEC(const uint8_t &value);
 uint8_t DECToBCD(const uint8_t &value);

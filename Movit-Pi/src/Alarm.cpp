@@ -1,4 +1,5 @@
 #include "Alarm.h"
+#include "Utils.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -91,7 +92,7 @@ void Alarm::TurnOffAlarm()
 
 void Alarm::TurnOnBlinkLedsAlarm()
 {
-	if (_isBlinkLedsAlarmOn == true)
+	if (_isBlinkLedsAlarmOn)
 	{
 		return;
 	}
@@ -106,7 +107,7 @@ void Alarm::TurnOnBlinkLedsAlarm()
 	{
 		_pca9536.toggleState(RED_LED);
 		_pca9536.toggleState(GREEN_LED);
-		usleep(_blinkFrequency * 1000 * 1000);
+		usleep(_blinkFrequency * secondsToMicroseconds);
 	}
 
 	TurnOffRedLed();
@@ -116,7 +117,7 @@ void Alarm::TurnOnBlinkLedsAlarm()
 
 void Alarm::TurnOnRedAlarm()
 {
-	if (_isRedAlarmOn == true)
+	if (_isRedAlarmOn)
 	{
 		return;
 	}
@@ -130,7 +131,7 @@ void Alarm::TurnOnRedAlarm()
 	while (GetPinState(PUSH_BUTTON) && (count++ <= (int)(_blinkFrequency * _blinkDuration)))
 	{
 		_pca9536.toggleState(RED_LED);
-		usleep(_blinkFrequency * 1000 * 1000);
+		usleep(_blinkFrequency * secondsToMicroseconds);
 	}
 
 	TurnOnRedLed();
@@ -140,10 +141,14 @@ void Alarm::TurnOnRedAlarm()
 
 std::thread Alarm::TurnOnRedAlarmThread()
 {
-	return std::thread([=] { TurnOnRedAlarm(); });
+    return std::thread([=] { 
+        TurnOnRedAlarm(); 
+    });
 }
 
 std::thread Alarm::TurnOnBlinkLedsAlarmThread()
 {
-	return std::thread([=] { TurnOnBlinkLedsAlarm(); });
+	return std::thread([=] { 
+        TurnOnBlinkLedsAlarm(); 
+    });
 }

@@ -9,37 +9,37 @@
 
 class Alarm
 {
-  private:
-	PCA9536 _pca9536;
+private:
+    PCA9536 _pca9536;
 
-	bool _isRedAlarmOn = false;
-	bool _isBlinkLedsAlarmOn = false;
+    bool _isRedAlarmOn = false;
+    bool _isBlinkLedsAlarmOn = false;
 
-	double _blinkFrequency;
-	int _blinkDuration;
+    double _blinkFrequency;
+    int _blinkDuration;
 
-	uint8_t GetPinState(pin_t pin);
+    uint8_t GetPinState(pin_t pin);
 
-  public:
-	Alarm();
-	Alarm(int blinkDuration, double blinkFrequency);
+public:
+    Alarm();
+    Alarm(int blinkDuration, double blinkFrequency);
 
-	void Initialize();
-	void SetBlinkDuration(int blinkDuraction);
-	void SetBlinkFrequency(double blinkFrequency);
+    void Initialize();
+    void SetBlinkDuration(int blinkDuraction);
+    void SetBlinkFrequency(double blinkFrequency);
 
-	void TurnOnDCMotor();
-	void TurnOffDCMotor();
-	void TurnOnRedLed();
-	void TurnOffRedLed();
-	void TurnOnGreenLed();
-	void TurnOffGreenLed();
-	void TurnOnBlinkLedsAlarm();
-	void TurnOnRedAlarm();
-	void TurnOffAlarm();
+    void TurnOnDCMotor();
+    void TurnOffDCMotor();
+    void TurnOnRedLed();
+    void TurnOffRedLed();
+    void TurnOnGreenLed();
+    void TurnOffGreenLed();
+    void TurnOnBlinkLedsAlarm();
+    void TurnOnRedAlarm();
+    void TurnOffAlarm();
 
-	std::thread TurnOnRedAlarmThread();
-	std::thread TurnOnBlinkLedsAlarmThread();
+    std::thread TurnOnRedAlarmThread();
+    std::thread TurnOnBlinkLedsAlarmThread();
 };
 
 #endif // ALARM_H
