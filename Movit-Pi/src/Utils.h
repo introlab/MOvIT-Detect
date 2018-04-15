@@ -2,11 +2,14 @@
 #define UTILS_H
 
 #include <stdint.h>
+#include <math.h>
 
 #define DEBUG_PRINT //Debug trace
 
 #define ONES_MASK 0x0F
 #define TENS_MASK 0xF0
+
+const double radiansToDegrees = 180.0 / M_PI;
 
 uint8_t BCDToDEC(const uint8_t &value);
 uint8_t DECToBCD(const uint8_t &value);
