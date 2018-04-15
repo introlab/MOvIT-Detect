@@ -36,8 +36,8 @@ class ChairManager
     bool _isMoving = false;
     bool _overrideNotificationPattern = false;
     bool _setAlarmOn = false;
-    
-    uint32_t _requiredBackRestAngle = 0;
+
+    int _requiredBackRestAngle = 0;
     uint32_t _requiredPeriod = 0;
     uint32_t _requiredDuration = 0;
 

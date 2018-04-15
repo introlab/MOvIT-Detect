@@ -22,7 +22,12 @@ const char *REQUIRED_ANGLE_TOPIC = "data/required_back_rest_angle";
 const char *REQUIRED_PERIOD_TOPIC = "data/required_period";
 const char *REQUIRED_DURATION_TOPIC = "data/required_duration";
 const char *CALIB_PRESSURE_MAT_TOPIC = "config/calib_pressure_mat";
+const char *CALIB_IMU_TOPIC = "config/calib_imu";
 
+const char *CURRENT_BACK_REST_ANGLE_TOPIC = "data/current_back_rest_angle";
+const char *CURRENT_CENTER_OF_PRESSURE_TOPIC = "data/current_center_of_pressure";
+const char *CURRENT_IS_SOMEONE_THERE_TOPIC = "data/current_is_someone_there";
+const char *CURRENT_CHAIR_SPEED_TOPIC = "data/current_chair_speed";
 
 MosquittoBroker::MosquittoBroker(const char *id) : mosquittopp(id)
 {
@@ -72,6 +77,7 @@ void MosquittoBroker::on_connect(int rc)
 		subscribe(NULL, REQUIRED_PERIOD_TOPIC);
 		subscribe(NULL, REQUIRED_DURATION_TOPIC);
 		subscribe(NULL, CALIB_PRESSURE_MAT_TOPIC);
+		subscribe(NULL, CALIB_IMU_TOPIC);
 	}
 }
 
@@ -164,20 +170,33 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
 			_calibPressureMatRequired = false;
 		}
 	}
+	if (topic == CALIB_IMU_TOPIC)
+	{
+		try
+		{
+			_calibIMURequired = std::stoi(message);
+		}
+		catch (const std::exception &e)
+		{
+			printf("Exception thrown by %s()\n", e.what());
+			printf("Setting _requiredDuration to 0\n");
+			_calibIMURequired = false;
+		}
+	}
 }
 
 void MosquittoBroker::sendBackRestAngle(const int angle, const std::string datetime)
 {
 	std::string strAngle = std::to_string(angle);
 	std::string strMsg = "{\"datetime\":" + datetime + ",\"angle\":" + strAngle + "}";
-	publish(NULL, "data/current_back_rest_angle", strMsg.length(), strMsg.c_str());
+	publish(NULL, CURRENT_BACK_REST_ANGLE_TOPIC, strMsg.length(), strMsg.c_str());
 }
 
 void MosquittoBroker::sendCenterOfPressure(const float x, const float y, const std::string datetime)
 {
 	std::string strMsg = "{\"datetime\":" + datetime + ",\"pos_x\":" + std::to_string(x) + ",\"pos_y\":" + std::to_string(x) + "}";
 
-	publish(NULL, "data/current_center_of_pressure", strMsg.length(), strMsg.c_str());
+	publish(NULL, CURRENT_CENTER_OF_PRESSURE_TOPIC, strMsg.length(), strMsg.c_str());
 }
 
 void MosquittoBroker::sendIsSomeoneThere(const bool state, const std::string datetime)
@@ -185,7 +204,7 @@ void MosquittoBroker::sendIsSomeoneThere(const bool state, const std::string dat
 	std::string strState = std::to_string(state);
 	std::string strMsg = "{\"datetime\":" + datetime + ",\"IsSomeoneThere\":" + strState + "}";
 
-	publish(NULL, "data/current_is_someone_there", strMsg.length(), strMsg.c_str());
+	publish(NULL, CURRENT_IS_SOMEONE_THERE_TOPIC, strMsg.length(), strMsg.c_str());
 }
 
 void MosquittoBroker::sendSpeed(const float speed, const std::string datetime)
@@ -193,7 +212,7 @@ void MosquittoBroker::sendSpeed(const float speed, const std::string datetime)
 	std::string strSpeed = std::to_string(speed);
 	std::string strMsg = "{\"datetime\":" + datetime + ",\"vitesse\":" + strSpeed + "}";
 
-	publish(NULL, "data/current_chair_speed", strMsg.length(), strMsg.c_str());
+	publish(NULL, CURRENT_CHAIR_SPEED_TOPIC, strMsg.length(), strMsg.c_str());
 }
 
 bool MosquittoBroker::getSetAlarmOn()
@@ -222,9 +241,22 @@ uint32_t MosquittoBroker::getRequiredDuration()
 
 bool MosquittoBroker::calibPressureMatRequired()
 {
-	if(_calibPressureMatRequired)
+	if (_calibPressureMatRequired)
 	{
 		_calibPressureMatRequired = false;
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+bool MosquittoBroker::calibIMURequired()
+{
+	if (_calibIMURequired)
+	{
+		_calibIMURequired = false;
 		return true;
 	}
 	else

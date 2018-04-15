@@ -4,6 +4,7 @@
 #define DELTA_ANGLE_THRESHOLD 5
 
 #define CENTER_OF_PRESSURE_EMISSION_PERIOD 5 * 60
+#define MINIMUM_BACK_REST_ANGLE 2
 
 ChairManager::ChairManager(MosquittoBroker *mosquittoBroker, DeviceManager *devicemgr)
     : _mosquittoBroker(mosquittoBroker), _devicemgr(devicemgr)
@@ -16,9 +17,16 @@ void ChairManager::UpdateDevices()
 {
     if (_mosquittoBroker->calibPressureMatRequired())
     {
-        printf("debut de la calibration \n");
+        printf("Debut de la calibration du tapis de pression\n");
         _devicemgr->CalibratePressureMat();
-        printf("FIN de la calibration \n");
+        printf("FIN de la calibration du tapis de pression\n");
+    }
+
+    if (_mosquittoBroker->calibIMURequired())
+    {
+        printf("Debut de la calibration des IMU\n");
+        _devicemgr->CalibrateIMU();
+        printf("FIN de la calibration des IMU\n");
     }
 
     _prevIsSomeoneThere = _isSomeoneThere;
@@ -146,7 +154,6 @@ void ChairManager::CheckNotification()
 
                 printf("_state 4\t abs(requiredBackRestAngle - _currentChairAngle): %i\n", abs(int(_requiredBackRestAngle) - int(_currentChairAngle)));
 
-                //if ((_requiredBackRestAngle - _currentChairAngle) < DELTA_ANGLE_THRESHOLD)
                 if (_currentChairAngle > (_requiredBackRestAngle - DELTA_ANGLE_THRESHOLD))
                 {
                     _devicemgr->GetAlarm()->TurnOffDCMotor();
@@ -159,7 +166,6 @@ void ChairManager::CheckNotification()
             case 5:
                 printf("_state 5\n");
                 // Si l'angle est maintenu
-                //if ((_requiredBackRestAngle - _currentChairAngle) < DELTA_ANGLE_THRESHOLD)
                 if (_currentChairAngle > (_requiredBackRestAngle - DELTA_ANGLE_THRESHOLD))
                 {
                     _secondsCounter++;
@@ -184,9 +190,7 @@ void ChairManager::CheckNotification()
                 _secondsCounter++;
                 printf("_state 6\t_secondsCounter: %i\n", _secondsCounter);
                 _devicemgr->GetAlarm()->TurnOffRedLed();
-                // On quitte quand l'angle requis - DELTA_ANGLE_THRESHOLD n'est plus maintenue. Par contre, on laisse la possibilité de continuer
-                //if ((_requiredBackRestAngle - _currentChairAngle) > DELTA_ANGLE_THRESHOLD)
-                if (_currentChairAngle < 2)
+                if (_currentChairAngle < MINIMUM_BACK_REST_ANGLE)
                 {
                     _state = 2;
                     _secondsCounter = 0;

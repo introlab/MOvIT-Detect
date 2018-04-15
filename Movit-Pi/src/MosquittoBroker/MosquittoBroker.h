@@ -43,6 +43,7 @@ class MosquittoBroker : public mosqpp::mosquittopp
 	bool isRequiredDurationNew() { return _requiredDurationNew; }
 
 	bool calibPressureMatRequired();
+	bool calibIMURequired();
 
   private:
 	bool _setAlarmOn = false;
@@ -51,6 +52,7 @@ class MosquittoBroker : public mosqpp::mosquittopp
 	uint32_t _requiredDuration = 0;
 
 	bool _calibPressureMatRequired = false;
+	bool _calibIMURequired = false;
 
 	bool _setAlarmOnNew = false;
 	bool _requiredBackRestAngleNew = false;

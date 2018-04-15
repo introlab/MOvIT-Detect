@@ -33,6 +33,8 @@ class DeviceManager
     int GetTimeSinceEpoch() { return _timeSinceEpoch; }
     float GetIsMoving() { return _isMoving; }
     void CalibratePressureMat();
+    void CalibrateIMU();
+
     bool TestDevices();
 
     // Singleton

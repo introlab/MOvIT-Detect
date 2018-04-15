@@ -30,6 +30,11 @@ void DeviceManager::CalibratePressureMat()
     _sensorMatrix.CalibrateForceSensor(_max11611Data, _max11611);
 }
 
+void DeviceManager::CalibrateIMU()
+{
+    _imu.Calibrate();
+}
+
 bool DeviceManager::InitializeForcePlate()
 {
     printf("MAX11611 (ADC) initializing ... ");
