@@ -1,6 +1,8 @@
 #include "DeviceManager.h"
+#include "NetworkManager.h"
 #include "I2Cdev.h"
 #include <unistd.h>
+#include <thread>
 
 DeviceManager::DeviceManager() : _alarm(700, 0.1)
 {
@@ -12,12 +14,12 @@ DeviceManager::DeviceManager() : _alarm(700, 0.1)
 void DeviceManager::InitializeDevices()
 {
     I2Cdev::initialize();
+    _datetimeRTC->SetCurrentDateTimeIfConnectedThread().detach();
+
     _alarm.Initialize();
     _imuValid = _imu.Initialize();
 	_motionSensor.Initialize();
     _forcePlateValid = InitializeForcePlate();
-
-    _datetimeRTC->SetCurrentDateTime();
 
     printf("Setup Done\n");
 }

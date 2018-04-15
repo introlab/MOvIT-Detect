@@ -1,15 +1,35 @@
 #include "DateTimeRTC.h"
 
+#include "NetworkManager.h"
 #include <Utils.h>
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
+#include <unistd.h>
+
+const int sleepTime = 5000000;
 
 DateTimeRTC::DateTimeRTC() { }
 
 void DateTimeRTC::SetDefaultDateTime()
 {
     _mcp79410.setDefaultDateTime();
+}
+
+std::thread DateTimeRTC::SetCurrentDateTimeIfConnectedThread()
+{
+    return std::thread([=] { SetCurrentDateTimeIfConnected(); });
+}
+
+void DateTimeRTC::SetCurrentDateTimeIfConnected()
+{
+    while (!NetworkManager::IsConnected())
+    {
+        usleep(sleepTime);
+    }
+
+    SetCurrentDateTime();
+    _isDatetimeSet = true;
 }
 
 void DateTimeRTC::SetCurrentDateTime()
@@ -30,13 +50,16 @@ void DateTimeRTC::SetCurrentDateTime()
 		DECToBCD(ptm->tm_year % 100),
 	};
 
-	// time_t timeSinceEpoch = mktime(ptm);
-
     _mcp79410.setDateTime(dt);
 }
 
 int DateTimeRTC::GetTimeSinceEpoch()
 {
+    if (!_isDatetimeSet)
+    {
+	    return 0;
+    }
+
 	const int numberOfYearsToAdd = 100;
 	unsigned char datetime[DATE_TIME_SIZE] = { 0, 0, 0, 0, 0, 0, 0 };
 

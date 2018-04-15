@@ -2,10 +2,12 @@
 #define DATETIME_RTC_H
 
 #include "MCP79410.h"
+#include <thread>
 
 class DateTimeRTC
 {
   public:
+    std::thread SetCurrentDateTimeIfConnectedThread();
     void SetCurrentDateTime();
     void SetDefaultDateTime();
     int GetTimeSinceEpoch();
@@ -18,6 +20,9 @@ class DateTimeRTC
 
   private:
     DateTimeRTC();
+	void SetCurrentDateTimeIfConnected();
+
+	bool _isDatetimeSet = false;
     MCP79410 _mcp79410;
 };
 
