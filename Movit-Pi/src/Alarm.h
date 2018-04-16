@@ -4,7 +4,7 @@
 #include "PCA9536.h"
 #include <thread>
 
-#define DEFAULT_BLINK_DURATION 1000
+#define DEFAULT_BLINK_DURATION 600
 #define DEFAULT_BLINK_FREQUENCY 0.1
 
 class Alarm
@@ -34,9 +34,11 @@ public:
     void TurnOffRedLed();
     void TurnOnGreenLed();
     void TurnOffGreenLed();
+    void TurnOffAlarm();
+
     void TurnOnBlinkLedsAlarm();
     void TurnOnRedAlarm();
-    void TurnOffAlarm();
+    void TurnOnGreenAlarm();
 
     std::thread TurnOnRedAlarmThread();
     std::thread TurnOnBlinkLedsAlarmThread();

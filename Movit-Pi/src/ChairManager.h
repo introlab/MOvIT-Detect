@@ -42,6 +42,13 @@ class ChairManager
     uint32_t _requiredDuration = 0;
 
     Timer _timer;
+
+    void CheckIfUserHasBeenSittingForFiveSeconds();
+    void CheckIfBackRestIsRequired();
+    void CheckIfRequiredBackSeatAngleIsReached();
+    void CheckIfRequiredBackSeatAngleIsMaintained();
+    void CheckIfBackSeatIsBackToInitialPosition();
+    void OverrideNotificationPattern();
 };
 
 #endif // CHAIR_MANAGER_H

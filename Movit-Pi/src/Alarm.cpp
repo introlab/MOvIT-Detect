@@ -1,8 +1,11 @@
 #include "Alarm.h"
 #include "Utils.h"
 
+#include <mutex>
 #include <stdio.h>
 #include <unistd.h>
+
+std::mutex alarmMutex;
 
 Alarm::Alarm()
 {
@@ -92,6 +95,8 @@ void Alarm::TurnOffAlarm()
 
 void Alarm::TurnOnBlinkLedsAlarm()
 {
+    std::lock_guard<std::mutex> lock(alarmMutex);
+
 	if (_isBlinkLedsAlarmOn)
 	{
 		return;
@@ -117,6 +122,8 @@ void Alarm::TurnOnBlinkLedsAlarm()
 
 void Alarm::TurnOnRedAlarm()
 {
+    std::lock_guard<std::mutex> lock(alarmMutex);
+
 	if (_isRedAlarmOn)
 	{
 		return;
@@ -137,6 +144,15 @@ void Alarm::TurnOnRedAlarm()
 	TurnOnRedLed();
 	TurnOffDCMotor();
 	_isRedAlarmOn = false;
+}
+
+void Alarm::TurnOnGreenAlarm()
+{
+    std::lock_guard<std::mutex> lock(alarmMutex);
+
+    TurnOnGreenLed();
+    TurnOffRedLed();
+    TurnOffDCMotor();
 }
 
 std::thread Alarm::TurnOnRedAlarmThread()

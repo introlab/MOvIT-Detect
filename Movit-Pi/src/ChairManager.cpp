@@ -1,6 +1,6 @@
 #include "ChairManager.h"
 
-#define INITIAL_VALIDATING_TIME 5 // Temps initial d'attente avant de commencer la séquence de bascule
+#define REQUIRED_SITTING_TIME 5
 #define DELTA_ANGLE_THRESHOLD 5
 
 #define CENTER_OF_PRESSURE_EMISSION_PERIOD 5 * 60
@@ -112,112 +112,121 @@ void ChairManager::ReadFromServer()
 
 void ChairManager::CheckNotification()
 {
-    if (!_overrideNotificationPattern)
+    if (_overrideNotificationPattern)
     {
-        if (_isSomeoneThere && _requiredDuration != 0 && _requiredPeriod != 0 && _requiredBackRestAngle != 0)
+        OverrideNotificationPattern();
+        return;
+    }
+
+    if (_requiredDuration == 0 || _requiredPeriod == 0 || _requiredBackRestAngle == 0)
+    {
+        _state = 1;
+        _secondsCounter = 0;
+        _devicemgr->GetAlarm()->TurnOffAlarm();
+        return;
+    }
+
+    switch (_state)
+    {
+    case 1:
+        CheckIfUserHasBeenSittingForFiveSeconds();
+        break;
+    case 2:
+        CheckIfBackRestIsRequired();
+        break;
+    case 3:
+        CheckIfRequiredBackSeatAngleIsReached();
+        break;
+    case 4:
+        CheckIfRequiredBackSeatAngleIsMaintained();
+        break;
+    case 5:
+        CheckIfBackSeatIsBackToInitialPosition();
+        break;
+    default:
+        break;
+    }
+}
+
+void ChairManager::CheckIfUserHasBeenSittingForFiveSeconds()
+{
+    printf("State 1\t_secondsCounter: %i\n", _secondsCounter);
+
+    if (++_secondsCounter >= REQUIRED_SITTING_TIME)
+    {
+        _state = 2;
+        _secondsCounter = 0;
+    }
+}
+
+void ChairManager::CheckIfBackRestIsRequired()
+{
+    printf("State 2\t_secondsCounter: %i\n", _secondsCounter);
+
+    if (++_secondsCounter >= _requiredPeriod)
+    {
+        _devicemgr->GetAlarm()->TurnOnRedAlarmThread().detach();
+        _state = 3;
+        _secondsCounter = 0;
+    }
+}
+
+void ChairManager::CheckIfRequiredBackSeatAngleIsReached()
+{
+    printf("State 3\t abs(requiredBackRestAngle - _currentChairAngle): %i\n", abs(int(_requiredBackRestAngle) - int(_currentChairAngle)));
+    
+    if (_currentChairAngle > (_requiredBackRestAngle - DELTA_ANGLE_THRESHOLD))
+    {
+        _devicemgr->GetAlarm()->TurnOnGreenAlarm();
+        _state = 4;
+    }
+}
+
+void ChairManager::CheckIfRequiredBackSeatAngleIsMaintained()
+{
+    printf("State 4\n");
+
+    if (_currentChairAngle > (_requiredBackRestAngle - DELTA_ANGLE_THRESHOLD))
+    {
+        printf("State 4\t_secondsCounter: %i\n", _secondsCounter);
+
+        if (++_secondsCounter >= _requiredDuration)
         {
-            switch (_state)
-            {
-            // Vérifie que le patient est assis depuis 5 secondes
-            case 1:
-                _secondsCounter++;
-                printf("_state 1\t_secondsCounter: %i\n", _secondsCounter);
-                if (_secondsCounter >= INITIAL_VALIDATING_TIME)
-                {
-                    _state = 2;
-                    _secondsCounter = 0;
-                }
-                break;
-            // Une bascule est requise
-            case 2:
-                _secondsCounter++;
-                printf("_state 2\t_secondsCounter: %i\n", _secondsCounter);
-                if (_secondsCounter >= _requiredPeriod)
-                {
-                    _state = 3;
-                    _secondsCounter = 0;
-                }
-                break;
-            // Genere un alarme pour initier la bascule
-            case 3:
-                // TODO
-                // L'ancienne équipe attendait un autre 60 secondes sans bougé soit passé
-                // Faudrais considerer un autre solution car ca me semble wack
-
-                //TODO: Valider que c'est le bon genre d'alarme
-                printf("_state 3\n");
-                _devicemgr->GetAlarm()->TurnOnRedAlarmThread().detach();
-                _state = 4;
-                break;
-            // Gestion de la monté de la bascule
-            case 4:
-
-                printf("_state 4\t abs(requiredBackRestAngle - _currentChairAngle): %i\n", abs(int(_requiredBackRestAngle) - int(_currentChairAngle)));
-
-                if (_currentChairAngle > (_requiredBackRestAngle - DELTA_ANGLE_THRESHOLD))
-                {
-                    _devicemgr->GetAlarm()->TurnOffDCMotor();
-                    _devicemgr->GetAlarm()->TurnOffRedLed();
-                    _devicemgr->GetAlarm()->TurnOnGreenLed();
-                    _state = 5;
-                }
-                break;
-            // Maintient de la bascule
-            case 5:
-                printf("_state 5\n");
-                // Si l'angle est maintenu
-                if (_currentChairAngle > (_requiredBackRestAngle - DELTA_ANGLE_THRESHOLD))
-                {
-                    _secondsCounter++;
-                    printf("_state 5\t_secondsCounter: %i\n", _secondsCounter);
-                    if (_secondsCounter >= _requiredDuration)
-                    {
-                        _devicemgr->GetAlarm()->TurnOnBlinkLedsAlarmThread().detach();
-                        _state = 6;
-                    }
-                }
-                // Le patient ne maintient plus l'angle de bascule
-                else
-                {
-                    printf("_state 5 il faut remonter\n");
-                    _devicemgr->GetAlarm()->TurnOnRedAlarmThread().detach();
-                    _state = 4;
-                    _secondsCounter = 0;
-                }
-                break;
-            // Descente de la bascule
-            case 6:
-                _secondsCounter++;
-                printf("_state 6\t_secondsCounter: %i\n", _secondsCounter);
-                _devicemgr->GetAlarm()->TurnOffRedLed();
-                if (_currentChairAngle < MINIMUM_BACK_REST_ANGLE)
-                {
-                    _state = 2;
-                    _secondsCounter = 0;
-                    _devicemgr->GetAlarm()->TurnOffAlarm();
-                }
-                break;
-            default:
-                break;
-            }
-        }
-        else
-        {
-            _state = 1;
-            _secondsCounter = 0;
-            _devicemgr->GetAlarm()->TurnOffAlarm();
+            _devicemgr->GetAlarm()->TurnOnBlinkLedsAlarmThread().detach();
+            _state = 5;
         }
     }
     else
     {
-        if (_setAlarmOn)
-        {
-            _devicemgr->GetAlarm()->TurnOnRedAlarmThread().detach();
-        }
-        else
-        {
-            _devicemgr->GetAlarm()->TurnOffAlarm();
-        }
-        _overrideNotificationPattern = false;
+        printf("State 4 il faut remonter\n");
+        _devicemgr->GetAlarm()->TurnOnRedAlarmThread().detach();
+        _state = 3;
+        _secondsCounter = 0;
     }
+}
+
+void ChairManager::CheckIfBackSeatIsBackToInitialPosition()
+{
+    printf("State 5\t_secondsCounter: %i\n", ++_secondsCounter);
+
+    _devicemgr->GetAlarm()->TurnOffAlarm();
+    
+    if (_currentChairAngle < MINIMUM_BACK_REST_ANGLE)
+    {
+        _state = 2;
+        _secondsCounter = 0;
+    }
+}
+
+void ChairManager::OverrideNotificationPattern()
+{
+    if (_setAlarmOn)
+    {
+        _devicemgr->GetAlarm()->TurnOnRedAlarmThread().detach();
+    }
+    else
+    {
+        _devicemgr->GetAlarm()->TurnOffAlarm();
+    }
+    _overrideNotificationPattern = false;
 }
