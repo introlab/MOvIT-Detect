@@ -15,7 +15,7 @@ BackSeatAngleTracker::BackSeatAngleTracker()
 
 bool BackSeatAngleTracker::Initialize()
 {
-	_fileManager.ReadImuCalibrationOffsetsFromFile(fixedImuName, mobileImuName);
+	_fileManager.ReadCalibrationOffsetsFromFile(fixedImuName, mobileImuName);
 	return InitializeMobileImu() && InitializeFixedImu();
 }
 
@@ -229,7 +229,7 @@ void BackSeatAngleTracker::Calibrate(MPU6050 &mpu, std::string name)
     CalibrateAccelerometer(mpu);
     CalibrateGyroscope(mpu);
 
-    _fileManager.WriteImuCalibrationOffsetsToFile(_accelerometerOffsets, _gyroscopeOffsets, name);
+    _fileManager.WriteCalibrationOffsetsToFile(_accelerometerOffsets, _gyroscopeOffsets, name);
 
 }
 
@@ -240,14 +240,14 @@ void BackSeatAngleTracker::Calibrate()
     Calibrate(_fixedImu, fixedImuName);
     SetImuOffsets(_fixedImu);
 
-    _fileManager.WriteImuCalibrationOffsetsToFile(_accelerometerOffsets, _gyroscopeOffsets, fixedImuName);
+    _fileManager.WriteCalibrationOffsetsToFile(_accelerometerOffsets, _gyroscopeOffsets, fixedImuName);
 
     // Calibrate mobile IMU:
     ResetIMUOffsets(_mobileImu);
     Calibrate(_mobileImu, mobileImuName);
     SetImuOffsets(_mobileImu);
 
-    _fileManager.WriteImuCalibrationOffsetsToFile(_accelerometerOffsets, _gyroscopeOffsets, mobileImuName);
+    _fileManager.WriteCalibrationOffsetsToFile(_accelerometerOffsets, _gyroscopeOffsets, mobileImuName);
 }
 
 void BackSeatAngleTracker::GetAcceleration(MPU6050 &mpu, double *acceleration)

@@ -7,20 +7,21 @@ const std::string SENSOR_SEPARATOR = "; ";
 const std::string OFFSETS_FILENAME = "offsets.txt";
 const std::string GYRO_FIELDNAME = "Gyro: ";
 const std::string ACCEL_FIELDNAME = "Accel: ";
+enum axis { x, y, z };
 
 int * FileManager::GetFixedImuAccelOffsets()
 {
-	if (_fixedImuAccelerationOffsets[_axis::x] != 0 || _fixedImuAccelerationOffsets[_axis::y] != 0 || _fixedImuAccelerationOffsets[_axis::z] != 0)
-	{
-		return _fixedImuAccelerationOffsets;
-	}
+    if (_fixedImuAccelerationOffsets[axis::x] != 0 || _fixedImuAccelerationOffsets[axis::y] != 0 || _fixedImuAccelerationOffsets[axis::z] != 0)
+    {
+	    return _fixedImuAccelerationOffsets;
+    }
 
-	return NULL;
+    return NULL;
 }
 
 int * FileManager::GetFixedImuGyroOffsets()
 {
-	if (_fixedImuGyroOffsets[_axis::x] != 0 || _fixedImuGyroOffsets[_axis::y] != 0 || _fixedImuGyroOffsets[_axis::z] != 0)
+	if (_fixedImuGyroOffsets[axis::x] != 0 || _fixedImuGyroOffsets[axis::y] != 0 || _fixedImuGyroOffsets[axis::z] != 0)
 	{
 		return _fixedImuGyroOffsets;
 	}
@@ -30,7 +31,7 @@ int * FileManager::GetFixedImuGyroOffsets()
 
 int * FileManager::GetMobileImuAccelOffsets()
 {
-	if (_mobileImuAccelerationOffsets[_axis::x] != 0 || _mobileImuAccelerationOffsets[_axis::y] != 0 || _mobileImuAccelerationOffsets[_axis::z] != 0)
+	if (_mobileImuAccelerationOffsets[axis::x] != 0 || _mobileImuAccelerationOffsets[axis::y] != 0 || _mobileImuAccelerationOffsets[axis::z] != 0)
 	{
 		return _mobileImuAccelerationOffsets;
 	}
@@ -40,7 +41,7 @@ int * FileManager::GetMobileImuAccelOffsets()
 
 int * FileManager::GetMobileImuGyroOffsets()
 {
-	if (_mobileImuGyroOffsets[_axis::x] != 0 || _mobileImuGyroOffsets[_axis::y] != 0 || _mobileImuGyroOffsets[_axis::z] != 0)
+	if (_mobileImuGyroOffsets[axis::x] != 0 || _mobileImuGyroOffsets[axis::y] != 0 || _mobileImuGyroOffsets[axis::z] != 0)
 	{
 		return _mobileImuGyroOffsets;
 	}
@@ -48,7 +49,7 @@ int * FileManager::GetMobileImuGyroOffsets()
 	return NULL;
 }
 
-void FileManager::WriteImuCalibrationOffsetsToFile(int * accelerationOffsets, int * gyroOffsets, std::string imuName)
+void FileManager::WriteCalibrationOffsetsToFile(int * accelerationOffsets, int * gyroOffsets, std::string imuName)
 {
 	std::ofstream file;
 
@@ -60,12 +61,12 @@ void FileManager::WriteImuCalibrationOffsetsToFile(int * accelerationOffsets, in
 	}
 
 	file << imuName << std::endl;
-	file << ACCEL_FIELDNAME << accelerationOffsets[0] << VALUE_SEPARATOR << accelerationOffsets[1] << VALUE_SEPARATOR << accelerationOffsets[2] << SENSOR_SEPARATOR;
-	file << GYRO_FIELDNAME << gyroOffsets[0] << VALUE_SEPARATOR << gyroOffsets[1] << VALUE_SEPARATOR << gyroOffsets[2] << std::endl;
+	file << ACCEL_FIELDNAME << accelerationOffsets[axis::x] << VALUE_SEPARATOR << accelerationOffsets[axis::y] << VALUE_SEPARATOR << accelerationOffsets[axis::z] << SENSOR_SEPARATOR;
+	file << GYRO_FIELDNAME << gyroOffsets[axis::x] << VALUE_SEPARATOR << gyroOffsets[axis::y] << VALUE_SEPARATOR << gyroOffsets[axis::z] << std::endl;
 	file.close();
 }
 
-void FileManager::ReadImuCalibrationOffsetsFromFile(std::string fixedImuName, std::string mobileImuName)
+void FileManager::ReadCalibrationOffsetsFromFile(std::string fixedImuName, std::string mobileImuName)
 {
 	std::string imuName;
 	std::string fixedImuLine;
@@ -98,6 +99,7 @@ void FileManager::ReadImuCalibrationOffsetsFromFile(std::string fixedImuName, st
 
 void FileManager::SetOffsetsFromLine(std::string line, int * offsets, std::string offsetsLine)
 {
+    const int numberOfSeparators = 2;
 	uint8_t i = 0;
 	size_t pos = 0;
 
@@ -116,11 +118,11 @@ void FileManager::SetOffsetsFromLine(std::string line, int * offsets, std::strin
 
 	int value = atoi(offsetsLine.c_str());
 
-	if (i != 2 || value == 0)
+	if (i != numberOfSeparators || value == 0)
 	{
-		offsets[_axis::x] = 0;
-		offsets[_axis::y] = 0;
-		offsets[_axis::z] = 0;
+		offsets[axis::x] = 0;
+		offsets[axis::y] = 0;
+		offsets[axis::z] = 0;
 		return;
 	}
 

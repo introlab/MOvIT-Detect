@@ -3,28 +3,28 @@
 
 #include <string>
 
+#define NUMBER_OF_AXIS 3
+
 class FileManager
 {
-	public:
-		int * GetFixedImuAccelOffsets();
-		int * GetFixedImuGyroOffsets();
-		int * GetMobileImuAccelOffsets();
-		int * GetMobileImuGyroOffsets();
+public:
+    int * GetFixedImuAccelOffsets();
+    int * GetFixedImuGyroOffsets();
+    int * GetMobileImuAccelOffsets();
+    int * GetMobileImuGyroOffsets();
 
-		void WriteImuCalibrationOffsetsToFile(int * accelerationOffsets, int * gyroOffsets, std::string type);
-		void ReadImuCalibrationOffsetsFromFile(std::string fixedImuName, std::string mobileImuName);
+    void WriteCalibrationOffsetsToFile(int * accelerationOffsets, int * gyroOffsets, std::string type);
+    void ReadCalibrationOffsetsFromFile(std::string fixedImuName, std::string mobileImuName);
 
-	private:
-		enum _axis { x, y, z };
+private:
+    int _fixedImuAccelerationOffsets[NUMBER_OF_AXIS];
+    int _mobileImuAccelerationOffsets[NUMBER_OF_AXIS];
+    int _fixedImuGyroOffsets[NUMBER_OF_AXIS];
+    int _mobileImuGyroOffsets[NUMBER_OF_AXIS];
 
-		int _fixedImuAccelerationOffsets[3];
-		int _mobileImuAccelerationOffsets[3];
-		int _fixedImuGyroOffsets[3];
-		int _mobileImuGyroOffsets[3];
-
-		void SetFixedImuOffsets(std::string line);
-		void SetMobileImuOffsets(std::string line);
-		void SetOffsetsFromLine(std::string line, int * offsets, std::string offsetsLine);
+    void SetFixedImuOffsets(std::string line);
+    void SetMobileImuOffsets(std::string line);
+    void SetOffsetsFromLine(std::string line, int * offsets, std::string offsetsLine);
 };
 
 #endif 
