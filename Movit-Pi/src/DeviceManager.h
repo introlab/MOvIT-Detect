@@ -31,7 +31,7 @@ class DeviceManager
     Coord_t GetCenterOfPressure() { return _COPCoord; }
     int GetBackSeatAngle() { return _backSeatAngle; }
     int GetTimeSinceEpoch() { return _timeSinceEpoch; }
-    float GetIsMoving() { return _isMoving; }
+    bool GetIsMoving() { return _isMoving; }
     void CalibratePressureMat();
     void CalibrateIMU();
 

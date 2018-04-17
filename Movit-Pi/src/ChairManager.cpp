@@ -41,12 +41,12 @@ void ChairManager::UpdateDevices()
     _isMoving = _devicemgr->GetIsMoving();
 
 #ifdef DEBUG_PRINT
-    //printf("getDateTime = %s\n", _currentDatetime.c_str());
-    //printf("isSomeoneThere = %i\n", _devicemgr->IsSomeoneThere());
-    //printf("getCenterOfPressure x = %f, y = %f\n", _copCoord.x, _copCoord.y);
-    printf("_currentChairAngle = %i\n", _currentChairAngle);
-    //printf("_prevChairAngle = %i\n\n", _prevChairAngle);
-    //printf("Current Speed = %f\n\n", _currentSpeed);
+    printf("getDateTime = %s \n", _currentDatetime.c_str());
+    printf("isSomeoneThere = %i \n", _devicemgr->IsSomeoneThere());
+    printf("getCenterOfPressure x = %f, y = %f \n", _copCoord.x, _copCoord.y);
+    printf("_currentChairAngle = %i \n", _currentChairAngle);
+    printf("_prevChairAngle = %i \n", _prevChairAngle);
+    printf("Is Moving = %d \n", _isMoving);
 #endif
 
     // Envoi de la moyenne de la position dans les 5 dernieres minutes.

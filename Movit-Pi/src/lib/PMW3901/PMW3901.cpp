@@ -53,8 +53,8 @@ bool PMW3901::Initialize()
 void PMW3901::ReadMotionCount(int16_t *deltaX, int16_t *deltaY)
 {
   RegisterRead(0x02);
-  *deltaX = ((int16_t)RegisterRead(0x04) << 8) | RegisterRead(0x03);
-  *deltaY = ((int16_t)RegisterRead(0x06) << 8) | RegisterRead(0x05);
+  *deltaX = ((int16_t)(RegisterRead(0x04) & 0xff) << 8) | (RegisterRead(0x03) & 0xff);
+  *deltaY = ((int16_t)(RegisterRead(0x06) & 0xff) << 8) | (RegisterRead(0x05) & 0xff);
 
   if (*deltaX == SHORT_MIN || *deltaX == SHORT_MAX || *deltaY == SHORT_MIN || *deltaY == SHORT_MAX)
   {
@@ -99,6 +99,7 @@ void PMW3901::InitRegisters()
   RegisterWrite(0x44, 0x1B);
   RegisterWrite(0x40, 0xBF);
   RegisterWrite(0x4E, 0x3F);
+
   RegisterWrite(0x7F, 0x08);
   RegisterWrite(0x65, 0x20);
   RegisterWrite(0x6A, 0x18);
@@ -165,7 +166,7 @@ void PMW3901::BeginTransaction()
 {
   bcm2835_spi_begin();
   bcm2835_spi_setDataMode(BCM2835_SPI_MODE0);
-  bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_512);
+  bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_256);
   SetChipSelect(LOW);
   SleepForMicroSeconds(TIME_TO_START_TRANSACTION);
 }
