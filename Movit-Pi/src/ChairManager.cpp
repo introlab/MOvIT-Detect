@@ -208,8 +208,6 @@ void ChairManager::CheckIfRequiredBackSeatAngleIsMaintained()
 void ChairManager::CheckIfBackSeatIsBackToInitialPosition()
 {
     printf("State 5\t_secondsCounter: %i\n", ++_secondsCounter);
-
-    _devicemgr->GetAlarm()->TurnOffAlarm();
     
     if (_currentChairAngle < MINIMUM_BACK_REST_ANGLE)
     {
