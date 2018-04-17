@@ -95,16 +95,17 @@ void Alarm::TurnOffAlarm()
 
 void Alarm::TurnOnBlinkLedsAlarm()
 {
-    std::lock_guard<std::mutex> lock(alarmMutex);
-
     if (_isBlinkLedsAlarmOn)
     {
         return;
     }
 
     _isBlinkLedsAlarmOn = true;
-    int count = 0;
-    TurnOffDCMotor();
+
+    std::lock_guard<std::mutex> lock(alarmMutex);
+
+	  int count = 0;
+	  TurnOffDCMotor();
     TurnOffRedLed();
     TurnOnGreenLed();
 
@@ -122,14 +123,15 @@ void Alarm::TurnOnBlinkLedsAlarm()
 
 void Alarm::TurnOnRedAlarm()
 {
-    std::lock_guard<std::mutex> lock(alarmMutex);
-
     if (_isRedAlarmOn)
     {
         return;
     }
 
     _isRedAlarmOn = true;
+
+    std::lock_guard<std::mutex> lock(alarmMutex);
+
     int count = 0;
     TurnOnDCMotor();
     TurnOnRedLed();

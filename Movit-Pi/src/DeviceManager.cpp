@@ -215,6 +215,16 @@ bool DeviceManager::TestDevices()
     }
     else if (inSerialChar == 'g')
     {
+        uint16_t sensedPresence = 0;
+        for (uint8_t i = 0; i < _sensorMatrix._sensorCount; i++)
+        {
+            sensedPresence += _sensorMatrix.GetAnalogData(i);
+        }
+        if (_sensorMatrix._sensorCount != 0)
+        {
+            sensedPresence /= _sensorMatrix._sensorCount;
+        }
+
         printf("\nDEBUG CENTER OF PRESSURE FORCE SENSORS START");
         printf("\nFunction(s) under test:");
         printf("\n DetectCenterOfPressure()");
@@ -244,6 +254,21 @@ bool DeviceManager::TestDevices()
         printf("COP (Y): \t %f \n", _globalForcePlate.GetCOPy());
         printf(".-.--..---.-.-.--.--.--.---.--.-");
         printf("\n");
+
+        printf("\n.-.--..---DETECTION DUNE PERSONNE SUR LA CHAISE--.---.--.-\n");
+        printf("Detected Presence : %u \n", sensedPresence);
+        printf("Detection Threshold : %f \n", _sensorMatrix.GetDetectionThreshold());
+        printf("Presence verification result : ");
+
+        if (_sensorMatrix.IsUserDetected())
+        {
+            printf("User detected \n");
+        }
+        else
+        {
+            printf("No user detected \n");
+        }
+        printf(".-.--..---.-.-.--.--.--.---.--.-\n\n");
     }
     else if (inSerialChar == 'h')
     {

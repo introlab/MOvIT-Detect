@@ -10,7 +10,7 @@ using std::string;
 
 #define EXECUTION_PERIOD 1000000
 
-int main()
+int main(int argc, char *argv[])
 {
     I2Cdev::Initialize();
 
@@ -23,6 +23,17 @@ int main()
     // std::clock_t start;
     // double duration;
 
+    if (argc > 1)
+    {
+        if (std::string(argv[1]) == "-t")
+        {
+            while (true)
+            {
+                devicemgr->TestDevices();
+            }
+        }
+    }
+    
     bool done = false;
     while (!done)
     {

@@ -3,7 +3,7 @@
 #define REQUIRED_SITTING_TIME 5
 #define DELTA_ANGLE_THRESHOLD 5
 
-#define CENTER_OF_PRESSURE_EMISSION_PERIOD 5 * 60
+#define CENTER_OF_PRESSURE_EMISSION_PERIOD 15
 #define MINIMUM_BACK_REST_ANGLE 2
 
 ChairManager::ChairManager(MosquittoBroker *mosquittoBroker, DeviceManager *devicemgr)
@@ -33,20 +33,18 @@ void ChairManager::UpdateDevices()
     _devicemgr->Update();
     _currentDatetime = std::to_string(_devicemgr->GetTimeSinceEpoch());
     _isSomeoneThere = _devicemgr->IsSomeoneThere();
-    Coord_t tempCoord = _devicemgr->GetCenterOfPressure();
-    _copCoord.x += tempCoord.x;
-    _copCoord.y += tempCoord.y;
+    Coord_t _copCoord = _devicemgr->GetCenterOfPressure();
     _prevChairAngle = _currentChairAngle;
     _currentChairAngle = _devicemgr->GetBackSeatAngle();
     _isMoving = _devicemgr->GetIsMoving();
 
 #ifdef DEBUG_PRINT
-    printf("getDateTime = %s \n", _currentDatetime.c_str());
-    printf("isSomeoneThere = %i \n", _devicemgr->IsSomeoneThere());
-    printf("getCenterOfPressure x = %f, y = %f \n", _copCoord.x, _copCoord.y);
-    printf("_currentChairAngle = %i \n", _currentChairAngle);
-    printf("_prevChairAngle = %i \n", _prevChairAngle);
-    printf("Is Moving = %d \n", _isMoving);
+    //printf("getDateTime = %s\n", _currentDatetime.c_str());
+    printf("isSomeoneThere = %i\n", _devicemgr->IsSomeoneThere());
+    printf("getCenterOfPressure x = %f, y = %f\n", _copCoord.x, _copCoord.y);
+    printf("_currentChairAngle = %i\n", _currentChairAngle);
+    //printf("_prevChairAngle = %i\n\n", _prevChairAngle);
+    //printf("Current Speed = %f\n\n", _currentSpeed);
 #endif
 
     // Envoi de la moyenne de la position dans les 5 dernieres minutes.
@@ -54,15 +52,11 @@ void ChairManager::UpdateDevices()
     // Ceci sera revue en même temps que tous le scheduling
     if (_timer.Elapsed() >= CENTER_OF_PRESSURE_EMISSION_PERIOD * 1000)
     {
-        _timer.Reset();
-        // Tester cette ligne avec la chaise
-        // _mosquittoBroker->SendCenterOfPressure(_copCoord.x/CENTER_OF_PRESSURE_EMISSION_PERIOD, _copCoord.y/CENTER_OF_PRESSURE_EMISSION_PERIOD, _currentDatetime);
-
-        _copCoord.x = 0;
-        _copCoord.y = 0;
+        _timer.reset();
+        _mosquittoBroker->sendCenterOfPressure(_copCoord.x, _copCoord.y, _currentDatetime);
     }
 
-    if (_currentChairAngle != _prevChairAngle)
+    if ((_currentChairAngle != _prevChairAngle) && _isSomeoneThere)
     {
         _mosquittoBroker->SendBackRestAngle(_currentChairAngle, _currentDatetime);
     }
@@ -71,9 +65,6 @@ void ChairManager::UpdateDevices()
     {
         _mosquittoBroker->SendIsSomeoneThere(_isSomeoneThere, _currentDatetime);
     }
-
-    // A rajouter quand le moment sera venu
-    //_mosquittoBroker->SendSpeed(0, _currentDatetime);
 }
 
 void ChairManager::ReadFromServer()
@@ -118,7 +109,7 @@ void ChairManager::CheckNotification()
         return;
     }
 
-    if (_requiredDuration == 0 || _requiredPeriod == 0 || _requiredBackRestAngle == 0)
+    if (!_isSomeoneThere || _requiredDuration == 0 || _requiredPeriod == 0 || _requiredBackRestAngle == 0)
     {
         _state = 1;
         _secondsCounter = 0;

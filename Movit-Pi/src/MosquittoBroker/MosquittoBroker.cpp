@@ -195,8 +195,8 @@ void MosquittoBroker::SendBackRestAngle(const int angle, const std::string datet
 
 void MosquittoBroker::SendCenterOfPressure(const float x, const float y, const std::string datetime)
 {
-    std::string strMsg = "{\"datetime\":" + datetime + ",\"pos_x\":" + std::to_string(x) + ",\"pos_y\":" + std::to_string(x) + "}";
-
+    std::string strMsg = "{\"datetime\":" + datetime + ",\"pos_x\":" + std::to_string(x) + ",\"pos_y\":" + std::to_string(y) + "}";
+  
     publish(NULL, CURRENT_CENTER_OF_PRESSURE_TOPIC, strMsg.length(), strMsg.c_str());
 }
 
