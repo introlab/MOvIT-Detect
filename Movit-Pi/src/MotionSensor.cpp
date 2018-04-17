@@ -7,6 +7,9 @@
 #define WHEELCHAIR_MOVING_THRESHOLD 0.25f // In meter
 #define WHEELCHAIR_MOVING_TIMEOUT 5000    // In milliseconde
 
+const char *FAIL_MESSAGE = "FAIL \n";
+const char *SUCCESS_MESSAGE = "SUCCESS \n";
+
 void MotionSensor::Initialize()
 {
     if (InitializeRangeSensor() && InitializeOpticalFlowSensor() && ValidDistanceToTheGround())
@@ -23,12 +26,12 @@ bool MotionSensor::InitializeRangeSensor()
     printf("Initialization of the range sensor... ");
     if (!_rangeSensor.Initialize(false))
     {
-        printf("FAIL \n");
+        printf(FAIL_MESSAGE);
         return false;
     }
     _rangeSensor.SetTimeout(timeout);
     _rangeSensor.SetMeasurementTimingBudget(timingBudget);
-    printf("SUCCESS \n");
+    printf(SUCCESS_MESSAGE);
     return true;
 }
 
@@ -38,10 +41,10 @@ bool MotionSensor::InitializeOpticalFlowSensor()
 
     if (!_opticalFLowSensor.Initialize())
     {
-        printf("FAIL \n");
+        printf(FAIL_MESSAGE);
         return false;
     }
-    printf("SUCCESS \n");
+    printf(SUCCESS_MESSAGE);
     return true;
 }
 
@@ -59,7 +62,7 @@ void MotionSensor::GetDeltaXY()
     {
         _opticalFLowSensor.ReadMotionCount(&deltaX, &deltaY);
         UpdateTravel(&deltaX, &deltaY);
-        SleepForMilliSeconds(TIME_BETWEEN_READINGS);
+        sleep_for_milliseconds(TIME_BETWEEN_READINGS);
     }
 }
 
@@ -110,14 +113,14 @@ bool MotionSensor::ValidDistanceToTheGround()
 
 bool MotionSensor::GetIsMoving()
 {
-    if (_timer.elapsed() > WHEELCHAIR_MOVING_TIMEOUT && _isMovingTravel < WHEELCHAIR_MOVING_THRESHOLD)
+    if (_timer.Elapsed() > WHEELCHAIR_MOVING_TIMEOUT && _isMovingTravel < WHEELCHAIR_MOVING_THRESHOLD)
     {
         return false;
     }
     if (_isMovingTravel >= WHEELCHAIR_MOVING_THRESHOLD)
     {
         _isMovingTravel = 0.0f;
-        _timer.reset();
+        _timer.Reset();
     }
     return true;
 }

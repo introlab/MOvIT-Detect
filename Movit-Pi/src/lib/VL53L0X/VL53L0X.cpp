@@ -284,20 +284,20 @@ bool VL53L0X::Initialize(bool io_2v8)
 // Write an 8-bit register
 void VL53L0X::WriteReg(uint8_t reg, uint8_t value)
 {
-  I2Cdev::writeByte(address, reg, value);
+  I2Cdev::WriteByte(address, reg, value);
 }
 
 // Write a 16-bit register
 void VL53L0X::WriteReg16Bit(uint8_t reg, uint16_t value)
 {
-  I2Cdev::writeWord(address, reg, value);
+  I2Cdev::WriteWord(address, reg, value);
 }
 
 // Read an 8-bit register
 uint8_t VL53L0X::ReadReg(uint8_t reg)
 {
   uint8_t value;
-  I2Cdev::readByte(address, reg, &value);
+  I2Cdev::ReadByte(address, reg, &value);
   return value;
 }
 
@@ -305,7 +305,7 @@ uint8_t VL53L0X::ReadReg(uint8_t reg)
 uint16_t VL53L0X::ReadReg16Bit(uint8_t reg)
 {
   uint16_t value;
-  I2Cdev::readWord(address, reg, &value);
+  I2Cdev::ReadWord(address, reg, &value);
   return value;
 }
 
@@ -313,14 +313,14 @@ uint16_t VL53L0X::ReadReg16Bit(uint8_t reg)
 // starting at the given register
 void VL53L0X::WriteMulti(uint8_t reg, uint8_t *src, uint8_t count)
 {
-  I2Cdev::writeBytes(address, reg, count, src);
+  I2Cdev::WriteBytes(address, reg, count, src);
 }
 
 // Read an arbitrary number of bytes from the sensor, starting at the given
 // register, into the given array
 void VL53L0X::ReadMulti(uint8_t reg, uint8_t *dst, uint8_t count)
 {
-  I2Cdev::readBytes(address, reg, count, dst);
+  I2Cdev::ReadBytes(address, reg, count, dst);
 }
 
 // Set the return signal rate limit check value in units of MCPS (mega counts
@@ -936,7 +936,7 @@ uint32_t VL53L0X::TimeoutMicrosecondsToMclks(uint32_t timeout_period_us, uint8_t
 {
   uint32_t macro_period_ns = CalcMacroPeriod(vcsel_period_pclks);
 
-  return (((timeout_period_us * 1000) + (macro_period_ns / 2)) / macro_period_ns);
+  return (timeout_period_us * 1000 + macro_period_ns / 2) / macro_period_ns;
 }
 
 // based on VL53L0X_perform_single_ref_calibration()

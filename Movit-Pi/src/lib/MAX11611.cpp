@@ -14,16 +14,16 @@ DATASHEET: https://datasheets.maximintegrated.com/en/ds/MAX11606-MAX11611.pdf
 // Default constructor, uses default I2C address.
 MAX11611::MAX11611()
 {
-    devAddr = MAX11611_DEFAULT_ADDRESS;
+    _devAddr = MAX11611_DEFAULT_ADDRESS;
 }
 
 // Specific address constructor.
 MAX11611::MAX11611(uint8_t address)
 {
-    devAddr = address;
+    _devAddr = address;
 }
 
-bool MAX11611::initialize()
+bool MAX11611::Initialize()
 {
     //Setup Byte Format (Datasheet p.13)
     /*
@@ -39,7 +39,7 @@ bool MAX11611::initialize()
     uint8_t dataToSend;
 
     dataToSend = 0x8A; //10001010
-    if (!I2Cdev::writeByte(devAddr, dataToSend))
+    if (!I2Cdev::WriteByte(_devAddr, dataToSend))
     {
         return false;
     }
@@ -49,14 +49,14 @@ bool MAX11611::initialize()
 	bit7 = 0; //Configuration
 	bit6 = 0; //SCAN1
 	bit5 = 0; //SCAN0
-	bit4 = 1; //CS3 //0011 = AIN3 (Va donc scanner de AIN0 � AIN3)
+	bit4 = 1; //CS3 //0011 = AIN3 (Va donc scanner de AIN0 AIN3)
 	bit3 = 0; //CS2
 	bit2 = 0; //CS1
 	bit1 = 0; //CS0
 	bit0 = 1; //Single-ended
 	*/
     dataToSend = 0x11; //0b00010001
-    if (!I2Cdev::writeByte(devAddr, dataToSend))
+    if (!I2Cdev::WriteByte(_devAddr, dataToSend))
     {
         return false;
     }
@@ -65,7 +65,7 @@ bool MAX11611::initialize()
 }
 
 //Fonctions traitant les donnees brutes (2*8bits par capteur) sur une seule variable 16 bits
-void MAX11611::getData(uint8_t nbOfAnalogDevices, uint16_t *realData)
+void MAX11611::GetData(uint8_t nbOfAnalogDevices, uint16_t *realData)
 {
     uint8_t rawDataArray[2 * nbOfAnalogDevices];
     uint8_t *rawData;
@@ -85,10 +85,10 @@ void MAX11611::getData(uint8_t nbOfAnalogDevices, uint16_t *realData)
     }
 
     //Ancien call deprecated
-    //readBytes(2 * nbOfAnalogDevices, rawData); //2 bytes par capteur (car valeur sur 10 bits (fig.11 datasheet p.16))
+    //ReadBytes(2 * nbOfAnalogDevices, rawData); //2 bytes par capteur (car valeur sur 10 bits (fig.11 datasheet p.16))
     //Nouveau call à implémenter
     //mise en commentaire des 4 printfs, decommenter pour debug
-    I2Cdev::readBytes(MAX11611_DEFAULT_ADDRESS, 2 * nbOfAnalogDevices, rawData);
+    I2Cdev::ReadBytes(MAX11611_DEFAULT_ADDRESS, 2 * nbOfAnalogDevices, rawData);
 
     for (int i = 0; i < (2 * nbOfAnalogDevices); i++)
     {

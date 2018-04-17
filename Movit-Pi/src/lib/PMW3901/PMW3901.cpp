@@ -66,7 +66,7 @@ void PMW3901::RegisterWrite(uint8_t reg, uint8_t value)
 {
   BeginTransaction();
   bcm2835_spi_transfer(reg | 0x80u);
-  SleepForMicroSeconds(TIME_BETWEEN_COMMANDS);
+  sleep_for_microseconds(TIME_BETWEEN_COMMANDS);
   bcm2835_spi_transfer(value);
   EndTransaction();
 }
@@ -75,7 +75,7 @@ uint8_t PMW3901::RegisterRead(uint8_t reg)
 {
   BeginTransaction();
   bcm2835_spi_transfer(reg & ~0x80u);
-  SleepForMicroSeconds(TIME_BETWEEN_COMMANDS);
+  sleep_for_microseconds(TIME_BETWEEN_COMMANDS);
   uint8_t value = bcm2835_spi_transfer(0x00);
   EndTransaction();
   return value;
@@ -145,7 +145,7 @@ void PMW3901::InitRegisters()
   RegisterWrite(0x40, 0x41);
   RegisterWrite(0x70, 0x00);
 
-  SleepForMilliSeconds(100);
+  sleep_for_milliseconds(100);
   RegisterWrite(0x32, 0x44);
   RegisterWrite(0x7F, 0x07);
   RegisterWrite(0x40, 0x40);
@@ -168,12 +168,12 @@ void PMW3901::BeginTransaction()
   bcm2835_spi_setDataMode(BCM2835_SPI_MODE0);
   bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_256);
   SetChipSelect(LOW);
-  SleepForMicroSeconds(TIME_TO_START_TRANSACTION);
+  sleep_for_microseconds(TIME_TO_START_TRANSACTION);
 }
 
 void PMW3901::EndTransaction()
 {
-  SleepForMicroSeconds(TIME_TO_END_TRANSACTION);
+  sleep_for_microseconds(TIME_TO_END_TRANSACTION);
   SetChipSelect(HIGH);
   bcm2835_spi_end();
 }

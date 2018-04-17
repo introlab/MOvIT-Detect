@@ -17,8 +17,8 @@ uint8_t DECToBCD(const uint8_t &value);
 uint8_t BCDAdd(const uint8_t &BCDlvalue, const uint8_t &DECrvalue);
 uint8_t BCDSubstract(const uint8_t &BCDlvalue, const uint8_t &DECrvalue);
 
-void SleepForMicroSeconds(uint32_t microseconds);
-void SleepForMilliSeconds(uint32_t milliseconds);
+void sleep_for_microseconds(uint32_t microseconds);
+void sleep_for_milliseconds(uint32_t milliseconds);
 
 //TODO maybe implement the following
 //bool BCDGreaterThan(const uint8_t lvalue, const uint8_t rvalue);

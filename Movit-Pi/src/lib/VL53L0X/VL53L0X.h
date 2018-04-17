@@ -169,7 +169,4 @@ class VL53L0X
     static uint32_t TimeoutMicrosecondsToMclks(uint32_t timeout_period_us, uint8_t vcsel_period_pclks);
 };
 
-#endif
-
-
-
+#endif // VL53L0X_H

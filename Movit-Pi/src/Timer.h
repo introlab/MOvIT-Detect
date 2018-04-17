@@ -9,17 +9,16 @@ class Timer
     Timer() : m_beg(clock_::now())
     {
     }
-    void reset()
+    
+    void Reset()
     {
-        m_beg = clock_::now();
+      m_beg = clock_::now();
     }
 
     // Retourne le nombre de miliseconde passé depuis le dernier reset
-    double elapsed() const
+    double Elapsed() const
     {
-        return std::chrono::duration_cast<std::chrono::milliseconds>(
-                   clock_::now() - m_beg)
-            .count();
+      return std::chrono::duration_cast<std::chrono::milliseconds>(clock_::now() - m_beg).count();
     }
 
   private:
@@ -28,4 +27,4 @@ class Timer
     std::chrono::time_point<clock_> m_beg;
 };
 
-#endif //TIMER_H
+#endif // TIMER_H

@@ -15,14 +15,14 @@ ChairManager::ChairManager(MosquittoBroker *mosquittoBroker, DeviceManager *devi
 
 void ChairManager::UpdateDevices()
 {
-    if (_mosquittoBroker->calibPressureMatRequired())
+    if (_mosquittoBroker->CalibPressureMatRequired())
     {
         printf("Debut de la calibration du tapis de pression\n");
         _devicemgr->CalibratePressureMat();
         printf("FIN de la calibration du tapis de pression\n");
     }
 
-    if (_mosquittoBroker->calibIMURequired())
+    if (_mosquittoBroker->CalibIMURequired())
     {
         printf("Debut de la calibration des IMU\n");
         _devicemgr->CalibrateIMU();
@@ -52,11 +52,11 @@ void ChairManager::UpdateDevices()
     // Envoi de la moyenne de la position dans les 5 dernieres minutes.
     // TODO Ceci est temporaire, il va falloir envoyer le centre de pression quand il y a un changement majeur.
     // Ceci sera revue en même temps que tous le scheduling
-    if (_timer.elapsed() >= CENTER_OF_PRESSURE_EMISSION_PERIOD * 1000)
+    if (_timer.Elapsed() >= CENTER_OF_PRESSURE_EMISSION_PERIOD * 1000)
     {
-        _timer.reset();
+        _timer.Reset();
         // Tester cette ligne avec la chaise
-        // _mosquittoBroker->sendCenterOfPressure(_copCoord.x/CENTER_OF_PRESSURE_EMISSION_PERIOD, _copCoord.y/CENTER_OF_PRESSURE_EMISSION_PERIOD, _currentDatetime);
+        // _mosquittoBroker->SendCenterOfPressure(_copCoord.x/CENTER_OF_PRESSURE_EMISSION_PERIOD, _copCoord.y/CENTER_OF_PRESSURE_EMISSION_PERIOD, _currentDatetime);
 
         _copCoord.x = 0;
         _copCoord.y = 0;
@@ -64,45 +64,45 @@ void ChairManager::UpdateDevices()
 
     if (_currentChairAngle != _prevChairAngle)
     {
-        _mosquittoBroker->sendBackRestAngle(_currentChairAngle, _currentDatetime);
+        _mosquittoBroker->SendBackRestAngle(_currentChairAngle, _currentDatetime);
     }
 
     if (_prevIsSomeoneThere != _isSomeoneThere)
     {
-        _mosquittoBroker->sendIsSomeoneThere(_isSomeoneThere, _currentDatetime);
+        _mosquittoBroker->SendIsSomeoneThere(_isSomeoneThere, _currentDatetime);
     }
 
     // A rajouter quand le moment sera venu
-    //_mosquittoBroker->sendSpeed(0, _currentDatetime);
+    //_mosquittoBroker->SendSpeed(0, _currentDatetime);
 }
 
 void ChairManager::ReadFromServer()
 {
-    if (_mosquittoBroker->isSetAlarmOnNew())
+    if (_mosquittoBroker->IsSetAlarmOnNew())
     {
         _overrideNotificationPattern = true;
-        _setAlarmOn = _mosquittoBroker->getSetAlarmOn();
+        _setAlarmOn = _mosquittoBroker->GetSetAlarmOn();
         printf("Something new for setAlarmOn = %i\n", _setAlarmOn);
     }
-    if (_mosquittoBroker->isRequiredBackRestAngleNew())
+    if (_mosquittoBroker->IsRequiredBackRestAngleNew())
     {
-        _requiredBackRestAngle = _mosquittoBroker->getRequiredBackRestAngle();
+        _requiredBackRestAngle = _mosquittoBroker->GetRequiredBackRestAngle();
         _secondsCounter = 0;
         // TODO valider que c'est le bon _state
         _state = 1;
         printf("Something new for _requiredBackRestAngle = %i\n", _requiredBackRestAngle);
     }
-    if (_mosquittoBroker->isRequiredPeriodNew())
+    if (_mosquittoBroker->IsRequiredPeriodNew())
     {
-        _requiredPeriod = _mosquittoBroker->getRequiredPeriod();
+        _requiredPeriod = _mosquittoBroker->GetRequiredPeriod();
         _secondsCounter = 0;
         // TODO valider que c'est le bon _state
         _state = 1;
         printf("Something new for _requiredPeriod = %i\n", _requiredPeriod);
     }
-    if (_mosquittoBroker->isRequiredDurationNew())
+    if (_mosquittoBroker->IsRequiredDurationNew())
     {
-        _requiredDuration = _mosquittoBroker->getRequiredDuration();
+        _requiredDuration = _mosquittoBroker->GetRequiredDuration();
         _secondsCounter = 0;
         // TODO valider que c'est le bon _state
         _state = 1;
@@ -174,7 +174,7 @@ void ChairManager::CheckIfBackRestIsRequired()
 void ChairManager::CheckIfRequiredBackSeatAngleIsReached()
 {
     printf("State 3\t abs(requiredBackRestAngle - _currentChairAngle): %i\n", abs(int(_requiredBackRestAngle) - int(_currentChairAngle)));
-    
+
     if (_currentChairAngle > (_requiredBackRestAngle - DELTA_ANGLE_THRESHOLD))
     {
         _devicemgr->GetAlarm()->TurnOnGreenAlarm();
@@ -208,7 +208,7 @@ void ChairManager::CheckIfRequiredBackSeatAngleIsMaintained()
 void ChairManager::CheckIfBackSeatIsBackToInitialPosition()
 {
     printf("State 5\t_secondsCounter: %i\n", ++_secondsCounter);
-    
+
     if (_currentChairAngle < MINIMUM_BACK_REST_ANGLE)
     {
         _state = 2;

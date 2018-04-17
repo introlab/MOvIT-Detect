@@ -35,7 +35,7 @@ std::mutex mutex;
 
 I2Cdev::I2Cdev() {}
 
-void I2Cdev::initialize()
+void I2Cdev::Initialize()
 {
     bcm2835_init();
     bcm2835_i2c_set_baudrate(I2C_BAUDRATE);
@@ -44,14 +44,19 @@ void I2Cdev::initialize()
 /** Enable or disable I2C,
  * @param isEnabled true = enable, false = disable
  */
-void I2Cdev::enable(bool isEnabled)
+void I2Cdev::Enable(bool isEnabled)
 {
     if (SET_I2C_PINS)
     {
         if (isEnabled)
+        {
             bcm2835_i2c_end();
+        }
+
         else
+        {
             bcm2835_i2c_begin();
+        }
     }
 }
 
@@ -65,7 +70,7 @@ char recvBuf[256];
  * @param data Container for single bit value
  * @return Status of read operation (true = success)
  */
-bool I2Cdev::readBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data)
+bool I2Cdev::ReadBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data)
 {
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -84,7 +89,7 @@ bool I2Cdev::readBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *
  * @param data Container for right-aligned value (i.e. '101' read from any bitStart position will equal 0x05)
  * @return Status of read operation (true = success)
  */
-bool I2Cdev::readBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data)
+bool I2Cdev::ReadBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data)
 {
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -113,7 +118,7 @@ bool I2Cdev::readBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_
  * @param data Container for byte value read from device
  * @return Status of read operation (true = success)
  */
-bool I2Cdev::readByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data)
+bool I2Cdev::ReadByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data)
 {
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -131,7 +136,7 @@ bool I2Cdev::readByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data)
  * @param data Buffer to store read data in
  * @return I2C_TransferReturn_TypeDef http://downloads.energymicro.com/documentation/doxygen/group__I2C.html
  */
-bool I2Cdev::readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data)
+bool I2Cdev::ReadBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data)
 {
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -146,7 +151,7 @@ bool I2Cdev::readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t
     return response == BCM2835_I2C_REASON_OK;
 }
 
-bool I2Cdev::readBytes(uint8_t devAddr, uint8_t length, uint8_t *data)
+bool I2Cdev::ReadBytes(uint8_t devAddr, uint8_t length, uint8_t *data)
 {
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -168,7 +173,7 @@ bool I2Cdev::readBytes(uint8_t devAddr, uint8_t length, uint8_t *data)
  * @param value New bit value to write
  * @return Status of operation (true = success)
  */
-bool I2Cdev::writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data)
+bool I2Cdev::WriteBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data)
 {
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -194,13 +199,13 @@ bool I2Cdev::writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t 
  * @param data Right-aligned value to write
  * @return Status of operation (true = success)
  */
-bool I2Cdev::writeBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data)
+bool I2Cdev::WriteBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data)
 {
     std::lock_guard<std::mutex> lock(mutex);
 
-    //      010 value to write
+    // 010 value to write
     // 76543210 bit numbers
-    //    xxx   args: bitStart=4, length=3
+    // xxx args: bitStart=4, length=3
     // 00011100 mask byte
     // 10101111 original value (sample)
     // 10100011 original & ~mask
@@ -229,7 +234,7 @@ bool I2Cdev::writeBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8
  * @param data New byte value to write
  * @return Status of operation (true = success)
  */
-bool I2Cdev::writeByte(uint8_t devAddr, uint8_t regAddr, uint8_t data)
+bool I2Cdev::WriteByte(uint8_t devAddr, uint8_t regAddr, uint8_t data)
 {
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -246,7 +251,7 @@ bool I2Cdev::writeByte(uint8_t devAddr, uint8_t regAddr, uint8_t data)
  * @param data Container for word value read from device
  * @return Status of read operation (true = success)
  */
-bool I2Cdev::readWord(uint8_t devAddr, uint8_t regAddr, uint16_t *data)
+bool I2Cdev::ReadWord(uint8_t devAddr, uint8_t regAddr, uint16_t *data)
 {
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -264,7 +269,7 @@ bool I2Cdev::readWord(uint8_t devAddr, uint8_t regAddr, uint16_t *data)
  * @param data Buffer to store read data in
  * @return Number of words read (-1 indicates failure)
  */
-bool I2Cdev::readWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data)
+bool I2Cdev::ReadWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data)
 {
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -279,7 +284,7 @@ bool I2Cdev::readWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_
     return response == BCM2835_I2C_REASON_OK;
 }
 
-bool I2Cdev::writeWord(uint8_t devAddr, uint8_t regAddr, uint16_t data)
+bool I2Cdev::WriteWord(uint8_t devAddr, uint8_t regAddr, uint16_t data)
 {
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -291,7 +296,7 @@ bool I2Cdev::writeWord(uint8_t devAddr, uint8_t regAddr, uint16_t data)
     return response == BCM2835_I2C_REASON_OK;
 }
 
-bool I2Cdev::writeBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data)
+bool I2Cdev::WriteBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data)
 {
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -306,7 +311,7 @@ bool I2Cdev::writeBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_
     return response == BCM2835_I2C_REASON_OK;
 }
 
-bool I2Cdev::writeByte(uint8_t devAddr, uint8_t data)
+bool I2Cdev::WriteByte(uint8_t devAddr, uint8_t data)
 {
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -317,7 +322,7 @@ bool I2Cdev::writeByte(uint8_t devAddr, uint8_t data)
     return response == BCM2835_I2C_REASON_OK;
 }
 
-bool I2Cdev::writeWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data)
+bool I2Cdev::WriteWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data)
 {
     std::lock_guard<std::mutex> lock(mutex);
 

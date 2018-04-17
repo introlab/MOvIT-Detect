@@ -1,13 +1,12 @@
 #ifndef HUMIDITY_SENSOR_H
 #define HUMIDITY_SENSOR_H
 
-class humiditySensor
+class HumiditySensor
 {
   public:
-    humiditySensor();
-    ~humiditySensor();
+    HumiditySensor();
+    ~HumiditySensor();
     void DetectHumidity();
-
 };
 
 #endif // HUMIDITY_SENSOR_H

@@ -9,7 +9,7 @@
 
 class Alarm
 {
-private:
+  private:
     PCA9536 _pca9536;
 
     bool _isRedAlarmOn = false;
@@ -20,7 +20,7 @@ private:
 
     uint8_t GetPinState(pin_t pin);
 
-public:
+  public:
     Alarm();
     Alarm(int blinkDuration, double blinkFrequency);
 

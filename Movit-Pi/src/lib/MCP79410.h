@@ -56,16 +56,16 @@
 
 class MCP79410
 {
-public:
+  public:
     MCP79410();
-    void setDefaultDateTime();
-    void setDateTime(unsigned char dt[]);
-    void getDateTime(unsigned char dt[]);
+    void SetDefaultDateTime();
+    void SetDateTime(unsigned char dt[]);
+    void GetDateTime(unsigned char dt[]);
 
-private:
+  private:
     uint8_t _devAddr;
     uint8_t _buffer[14];
-    int _validBits[DATE_TIME_SIZE] = {7,7,6,8,6,5,8};
+    int _validBits[DATE_TIME_SIZE] = {7, 7, 6, 8, 6, 5, 8};
 };
 
 #endif // MCP79410_H

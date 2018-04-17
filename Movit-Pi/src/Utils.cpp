@@ -7,7 +7,7 @@ uint8_t DECToBCD(const uint8_t &value)
     uint8_t ones = value % 10;
     uint8_t tens = (value / 10) << 4;
 
-    return (tens | ones);
+    return tens | ones;
 }
 
 uint8_t BCDToDEC(const uint8_t &value)
@@ -34,12 +34,12 @@ uint8_t BCDSubstract(const uint8_t &BCDlvalue, const uint8_t &DECrvalue)
     return DECToBCD(dec);
 }
 
-void SleepForMicroSeconds(uint32_t microseconds)
+void sleep_for_microseconds(uint32_t microseconds)
 {
-  std::this_thread::sleep_for(std::chrono::microseconds(microseconds));
+    std::this_thread::sleep_for(std::chrono::microseconds(microseconds));
 }
 
-void SleepForMilliSeconds(uint32_t milliseconds)
+void sleep_for_milliseconds(uint32_t milliseconds)
 {
-  std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
+    std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
 }

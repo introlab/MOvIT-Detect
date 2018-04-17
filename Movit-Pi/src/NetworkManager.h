@@ -3,12 +3,8 @@
 
 class NetworkManager
 {
-	public:
-
-		static bool IsConnected();
-
-	private:
-
+  public:
+    static bool IsConnected();
 };
 
-#endif
+#endif // NETWORK_MANAGER_H

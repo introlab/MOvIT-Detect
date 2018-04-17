@@ -6,19 +6,19 @@
 
 DeviceManager::DeviceManager() : _alarm(700, 0.1)
 {
-    _datetimeRTC = DateTimeRTC::getInstance();
+    _datetimeRTC = DateTimeRTC::GetInstance();
     _COPCoord.x = 0;
     _COPCoord.y = 0;
 }
 
 void DeviceManager::InitializeDevices()
 {
-    I2Cdev::initialize();
+    I2Cdev::Initialize();
     _datetimeRTC->SetCurrentDateTimeIfConnectedThread().detach();
 
     _alarm.Initialize();
     _imuValid = _imu.Initialize();
-	_motionSensor.Initialize();
+    _motionSensor.Initialize();
     _forcePlateValid = InitializeForcePlate();
 
     printf("Setup Done\n");
@@ -38,7 +38,7 @@ void DeviceManager::CalibrateIMU()
 bool DeviceManager::InitializeForcePlate()
 {
     printf("MAX11611 (ADC) initializing ... ");
-    if (_max11611.initialize())
+    if (_max11611.Initialize())
     {
         for (uint8_t i = 0; i < _sensorMatrix._sensorCount; i++)
         {
@@ -61,7 +61,7 @@ bool DeviceManager::InitializeForcePlate()
 
 void DeviceManager::Update()
 {
-	_timeSinceEpoch = _datetimeRTC->GetTimeSinceEpoch();
+    _timeSinceEpoch = _datetimeRTC->GetTimeSinceEpoch();
     _isMoving = _motionSensor.GetIsMoving();
 
     if (_imuValid)
@@ -87,7 +87,7 @@ void DeviceManager::Update()
 
 void DeviceManager::UpdateForcePlateData()
 {
-    _max11611.getData(_sensorMatrix._sensorCount, _max11611Data);
+    _max11611.GetData(_sensorMatrix._sensorCount, _max11611Data);
     for (uint8_t i = 0; i < _sensorMatrix._sensorCount; i++)
     {
         _sensorMatrix.SetAnalogData(_max11611Data[i], i);
@@ -265,7 +265,6 @@ bool DeviceManager::TestDevices()
         printf("\nFunction(s) under test:");
         printf("\n DetectRelativePressure()\n");
 
-        //getData(max11611Data, sensorMatrix);
         UpdateForcePlateData();
 
         printf("\n.-.--..---MESURE DES PRESSIONS RELATIVES DES QUADRANTS--.---.--.-\n");

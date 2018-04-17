@@ -31,38 +31,39 @@ THE SOFTWARE.
 #define I2CDEV_H
 
 #include <bcm2835.h>
-#include <math.h> 
-#include <stdlib.h> 
+#include <math.h>
+#include <stdlib.h>
 #include <string>
 
-#define SET_I2C_PINS  false
+#define SET_I2C_PINS false
 /* used to boolean for setting RPi I2C pins P1-03 (SDA) and P1-05 (SCL) to alternate function ALT0, which enables those pins for I2C interface.
    setI2Cpin should be false, if the I2C are already configured in alt mode ... */
 
 #define I2C_BAUDRATE 400000
 
-class I2Cdev {
- public:
+class I2Cdev
+{
+      public:
         I2Cdev();
 
-        static void initialize();
-        static void enable(bool isEnabled);
+        static void Initialize();
+        static void Enable(bool isEnabled);
 
-        static bool readBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data);
-        static bool readBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data);
-        static bool readByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data);
-        static bool readWord(uint8_t devAddr, uint8_t regAddr, uint16_t *data);
-        static bool readBytes(uint8_t devAddr, uint8_t length, uint8_t *data);
-        static bool readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
-        static bool readWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data);
+        static bool ReadBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data);
+        static bool ReadBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data);
+        static bool ReadByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data);
+        static bool ReadWord(uint8_t devAddr, uint8_t regAddr, uint16_t *data);
+        static bool ReadBytes(uint8_t devAddr, uint8_t length, uint8_t *data);
+        static bool ReadBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
+        static bool ReadWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data);
 
-        static bool writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data);
-        static bool writeBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data);
-        static bool writeByte(uint8_t devAddr, uint8_t data);
-        static bool writeByte(uint8_t devAddr, uint8_t regAddr, uint8_t data);
-        static bool writeWord(uint8_t devAddr, uint8_t regAddr, uint16_t data);
-        static bool writeBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
-        static bool writeWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data);
+        static bool WriteBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data);
+        static bool WriteBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data);
+        static bool WriteByte(uint8_t devAddr, uint8_t data);
+        static bool WriteByte(uint8_t devAddr, uint8_t regAddr, uint8_t data);
+        static bool WriteWord(uint8_t devAddr, uint8_t regAddr, uint16_t data);
+        static bool WriteBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
+        static bool WriteWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data);
 };
 
 #endif // I2CDEV_H

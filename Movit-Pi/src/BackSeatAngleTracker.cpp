@@ -1,6 +1,6 @@
 #include "BackSeatAngleTracker.h"
 #include "Utils.h"
-#include <algorithm> 
+#include <algorithm>
 #include <unistd.h>
 #include <math.h>
 #include <string>
@@ -15,23 +15,23 @@ BackSeatAngleTracker::BackSeatAngleTracker()
 
 bool BackSeatAngleTracker::Initialize()
 {
-	_fileManager.ReadCalibrationOffsetsFromFile(fixedImuName, mobileImuName);
-	return InitializeMobileImu() && InitializeFixedImu();
+    _fileManager.ReadCalibrationOffsetsFromFile(fixedImuName, mobileImuName);
+    return InitializeMobileImu() && InitializeFixedImu();
 }
 
-bool BackSeatAngleTracker::InitializeImu(MPU6050 &mpu, std::string name, int* accelerometerOffsets, int* gyroscopeOffsets)
+bool BackSeatAngleTracker::InitializeImu(MPU6050 &mpu, std::string name, int *accelerometerOffsets, int *gyroscopeOffsets)
 {
     printf("MPU6050 %s initializing ... ", name.c_str());
     fflush(stdout);
 
-    if (!mpu.testConnection())
+    if (!mpu.TestConnection())
     {
         printf("FAIL\n");
         return false;
     }
 
-    mpu.initialize();
-    
+    mpu.Initialize();
+
     ResetIMUOffsets(mpu);
 
     if (accelerometerOffsets == NULL || gyroscopeOffsets == NULL)
@@ -50,16 +50,16 @@ bool BackSeatAngleTracker::InitializeImu(MPU6050 &mpu, std::string name, int* ac
 
 bool BackSeatAngleTracker::InitializeFixedImu()
 {
-    int * accelerometerOffsets = _fileManager.GetFixedImuAccelOffsets();
-    int * gyroscopeOffsets = _fileManager.GetFixedImuGyroOffsets();
+    int *accelerometerOffsets = _fileManager.GetFixedImuAccelOffsets();
+    int *gyroscopeOffsets = _fileManager.GetFixedImuGyroOffsets();
 
     return InitializeImu(_fixedImu, fixedImuName, accelerometerOffsets, gyroscopeOffsets);
 }
 
 bool BackSeatAngleTracker::InitializeMobileImu()
 {
-    int * accelerometerOffsets = _fileManager.GetMobileImuAccelOffsets();
-    int * gyroscopeOffsets = _fileManager.GetMobileImuGyroOffsets();
+    int *accelerometerOffsets = _fileManager.GetMobileImuAccelOffsets();
+    int *gyroscopeOffsets = _fileManager.GetMobileImuGyroOffsets();
 
     return InitializeImu(_mobileImu, mobileImuName, accelerometerOffsets, gyroscopeOffsets);
 }
@@ -72,16 +72,16 @@ void BackSeatAngleTracker::ResetIMUOffsets(MPU6050 &mpu)
 
 void BackSeatAngleTracker::ResetIMUAccelOffsets(MPU6050 &mpu)
 {
-    mpu.setXAccelOffset(0);
-    mpu.setYAccelOffset(0);
-    mpu.setZAccelOffset(0);
+    mpu.SetXAccelOffset(0);
+    mpu.SetYAccelOffset(0);
+    mpu.SetZAccelOffset(0);
 }
 
 void BackSeatAngleTracker::ResetIMUGyroOffsets(MPU6050 &mpu)
 {
-    mpu.setXGyroOffset(0);
-    mpu.setYGyroOffset(0);
-    mpu.setZGyroOffset(0);
+    mpu.SetXGyroOffset(0);
+    mpu.SetYGyroOffset(0);
+    mpu.SetZGyroOffset(0);
 }
 
 void BackSeatAngleTracker::SetImuOffsets(MPU6050 &mpu)
@@ -92,32 +92,32 @@ void BackSeatAngleTracker::SetImuOffsets(MPU6050 &mpu)
 
 void BackSeatAngleTracker::SetImuAccelOffsets(MPU6050 &mpu)
 {
-    mpu.setXAccelOffset(_accelerometerOffsets[_axis::x]);
-    mpu.setYAccelOffset(_accelerometerOffsets[_axis::y]);
-    mpu.setZAccelOffset(_accelerometerOffsets[_axis::z]);
+    mpu.SetXAccelOffset(_accelerometerOffsets[_axis::x]);
+    mpu.SetYAccelOffset(_accelerometerOffsets[_axis::y]);
+    mpu.SetZAccelOffset(_accelerometerOffsets[_axis::z]);
 }
 
 void BackSeatAngleTracker::SetImuGyroOffsets(MPU6050 &mpu)
 {
-    mpu.setXGyroOffset(_gyroscopeOffsets[_axis::x]);
-    mpu.setYGyroOffset(_gyroscopeOffsets[_axis::y]);
-    mpu.setZGyroOffset(_gyroscopeOffsets[_axis::z]);
+    mpu.SetXGyroOffset(_gyroscopeOffsets[_axis::x]);
+    mpu.SetYGyroOffset(_gyroscopeOffsets[_axis::y]);
+    mpu.SetZGyroOffset(_gyroscopeOffsets[_axis::z]);
 }
 
-int * BackSeatAngleTracker::GetGyroscopeMeans(MPU6050 &mpu)
+int *BackSeatAngleTracker::GetGyroscopeMeans(MPU6050 &mpu)
 {
     const int numberOfDiscardedMeasures = 100;
     const int timeBetweenMeasures = 2000;
 
     uint16_t i = 0;
     int16_t gx, gy, gz;
-    int gyroscopeMeans[NUMBER_OF_AXIS] = { 0, 0, 0 };
-    int* pointer;
+    int gyroscopeMeans[NUMBER_OF_AXIS] = {0, 0, 0};
+    int *pointer;
     pointer = gyroscopeMeans;
 
     while (i < (BUFFER_SIZE + numberOfDiscardedMeasures))
     {
-        mpu.getRotation(&gx, &gy, &gz);
+        mpu.GetRotation(&gx, &gy, &gz);
 
         if (i++ > numberOfDiscardedMeasures)
         {
@@ -135,30 +135,30 @@ int * BackSeatAngleTracker::GetGyroscopeMeans(MPU6050 &mpu)
     return pointer;
 }
 
-int * BackSeatAngleTracker::GetAccelerometerMeans(MPU6050 &mpu)
+int *BackSeatAngleTracker::GetAccelerometerMeans(MPU6050 &mpu)
 {
-	const int numberOfDiscardedMeasures = 100;
-	const int timeBetweenMeasures = 2000;
+    const int numberOfDiscardedMeasures = 100;
+    const int timeBetweenMeasures = 2000;
 
-	uint16_t i = 0;
-	int16_t ax, ay, az;
-    int accelerationBuffer[NUMBER_OF_AXIS] = { 0, 0, 0 };
-    int* pointer;
+    uint16_t i = 0;
+    int16_t ax, ay, az;
+    int accelerationBuffer[NUMBER_OF_AXIS] = {0, 0, 0};
+    int *pointer;
     pointer = accelerationBuffer;
 
-	while (i < (BUFFER_SIZE + numberOfDiscardedMeasures))
-	{
-		mpu.getAcceleration(&ax, &ay, &az);
+    while (i < (BUFFER_SIZE + numberOfDiscardedMeasures))
+    {
+        mpu.GetAcceleration(&ax, &ay, &az);
 
-		if (i++ > numberOfDiscardedMeasures)
-		{
-			accelerationBuffer[_axis::x] += ax;
-			accelerationBuffer[_axis::y] += ay;
-			accelerationBuffer[_axis::z] += az;
-		}
+        if (i++ > numberOfDiscardedMeasures)
+        {
+            accelerationBuffer[_axis::x] += ax;
+            accelerationBuffer[_axis::y] += ay;
+            accelerationBuffer[_axis::z] += az;
+        }
 
-		usleep(timeBetweenMeasures);
-	}
+        usleep(timeBetweenMeasures);
+    }
 
     accelerationBuffer[_axis::x] /= BUFFER_SIZE;
     accelerationBuffer[_axis::y] /= BUFFER_SIZE;
@@ -169,7 +169,7 @@ int * BackSeatAngleTracker::GetAccelerometerMeans(MPU6050 &mpu)
 void BackSeatAngleTracker::CalibrateAccelerometer(MPU6050 &mpu)
 {
     uint8_t ready = 0;
-    int * accelerometerMeans = GetAccelerometerMeans(mpu);
+    int *accelerometerMeans = GetAccelerometerMeans(mpu);
 
     _accelerometerOffsets[_axis::x] = (_calibrationArray[_axis::x] - accelerometerMeans[_axis::x]) / 8;
     _accelerometerOffsets[_axis::y] = (_calibrationArray[_axis::y] - accelerometerMeans[_axis::y]) / 8;
@@ -198,7 +198,7 @@ void BackSeatAngleTracker::CalibrateAccelerometer(MPU6050 &mpu)
 void BackSeatAngleTracker::CalibrateGyroscope(MPU6050 &mpu)
 {
     uint8_t ready = 0;
-    int * gyroscopeMeans = GetGyroscopeMeans(mpu);
+    int *gyroscopeMeans = GetGyroscopeMeans(mpu);
 
     _gyroscopeOffsets[_axis::x] = -gyroscopeMeans[_axis::x] / 4;
     _gyroscopeOffsets[_axis::y] = -gyroscopeMeans[_axis::y] / 4;
@@ -230,7 +230,6 @@ void BackSeatAngleTracker::Calibrate(MPU6050 &mpu, std::string name)
     CalibrateGyroscope(mpu);
 
     _fileManager.WriteCalibrationOffsetsToFile(_accelerometerOffsets, _gyroscopeOffsets, name);
-
 }
 
 void BackSeatAngleTracker::Calibrate()
@@ -253,7 +252,7 @@ void BackSeatAngleTracker::Calibrate()
 void BackSeatAngleTracker::GetAcceleration(MPU6050 &mpu, double *acceleration)
 {
     int16_t ax, ay, az;
-    mpu.getAcceleration(&ax, &ay, &az);
+    mpu.GetAcceleration(&ax, &ay, &az);
 
     // TODO: Add low-pass filter
 
@@ -264,13 +263,14 @@ void BackSeatAngleTracker::GetAcceleration(MPU6050 &mpu, double *acceleration)
 
 double BackSeatAngleTracker::GetPitch(double acceleration[])
 {
-    return atan2(acceleration[_axis::x], sqrt(acceleration[_axis::y] * acceleration[_axis::y] + acceleration[_axis::z] * acceleration[_axis::z])) * radiansToDegrees;
+    return atan2(acceleration[_axis::x], sqrt(acceleration[_axis::y] * acceleration[_axis::y] 
+    + acceleration[_axis::z] * acceleration[_axis::z])) * radiansToDegrees;
 }
 
 int BackSeatAngleTracker::GetBackSeatAngle()
 {
-    double fixedImuAccelerations[NUMBER_OF_AXIS] = { 0, 0, 0 };
-    double mobileImuAccelerations[NUMBER_OF_AXIS] = { 0, 0, 0 };
+    double fixedImuAccelerations[NUMBER_OF_AXIS] = {0, 0, 0};
+    double mobileImuAccelerations[NUMBER_OF_AXIS] = {0, 0, 0};
 
     GetAcceleration(_fixedImu, fixedImuAccelerations);
     GetAcceleration(_mobileImu, mobileImuAccelerations);

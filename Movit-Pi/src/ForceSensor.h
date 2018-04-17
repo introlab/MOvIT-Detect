@@ -1,7 +1,7 @@
 #ifndef FORCE_SENSOR_H
 #define FORCE_SENSOR_H
 
-#include"MAX11611.h"
+#include "MAX11611.h"
 
 class ForceSensor
 {
@@ -9,7 +9,7 @@ class ForceSensor
     ForceSensor();
     ~ForceSensor();
 
-    void CalibrateForceSensor(uint16_t* max11611Data, MAX11611 &max11611);
+    void CalibrateForceSensor(uint16_t *max11611Data, MAX11611 &max11611);
     void GetForceSensorData();
     bool IsUserDetected();
     int *DetectRelativePressure();
@@ -33,8 +33,8 @@ class ForceSensor
     void SetDetectionThreshold(float detectionThreshold) { _detectionThreshold = detectionThreshold; }
 
     //Constants - physical montage values
-    static const uint8_t _sensorCount = 9;      //Total number of sensor in the matrix
-  
+    static const uint8_t _sensorCount = 9; //Total number of sensor in the matrix
+
   private:
     uint16_t _analogData[_sensorCount];
     uint16_t _voltageData[_sensorCount];

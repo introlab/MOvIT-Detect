@@ -120,74 +120,77 @@
 
 #include <stdint.h>
 
-namespace Pca9536 {
+namespace Pca9536
+{
 
-    const uint8_t DEV_ADDR         = 0x41;
-    const uint8_t NUM_BYTES        = 0x01;
-    const uint8_t ALL_INPUT        = 0xFF;
-    const uint8_t ALL_OUTPUT       = 0x00;
-    const uint8_t ALL_LOW          = 0x00;
-    const uint8_t ALL_HIGH         = 0xFF;
-    const uint8_t ALL_NON_INVERTED = 0x00;
-    const uint8_t ALL_INVERTED     = 0xFF;
-    const uint8_t COM_SUCCESS      = 0x00;
+const uint8_t DEV_ADDR = 0x41;
+const uint8_t NUM_BYTES = 0x01;
+const uint8_t ALL_INPUT = 0xFF;
+const uint8_t ALL_OUTPUT = 0x00;
+const uint8_t ALL_LOW = 0x00;
+const uint8_t ALL_HIGH = 0xFF;
+const uint8_t ALL_NON_INVERTED = 0x00;
+const uint8_t ALL_INVERTED = 0xFF;
+const uint8_t COM_SUCCESS = 0x00;
 
-    typedef enum:uint8_t {
-        REG_INPUT    = 0,      // default
-        REG_OUTPUT   = 1,
-        REG_POLARITY = 2,
-        REG_CONFIG   = 3
-    } reg_ptr_t;
+typedef enum : uint8_t {
+    REG_INPUT = 0, // default
+    REG_OUTPUT = 1,
+    REG_POLARITY = 2,
+    REG_CONFIG = 3
+} reg_ptr_t;
 
-    typedef enum:uint8_t {
-//        IO0 = 0,
-//        IO1 = 1,
-//        IO2 = 2,
-//        IO3 = 3
+typedef enum : uint8_t {
+    //        IO0 = 0,
+    //        IO1 = 1,
+    //        IO2 = 2,
+    //        IO3 = 3
 
-        DC_MOTOR = 0,
-        PUSH_BUTTON = 1,
-        RED_LED = 2,
-        GREEN_LED = 3
-    } pin_t;
+    DC_MOTOR = 0,
+    PUSH_BUTTON = 1,
+    RED_LED = 2,
+    GREEN_LED = 3
+} pin_t;
 
-    typedef enum:uint8_t {
-        IO_OUTPUT = 0,
-        IO_INPUT  = 1
-    } mode_t;
+typedef enum : uint8_t {
+    IO_OUTPUT = 0,
+    IO_INPUT = 1
+} mode_t;
 
-    typedef enum:uint8_t {
-        IO_LOW  = 0,
-        IO_HIGH = 1
-    } state_t;
+typedef enum : uint8_t {
+    IO_LOW = 0,
+    IO_HIGH = 1
+} state_t;
 
-    typedef enum:uint8_t {
-        IO_NON_INVERTED = 0,
-        IO_INVERTED     = 1
-    } polarity_t;
+typedef enum : uint8_t {
+    IO_NON_INVERTED = 0,
+    IO_INVERTED = 1
+} polarity_t;
 
-    class PCA9536 {
-         public:
-            PCA9536();
-            ~PCA9536();
-            uint8_t getMode(pin_t pin);
-            uint8_t getState(pin_t pin);
-            uint8_t getPolarity(pin_t pin);
-            void setMode(pin_t pin, mode_t newMode);
-            void setMode(mode_t newMode);
-            void setState(pin_t pin, state_t newState);
-            void setState(state_t newState);
-            void toggleState(pin_t pin);
-            void toggleState();
-            void setPolarity(pin_t pin, polarity_t newPolarity);
-            void setPolarity(polarity_t newPolarity);
-            void reset();
-         private:
-            uint8_t getReg(reg_ptr_t regPtr);
-            uint8_t getPin(pin_t pin, reg_ptr_t regPtr);
-            void setReg(reg_ptr_t ptr, uint8_t newSetting);
-            void setPin(pin_t pin, reg_ptr_t regPtr, uint8_t newSetting);
-    };
+class PCA9536
+{
+  public:
+    PCA9536();
+    ~PCA9536();
+    uint8_t GetMode(pin_t pin);
+    uint8_t GetState(pin_t pin);
+    uint8_t GetPolarity(pin_t pin);
+    void SetMode(pin_t pin, mode_t newMode);
+    void SetMode(mode_t newMode);
+    void SetState(pin_t pin, state_t newState);
+    void SetState(state_t newState);
+    void ToggleState(pin_t pin);
+    void ToggleState();
+    void SetPolarity(pin_t pin, polarity_t newPolarity);
+    void SetPolarity(polarity_t newPolarity);
+    void Reset();
+
+  private:
+    uint8_t GetReg(reg_ptr_t regPtr);
+    uint8_t GetPin(pin_t pin, reg_ptr_t regPtr);
+    void SetReg(reg_ptr_t ptr, uint8_t newSetting);
+    void SetPin(pin_t pin, reg_ptr_t regPtr, uint8_t newSetting);
+};
 }
 
 using namespace Pca9536;

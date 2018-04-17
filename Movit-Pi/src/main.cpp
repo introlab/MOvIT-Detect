@@ -12,7 +12,7 @@ using std::string;
 
 int main()
 {
-    I2Cdev::initialize();
+    I2Cdev::Initialize();
 
     MosquittoBroker *mosquittoBroker = new MosquittoBroker("embedded");
     DeviceManager *devicemgr = DeviceManager::GetInstance();

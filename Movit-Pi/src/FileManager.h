@@ -7,16 +7,16 @@
 
 class FileManager
 {
-public:
-    int * GetFixedImuAccelOffsets();
-    int * GetFixedImuGyroOffsets();
-    int * GetMobileImuAccelOffsets();
-    int * GetMobileImuGyroOffsets();
+  public:
+    int *GetFixedImuAccelOffsets();
+    int *GetFixedImuGyroOffsets();
+    int *GetMobileImuAccelOffsets();
+    int *GetMobileImuGyroOffsets();
 
-    void WriteCalibrationOffsetsToFile(int * accelerationOffsets, int * gyroOffsets, std::string type);
+    void WriteCalibrationOffsetsToFile(int *accelerationOffsets, int *gyroOffsets, std::string type);
     void ReadCalibrationOffsetsFromFile(std::string fixedImuName, std::string mobileImuName);
 
-private:
+  private:
     int _fixedImuAccelerationOffsets[NUMBER_OF_AXIS];
     int _mobileImuAccelerationOffsets[NUMBER_OF_AXIS];
     int _fixedImuGyroOffsets[NUMBER_OF_AXIS];
@@ -24,7 +24,7 @@ private:
 
     void SetFixedImuOffsets(std::string line);
     void SetMobileImuOffsets(std::string line);
-    void SetOffsetsFromLine(std::string line, int * offsets, std::string offsetsLine);
+    void SetOffsetsFromLine(std::string line, int *offsets, std::string offsetsLine);
 };
 
-#endif 
+#endif // FILE_MANAGER_H

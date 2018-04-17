@@ -74,50 +74,49 @@ class ForcePlate
     void SetCOFxy(float COFxy) { _COFxy = COFxy; }
 
     //Constants - physical montage values
-    const float distX = 4.0/2;      //Distance along X axis from SensorNo1 to SensorNo2
-    const float distY = 7.5/2;      //Distance along Y axis from SensorNo2 to SensorNo3
-    const float distZ0 = 0.001;    //Half of the force plate height : 0.5cm approximate for plexiglass? VALIDATE
+    const float distX = 4.0 / 2; //Distance along X axis from SensorNo1 to SensorNo2
+    const float distY = 7.5 / 2; //Distance along Y axis from SensorNo2 to SensorNo3
+    const float distZ0 = 0.001;  //Half of the force plate height : 0.5cm approximate for plexiglass? VALIDATE
 
   private:
     //Force plate output signals
-    float _fx12;   //Force in X-Direction measured by SensorNo1 + SensorNo2
-    float _fx34;   //Force in X-Direction measured by SensorNo3 + SensorNo4
-    float _fy14;   //Force in Y-Direction measured by SensorNo1 + SensorNo4
-    float _fy23;   //Force in Y-Direction measured by SensorNo2 + SensorNo3
-    float _fz1;    //
-    float _fz2;    //Forces in Z-Direction
-    float _fz3;    //measured by SensorNo1, ..., SensorNo4
-    float _fz4;    //
+    float _fx12; //Force in X-Direction measured by SensorNo1 + SensorNo2
+    float _fx34; //Force in X-Direction measured by SensorNo3 + SensorNo4
+    float _fy14; //Force in Y-Direction measured by SensorNo1 + SensorNo4
+    float _fy23; //Force in Y-Direction measured by SensorNo2 + SensorNo3
+    float _fz1;  //
+    float _fz2;  //Forces in Z-Direction
+    float _fz3;  //measured by SensorNo1, ..., SensorNo4
+    float _fz4;  //
 
     //Calculated parameters
-    float _Fx;     //Medio-lateral force
-    float _Fy;     //Anterior-posterior force
-    float _Fz;     //Vertical force
-    float _Mx;     //Plate Moment about X-Axis
-    float _My;     //Plate Moment about Y-Axis
-    float _Mz;     //Plate Moment about Z-Axis
-    float _Mx1;    //Plate Moment along X-Axis about top plate surface
-    float _My1;    //Plate Moment along Y-axis about top plate surface
+    float _Fx;  //Medio-lateral force
+    float _Fy;  //Anterior-posterior force
+    float _Fz;  //Vertical force
+    float _Mx;  //Plate Moment about X-Axis
+    float _My;  //Plate Moment about Y-Axis
+    float _Mz;  //Plate Moment about Z-Axis
+    float _Mx1; //Plate Moment along X-Axis about top plate surface
+    float _My1; //Plate Moment along Y-axis about top plate surface
 
     //Coordinate of the force application point (C.O.P.)
-    float _COPx;    //X-Coordinate of the application point
-    float _COPy;    //Y-Coordinate of the application point
+    float _COPx; //X-Coordinate of the application point
+    float _COPy; //Y-Coordinate of the application point
 
     //Global ForcePlates Coordinate of the force application point (C.O.P.)
-    float _fp1COPx;    //X-Coordinate of the application point
-    float _fp1COPy;    //Y-Coordinate of the application point
-    float _fp2COPx;    //X-Coordinate of the application point
-    float _fp2COPy;    //Y-Coordinate of the application point
-    float _fp3COPx;    //X-Coordinate of the application point
-    float _fp3COPy;    //Y-Coordinate of the application point
-    float _fp4COPx;    //X-Coordinate of the application point
-    float _fp4COPy;    //Y-Coordinate of the application point
+    float _fp1COPx; //X-Coordinate of the application point
+    float _fp1COPy; //Y-Coordinate of the application point
+    float _fp2COPx; //X-Coordinate of the application point
+    float _fp2COPy; //Y-Coordinate of the application point
+    float _fp3COPx; //X-Coordinate of the application point
+    float _fp3COPy; //Y-Coordinate of the application point
+    float _fp4COPx; //X-Coordinate of the application point
+    float _fp4COPy; //Y-Coordinate of the application point
 
     //Coefficients of friction
-    float _COFx;    //Coefficient of friction X-Component
-    float _COFy;    //Coefficient of friciton Y-Component
-    float _COFxy;   //Coefficient of friction absolute
+    float _COFx;  //Coefficient of friction X-Component
+    float _COFy;  //Coefficient of friciton Y-Component
+    float _COFxy; //Coefficient of friction absolute
 };
-
 
 #endif // FORCE_PLATE_H
