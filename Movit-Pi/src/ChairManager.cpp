@@ -50,10 +50,10 @@ void ChairManager::UpdateDevices()
     // Envoi de la moyenne de la position dans les 5 dernieres minutes.
     // TODO Ceci est temporaire, il va falloir envoyer le centre de pression quand il y a un changement majeur.
     // Ceci sera revue en même temps que tous le scheduling
-    if (_timer.Elapsed() >= CENTER_OF_PRESSURE_EMISSION_PERIOD * 1000)
+    if (_timer.Elapsed() >= CENTER_OF_PRESSURE_EMISSION_PERIOD * 1000 && _isSomeoneThere)
     {
-        _timer.reset();
-        _mosquittoBroker->sendCenterOfPressure(_copCoord.x, _copCoord.y, _currentDatetime);
+        _timer.Reset();
+        _mosquittoBroker->SendCenterOfPressure(_copCoord.x, _copCoord.y, _currentDatetime);
     }
 
     if ((_currentChairAngle != _prevChairAngle) && _isSomeoneThere)
@@ -113,14 +113,13 @@ void ChairManager::CheckNotification()
     {
         _state = 1;
         _secondsCounter = 0;
-        _devicemgr->GetAlarm()->TurnOffAlarm();
         return;
     }
 
     switch (_state)
     {
     case 1:
-        CheckIfUserHasBeenSittingForFiveSeconds();
+        CheckIfUserHasBeenSittingForRequiredTime();
         break;
     case 2:
         CheckIfBackRestIsRequired();
@@ -139,7 +138,7 @@ void ChairManager::CheckNotification()
     }
 }
 
-void ChairManager::CheckIfUserHasBeenSittingForFiveSeconds()
+void ChairManager::CheckIfUserHasBeenSittingForRequiredTime()
 {
     printf("State 1\t_secondsCounter: %i\n", _secondsCounter);
 
@@ -200,7 +199,7 @@ void ChairManager::CheckIfBackSeatIsBackToInitialPosition()
 {
     printf("State 5\t_secondsCounter: %i\n", ++_secondsCounter);
 
-    if (_currentChairAngle < MINIMUM_BACK_REST_ANGLE)
+    if (_currentChairAngle < (_requiredBackRestAngle - DELTA_ANGLE_THRESHOLD))
     {
         _state = 2;
         _secondsCounter = 0;
@@ -211,7 +210,9 @@ void ChairManager::OverrideNotificationPattern()
 {
     if (_setAlarmOn)
     {
-        _devicemgr->GetAlarm()->TurnOnRedAlarmThread().detach();
+        _devicemgr->GetAlarm()->TurnOnRedLed();
+        _devicemgr->GetAlarm()->TurnOnGreenLed();
+        _devicemgr->GetAlarm()->TurnOnDCMotor();
     }
     else
     {

@@ -43,7 +43,7 @@ class ChairManager
 
     Timer _timer;
 
-    void CheckIfUserHasBeenSittingForFiveSeconds();
+    void CheckIfUserHasBeenSittingForRequiredTime();
     void CheckIfBackRestIsRequired();
     void CheckIfRequiredBackSeatAngleIsReached();
     void CheckIfRequiredBackSeatAngleIsMaintained();
