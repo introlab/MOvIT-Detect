@@ -1,5 +1,7 @@
-#include <string>
+#include <signal.h>
+#include <stdlib.h>
 #include <stdio.h>
+#include <string>
 #include <unistd.h>
 #include <ctime>
 #include "MosquittoBroker/MosquittoBroker.h"
@@ -10,9 +12,24 @@ using std::string;
 
 #define EXECUTION_PERIOD 1000000
 
+void exit_program_handler(int s) 
+{
+    DeviceManager *devicemgr = DeviceManager::GetInstance();
+    devicemgr->TurnOff();
+    exit(1);
+}
+
 int main(int argc, char *argv[])
 {
     I2Cdev::Initialize();
+
+    struct sigaction sigIntHandler;
+
+    sigIntHandler.sa_handler = exit_program_handler;
+    sigemptyset(&sigIntHandler.sa_mask);
+    sigIntHandler.sa_flags = 0;
+
+    sigaction(SIGINT, &sigIntHandler, NULL);
 
     MosquittoBroker *mosquittoBroker = new MosquittoBroker("embedded");
     DeviceManager *devicemgr = DeviceManager::GetInstance();

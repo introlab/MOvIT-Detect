@@ -24,6 +24,11 @@ void DeviceManager::InitializeDevices()
     printf("Setup Done\n");
 }
 
+void DeviceManager::TurnOff()
+{
+    GetAlarm()->TurnOffAlarm();
+}
+
 void DeviceManager::CalibratePressureMat()
 {
     UpdateForcePlateData();

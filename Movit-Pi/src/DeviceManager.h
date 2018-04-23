@@ -34,6 +34,7 @@ class DeviceManager
     bool GetIsMoving() { return _isMoving; }
     void CalibratePressureMat();
     void CalibrateIMU();
+    void TurnOff();
 
     bool TestDevices();
 
