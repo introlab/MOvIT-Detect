@@ -36,39 +36,30 @@ int main(int argc, char *argv[])
     ChairManager chairmgr(mosquittoBroker, devicemgr);
 
     devicemgr->InitializeDevices();
-    // Pour usage Ã©ventuel
+    // Pour usage éventuel (un jour, ce code sera décommenté, pray for it)
     // std::clock_t start;
     // double duration;
 
-    if (argc > 1)
+    bool done = false;
+
+    if (argc > 1 && std::string(argv[1]) == "-t")
     {
-        if (std::string(argv[1]) == "-t")
+        while (!done)
         {
-            while (true)
-            {
-                devicemgr->TestDevices();
-            }
+            done = devicemgr->TestDevices();
         }
     }
-    
-    bool done = false;
-    while (!done)
+    else
     {
-        // Test thing
-        // done = chairmgr.testPattern();
+        while (!done)
+        {
+            chairmgr.UpdateDevices();
+            chairmgr.ReadFromServer();
+            chairmgr.CheckNotification();
 
-        // Real thing
-        chairmgr.UpdateDevices();
-        chairmgr.ReadFromServer();
-        chairmgr.CheckNotification();
-
-        //TODO trouver une facon d'attendre vraiment EXACTEMENT 1 sec
-        usleep(EXECUTION_PERIOD);
-
-        // char inSerialChar = getchar();
-
-        // if (inSerialChar == 'q')
-        //     done = true;
+            // TODO: trouver une facon d'attendre vraiment EXACTEMENT 1 sec
+            usleep(EXECUTION_PERIOD);
+        }
     }
 
     delete mosquittoBroker;
