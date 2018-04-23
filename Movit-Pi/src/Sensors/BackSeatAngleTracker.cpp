@@ -1,9 +1,10 @@
 #include "BackSeatAngleTracker.h"
-#include "Utils.h"
+#include "Utilities/Utils.h"
+
 #include <algorithm>
-#include <unistd.h>
 #include <math.h>
 #include <string>
+#include <unistd.h>
 
 enum _axis { x, y, z };
 const std::string fixedImuName = "fixedImu";

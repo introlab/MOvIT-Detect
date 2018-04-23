@@ -3,7 +3,6 @@
 
 #include <bcm2835.h>
 #include <stdint.h>
-#include "Utils.h"
 
 class PMW3901
 {

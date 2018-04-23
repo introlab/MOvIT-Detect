@@ -1,11 +1,11 @@
-#include "MAX11611.h" //10-Bit ADC
+#include "MAX11611.h"
 #include "ForcePlate.h"
 #include "ForceSensor.h"
 
 #include <stdio.h>
 #include <unistd.h>
 
-extern MAX11611 max11611; //Initialisation of the 10-bit ADC
+extern MAX11611 max11611;
 
 ForcePlate::ForcePlate()
 {

@@ -1,13 +1,13 @@
 #ifndef DEVICE_MANAGER_H
 #define DEVICE_MANAGER_H
 
-#include "Alarm.h"
-#include "ForcePlate.h"
-#include "ForceSensor.h"
+#include "Sensors/Alarm.h"
+#include "Sensors/ForcePlate.h"
+#include "Sensors/ForceSensor.h"
+#include "Sensors/BackSeatAngleTracker.h"
+#include "Sensors/DateTimeRTC.h"
+#include "Sensors/MotionSensor.h"
 #include "MAX11611.h"
-#include "BackSeatAngleTracker.h"
-#include "DateTimeRTC.h"
-#include "MotionSensor.h"
 #include <string>
 
 //Center of pressure coordinate

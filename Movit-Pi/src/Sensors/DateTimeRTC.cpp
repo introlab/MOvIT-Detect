@@ -1,10 +1,10 @@
 #include "DateTimeRTC.h"
+#include "Utilities/NetworkManager.h"
+#include "Utilities/Utils.h"
 
-#include "NetworkManager.h"
-#include <Utils.h>
 #include <stdio.h>
-#include <time.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 
 const int sleepTime = 5000000;
