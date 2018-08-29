@@ -1,5 +1,5 @@
 #include "Alarm.h"
-#include "Utilities/Utils.h"
+#include "Utils.h"
 
 #include <mutex>
 #include <stdio.h>

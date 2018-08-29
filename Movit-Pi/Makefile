@@ -1,37 +1,48 @@
-CFLAGS=-Wall -ggdb -Isrc -Isrc/lib -Isrc/lib/MosquittoBroker -Isrc/lib/MosquittoBroker/cpp
-LDFLAGS=-Lsrc/lib -Lsrc/lib/MosquittoBroker src/lib/MosquittoBroker/cpp/libmosquittopp.so.1 src/lib/MosquittoBroker/libmosquitto.so.1
+include component_common.mk
 
-SOURCES = 	src/main.cpp \
-			src/DeviceManager.cpp \
-			src/ChairManager.cpp \
-			src/Sensors/Alarm.cpp \
-			src/Sensors/BackSeatAngleTracker.cpp \
-			src/Sensors/DateTimeRTC.cpp \
-			src/Sensors/ForcePlate.cpp \
-			src/Sensors/ForceSensor.cpp \
-			src/Sensors/HumiditySensor.cpp \
-			src/Sensors/MotionSensor.cpp \
-			src/Utilities/FileManager.cpp \
-			src/Utilities/NetworkManager.cpp \
-			src/Utilities/Utils.cpp \
-			src/MosquittoBroker/MosquittoBroker.cpp \
-			src/lib/MPU6050.cpp \
-			src/lib/MAX11611.cpp \
-			src/lib/MCP79410.cpp \
-			src/lib/PCA9536.cpp \
-			src/lib/I2Cdev.cpp \
-			src/lib/VL53L0X/VL53L0X.cpp \
-			src/lib/PMW3901/PMW3901.cpp \
+#System dependencies
+LDFLAGS += -lpthread
+LDFLAGS += -lrt
+LDFLAGS += -lm
 
-OBJECTS = $(SOURCES:%.c=%.o)
+MODULE_DIR := $(shell pwd)
 
-TARGET = movit-plus
+CPPFLAGS += -c
+CPPFLAGS += -Wall
+CXXFLAGS += -std=c++11
+CXXFLAGS += -O3
 
-$(TARGET): $(OBJECTS)
-	gcc $^ -o $@ -lm -lbcm2835 -lstdc++ -pthread ${LDFLAGS} ${CFLAGS}
+export CPPFLAGS
+export CXXFLAGS
 
-%.o: %.c
-	gcc -c $< -o $@
+export OBJ_DIR = $(MODULE_DIR)/obj
+SRC_DIR = $(MODULE_DIR)/src
+LIB_DIR = $(MODULE_DIR)/lib
+
+OUTPUT_DIR := $(MODULE_DIR)/output
+
+DIRECTORIES := $(OBJ_DIR) $(OUTPUT_DIR)
+
+# Our lib dependencies
+LDFLAGS += $(LIB_DIR)/libmosquittopp.so.1
+LDFLAGS += $(LIB_DIR)/libmosquitto.so.1
+LDFLAGS += $(LIB_DIR)/libbcm2835.a
+
+# Std lib dependencies
+LDFLAGS += $(ROOTFS_PATH)/usr/lib/arm-linux-gnueabihf/libcares.so.2
+LDFLAGS += $(ROOTFS_PATH)/usr/lib/arm-linux-gnueabihf/libcrypto.so.1.1
+LDFLAGS += $(ROOTFS_PATH)/usr/lib/arm-linux-gnueabihf/libssl.so.1.1
+LDFLAGS += $(SYSROOT_PATH)/usr/lib/libdl.so
+
+export TARGET = movit-pi
+
+$(TARGET): | $(DIRECTORIES)
+	cd src && $(MAKE) $(TARGET)
+	$(CPP) $^ -o $(OUTPUT_DIR)/$(TARGET) $(OBJ_DIR)/*.o $(LDFLAGS)
 
 clean:
-	rm -rf *o $(TARGET)
+	rm -rf $(OUTPUT_DIR)
+	rm -rf $(OBJ_DIR)
+
+$(DIRECTORIES):
+	mkdir -p $@

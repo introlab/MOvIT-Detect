@@ -1,6 +1,6 @@
 #include "DateTimeRTC.h"
-#include "Utilities/NetworkManager.h"
-#include "Utilities/Utils.h"
+#include "NetworkManager.h"
+#include "Utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,9 +1,9 @@
 #ifndef CHAIR_MANAGER_H
 #define CHAIR_MANAGER_H
 
-#include "MosquittoBroker/MosquittoBroker.h"
-#include "Utilities/Utils.h"
-#include "Utilities/Timer.h"
+#include "MosquittoBroker.h"
+#include "Utils.h"
+#include "Timer.h"
 #include "DeviceManager.h"
 #include <string>
 #include <unistd.h>

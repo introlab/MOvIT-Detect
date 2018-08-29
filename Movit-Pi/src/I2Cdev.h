@@ -30,7 +30,7 @@ THE SOFTWARE.
 #ifndef I2CDEV_H
 #define I2CDEV_H
 
-#include <bcm2835.h>
+#include "bcm2835.h"
 #include <math.h>
 #include <stdlib.h>
 #include <string>

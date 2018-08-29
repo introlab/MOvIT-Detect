@@ -4,7 +4,7 @@
 #include <string>
 #include <unistd.h>
 #include <ctime>
-#include "MosquittoBroker/MosquittoBroker.h"
+#include "MosquittoBroker.h"
 #include "DeviceManager.h"
 #include "ChairManager.h"
 
@@ -12,7 +12,7 @@ using std::string;
 
 #define EXECUTION_PERIOD 1000000
 
-void exit_program_handler(int s) 
+void exit_program_handler(int s)
 {
     DeviceManager *devicemgr = DeviceManager::GetInstance();
     devicemgr->TurnOff();
@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
     ChairManager chairmgr(mosquittoBroker, devicemgr);
 
     devicemgr->InitializeDevices();
-    // Pour usage éventuel (un jour, ce code sera décommenté, pray for it)
+    // Pour usage ï¿½ventuel (un jour, ce code sera dï¿½commentï¿½, pray for it)
     // std::clock_t start;
     // double duration;
 

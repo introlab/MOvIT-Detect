@@ -1,7 +1,7 @@
 #ifndef PMW3901_H
 #define PMW3901_H
 
-#include <bcm2835.h>
+#include "bcm2835.h"
 #include <stdint.h>
 
 class PMW3901

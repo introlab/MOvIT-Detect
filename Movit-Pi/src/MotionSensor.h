@@ -6,10 +6,10 @@
 #include <stdio.h>
 #include <thread>
 
-#include "PMW3901/PMW3901.h"
-#include "VL53L0X/VL53L0X.h"
-#include "Utilities/Utils.h"
-#include "Utilities/Timer.h"
+#include "PMW3901.h"
+#include "VL53L0X.h"
+#include "Utils.h"
+#include "Timer.h"
 
 class MotionSensor
 {

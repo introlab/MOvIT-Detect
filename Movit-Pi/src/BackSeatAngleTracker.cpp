@@ -1,5 +1,5 @@
 #include "BackSeatAngleTracker.h"
-#include "Utilities/Utils.h"
+#include "Utils.h"
 
 #include <algorithm>
 #include <math.h>
@@ -264,7 +264,7 @@ void BackSeatAngleTracker::GetAcceleration(MPU6050 &mpu, double *acceleration)
 
 double BackSeatAngleTracker::GetPitch(double acceleration[])
 {
-    return atan2(acceleration[_axis::x], sqrt(acceleration[_axis::y] * acceleration[_axis::y] 
+    return atan2(acceleration[_axis::x], sqrt(acceleration[_axis::y] * acceleration[_axis::y]
     + acceleration[_axis::z] * acceleration[_axis::z])) * radiansToDegrees;
 }
 

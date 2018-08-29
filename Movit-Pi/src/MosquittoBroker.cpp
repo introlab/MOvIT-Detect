@@ -3,7 +3,7 @@
 #include <string>
 
 #include "MosquittoBroker.h"
-#include <mosquittopp.h>
+#include "mosquittopp.h"
 
 // Embarqué à back-end
 // data/current_back_rest_angle: entier (angle en degrés) ce qui est envoyé est l'angle de début et l'angle de fin de la bascule
@@ -196,7 +196,7 @@ void MosquittoBroker::SendBackRestAngle(const int angle, const std::string datet
 void MosquittoBroker::SendCenterOfPressure(const float x, const float y, const std::string datetime)
 {
     std::string strMsg = "{\"datetime\":" + datetime + ",\"pos_x\":" + std::to_string(x) + ",\"pos_y\":" + std::to_string(y) + "}";
-  
+
     publish(NULL, CURRENT_CENTER_OF_PRESSURE_TOPIC, strMsg.length(), strMsg.c_str());
 }
 

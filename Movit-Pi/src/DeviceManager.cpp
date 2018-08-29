@@ -1,5 +1,5 @@
 #include "DeviceManager.h"
-#include "Utilities/NetworkManager.h"
+#include "NetworkManager.h"
 #include "I2Cdev.h"
 
 #include <unistd.h>
