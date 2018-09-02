@@ -34,7 +34,7 @@ void Alarm::Initialize()
     }
     else
     {
-        printf("success\n");
+        printf("SUCCESS\n");
     }
     TurnOffRedLed();
     TurnOffGreenLed();

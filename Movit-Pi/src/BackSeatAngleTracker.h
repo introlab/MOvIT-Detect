@@ -44,8 +44,8 @@ class BackSeatAngleTracker
     void ResetIMUAccelOffsets(MPU6050 &mpu);
     void ResetIMUGyroOffsets(MPU6050 &mpu);
 
-    int *GetAccelerometerMeans(MPU6050 &mpu);
-    int *GetGyroscopeMeans(MPU6050 &mpu);
+    void GetAccelerometerMeans(MPU6050 &mpu, int accbuff[]);
+    void GetGyroscopeMeans(MPU6050 &mpu, int gyrbuff[]);
     void GetAcceleration(MPU6050 &mpu, double *acceleration);
     double GetPitch(double acceleration[]);
 };
