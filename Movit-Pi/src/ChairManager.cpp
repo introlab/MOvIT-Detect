@@ -4,6 +4,7 @@
 #define DELTA_ANGLE_THRESHOLD 5
 
 #define CENTER_OF_PRESSURE_EMISSION_PERIOD 15
+#define KEEP_ALIVE_PERIOD 300000
 #define MINIMUM_BACK_REST_ANGLE 2
 
 ChairManager::ChairManager(MosquittoBroker *mosquittoBroker, DeviceManager *devicemgr)
@@ -54,6 +55,12 @@ void ChairManager::UpdateDevices()
     {
         _timer.Reset();
         _mosquittoBroker->SendCenterOfPressure(_copCoord.x, _copCoord.y, _currentDatetime);
+    }
+
+    if (_keepAliveTimer.Elapsed() >= KEEP_ALIVE_PERIOD)
+    {
+        _keepAliveTimer.Reset();
+        _mosquittoBroker->SendKeepAlive(_currentDatetime);
     }
 
     if ((_currentChairAngle != _prevChairAngle) && _isSomeoneThere)

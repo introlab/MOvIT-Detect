@@ -42,6 +42,7 @@ class ChairManager
     uint32_t _requiredDuration = 0;
 
     Timer _timer;
+    Timer _keepAliveTimer;
 
     void CheckIfUserHasBeenSittingForRequiredTime();
     void CheckIfBackRestIsRequired();
