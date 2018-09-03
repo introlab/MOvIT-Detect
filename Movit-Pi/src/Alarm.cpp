@@ -104,8 +104,8 @@ void Alarm::TurnOnBlinkLedsAlarm()
 
     std::lock_guard<std::mutex> lock(alarmMutex);
 
-	  int count = 0;
-	  TurnOffDCMotor();
+    int count = 0;
+    TurnOffDCMotor();
     TurnOffRedLed();
     TurnOnGreenLed();
 
@@ -113,7 +113,7 @@ void Alarm::TurnOnBlinkLedsAlarm()
     {
         _pca9536.ToggleState(RED_LED);
         _pca9536.ToggleState(GREEN_LED);
-        usleep(_blinkFrequency * secondsToMicroseconds);
+        sleep_for_microseconds(_blinkFrequency * secondsToMicroseconds);
     }
 
     TurnOffRedLed();
@@ -140,7 +140,7 @@ void Alarm::TurnOnRedAlarm()
     while (GetPinState(PUSH_BUTTON) && (count++ <= (int)(_blinkFrequency * _blinkDuration)))
     {
         _pca9536.ToggleState(RED_LED);
-        usleep(_blinkFrequency * secondsToMicroseconds);
+        sleep_for_microseconds(_blinkFrequency * secondsToMicroseconds);
     }
 
     TurnOnRedLed();

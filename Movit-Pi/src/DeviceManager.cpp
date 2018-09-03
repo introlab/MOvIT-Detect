@@ -1,6 +1,7 @@
 #include "DeviceManager.h"
 #include "NetworkManager.h"
 #include "I2Cdev.h"
+#include "Utils.h"
 
 #include <unistd.h>
 #include <thread>
@@ -148,7 +149,7 @@ bool DeviceManager::TestDevices()
         while (count++ < 70)
         {
             _alarm.TurnOnDCMotor();
-            usleep(0.1 * 1000 * 1000);
+            sleep_for_microseconds(0.1 * 1000 * 1000);
         }
         _alarm.TurnOffDCMotor();
     }

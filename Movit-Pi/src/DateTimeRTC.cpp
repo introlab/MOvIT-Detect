@@ -25,7 +25,7 @@ void DateTimeRTC::SetCurrentDateTimeIfConnected()
 {
     while (!NetworkManager::IsConnected())
     {
-        usleep(sleepTime);
+        sleep_for_microseconds(sleepTime);
     }
 
     SetCurrentDateTime();

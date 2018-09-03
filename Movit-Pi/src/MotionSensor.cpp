@@ -1,5 +1,6 @@
 #include "MotionSensor.h"
 #include <math.h>
+#include "Utils.h"
 
 #define TIME_BETWEEN_READINGS 100   // In milliseconde
 #define MINIMUM_WORKING_RANGE 0.08f //The sensor needs a minimum of 80 mm to the ground.

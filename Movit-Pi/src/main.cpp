@@ -7,6 +7,7 @@
 #include "MosquittoBroker.h"
 #include "DeviceManager.h"
 #include "ChairManager.h"
+#include "Utils.h"
 
 using std::string;
 
@@ -58,7 +59,7 @@ int main(int argc, char *argv[])
             chairmgr.CheckNotification();
 
             // TODO: trouver une facon d'attendre vraiment EXACTEMENT 1 sec
-            usleep(EXECUTION_PERIOD);
+            sleep_for_microseconds(EXECUTION_PERIOD);
         }
     }
 
