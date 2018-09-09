@@ -17,7 +17,9 @@ Imu::Imu()
 bool Imu::Initialize()
 {
     _fileManager.ReadCalibrationOffsetsFromFile(fixedImuName, mobileImuName);
-    return InitializeMobileImu() && InitializeFixedImu();
+    bool mobileIMUInitialized = InitializeMobileImu();
+    bool fixedIMUInitialized = InitializeFixedImu();
+    return mobileIMUInitialized && fixedIMUInitialized;
 }
 
 bool Imu::InitializeImu(MPU6050 &mpu, std::string name, int *accelerometerOffsets, int *gyroscopeOffsets)

@@ -89,6 +89,11 @@ void DeviceManager::Update()
             _COPCoord.x = _globalForcePlate.GetCOPx();
             _COPCoord.y = _globalForcePlate.GetCOPy();
         }
+        else
+        {
+            _COPCoord.x = 0;
+            _COPCoord.y = 0;
+        }
     }
 }
 
