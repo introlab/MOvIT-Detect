@@ -36,3 +36,7 @@ The embedded system part of the MOvIT-Detect project.
 ```shell
     sudo ./movit-pi
 ```
+N.B.: Si le fichier est présent mais qu'en essayant de l'éxécuter ça ne trouve pas le fichier c'est surement parce que le fichier n'a pas les permissions pour être exécuter. Pour regler ce problème il suffit de faire:
+```shell
+    sudo chmod +x movit-pi
+```
