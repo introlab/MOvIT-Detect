@@ -74,7 +74,7 @@ void DeviceManager::Update()
     if (_imuValid)
     {
         // Data: Angle (centrales intertielles mobile/fixe)
-        _backSeatAngle = _imu.GetBackSeatAngle();
+        _backSeatAngle = _backSeatAngleTracker.GetBackSeatAngle();
     }
 
     if (_forcePlateValid)
@@ -281,7 +281,7 @@ bool DeviceManager::TestDevices()
     {
         printf("Eteindre les DELs et arrêter le moteur DC.\n");
         // _alarm.TurnOffAlarm();
-        _imu.GetBackSeatAngle();
+        _backSeatAngleTracker.GetBackSeatAngle();
     }
     else if (inSerialChar == 'i')
     {

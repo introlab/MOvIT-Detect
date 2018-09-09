@@ -1,6 +1,7 @@
 #ifndef DEVICE_MANAGER_H
 #define DEVICE_MANAGER_H
 
+#include "Imu.h"
 #include "Alarm.h"
 #include "ForcePlate.h"
 #include "ForceSensor.h"
@@ -64,7 +65,8 @@ class DeviceManager
 
     DateTimeRTC *_datetimeRTC;
     Alarm _alarm;
-    BackSeatAngleTracker _imu;
+    BackSeatAngleTracker _backSeatAngleTracker;
+    Imu _imu;
     int _backSeatAngle = 0;
 
     uint16_t _max11611Data[9];
