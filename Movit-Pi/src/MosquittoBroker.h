@@ -19,6 +19,8 @@ class MosquittoBroker : public mosqpp::mosquittopp
     void SendBackRestAngle(const int angle, const std::string datetime);
     void SendCenterOfPressure(const float x, const float y, const std::string datetime);
     void SendIsSomeoneThere(const bool state, const std::string datetime);
+    void SendIsPressureMatCalib(const bool state, const std::string datetime);
+    void SendIsIMUCalib(const bool state, const std::string datetime);
     void SendSpeed(const float speed, const std::string datetime);
     void SendKeepAlive(const std::string datetime);
 

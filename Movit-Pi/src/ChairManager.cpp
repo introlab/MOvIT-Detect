@@ -16,23 +16,26 @@ ChairManager::ChairManager(MosquittoBroker *mosquittoBroker, DeviceManager *devi
 
 void ChairManager::UpdateDevices()
 {
+    _currentDatetime = std::to_string(_devicemgr->GetTimeSinceEpoch());
+
     if (_mosquittoBroker->CalibPressureMatRequired())
     {
         printf("Debut de la calibration du tapis de pression\n");
         _devicemgr->CalibratePressureMat();
+        _mosquittoBroker->SendIsPressureMatCalib(true, _currentDatetime);
         printf("FIN de la calibration du tapis de pression\n");
-    }
+    } 
 
     if (_mosquittoBroker->CalibIMURequired())
     {
         printf("Debut de la calibration des IMU\n");
         _devicemgr->CalibrateIMU();
+        _mosquittoBroker->SendIsIMUCalib(true, _currentDatetime);
         printf("FIN de la calibration des IMU\n");
     }
 
     _prevIsSomeoneThere = _isSomeoneThere;
     _devicemgr->Update();
-    _currentDatetime = std::to_string(_devicemgr->GetTimeSinceEpoch());
     _isSomeoneThere = _devicemgr->IsSomeoneThere();
     Coord_t _copCoord = _devicemgr->GetCenterOfPressure();
     _prevChairAngle = _currentChairAngle;

@@ -209,6 +209,22 @@ void MosquittoBroker::SendIsSomeoneThere(const bool state, const std::string dat
     publish(NULL, CURRENT_IS_SOMEONE_THERE_TOPIC, strMsg.length(), strMsg.c_str());
 }
 
+void MosquittoBroker::SendIsPressureMatCalib(const bool state, const std::string datetime)
+{
+    std::string strState = std::to_string(state);
+    std::string strMsg = "{\"datetime\":" + datetime + ",\"IsPressureMatCalib\":" + strState + "}";
+
+    publish(NULL, CALIB_PRESSURE_MAT_TOPIC, strMsg.length(), strMsg.c_str());
+}
+
+void MosquittoBroker::SendIsIMUCalib(const bool state, const std::string datetime)
+{
+    std::string strState = std::to_string(state);
+    std::string strMsg = "{\"datetime\":" + datetime + ",\"IsIMUCalib\":" + strState + "}";
+
+    publish(NULL, CALIB_IMU_TOPIC, strMsg.length(), strMsg.c_str());
+}
+
 void MosquittoBroker::SendSpeed(const float speed, const std::string datetime)
 {
     std::string strSpeed = std::to_string(speed);
