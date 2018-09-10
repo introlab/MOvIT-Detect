@@ -13,9 +13,14 @@ const char *SUCCESS_MESSAGE = "SUCCESS \n";
 
 void MotionSensor::Initialize()
 {
-    if (InitializeRangeSensor() && InitializeOpticalFlowSensor() && ValidDistanceToTheGround())
+    bool rangeSensorInit = InitializeRangeSensor();
+    bool flowSensorInit = InitializeOpticalFlowSensor(); 
+    if (rangeSensorInit && flowSensorInit)
     {
-        GetDeltaXYThread().detach();
+        if (ValidDistanceToTheGround()) 
+        {
+            GetDeltaXYThread().detach();
+        }
     }
 }
 
@@ -24,7 +29,7 @@ bool MotionSensor::InitializeRangeSensor()
     uint16_t const timeout = 500;         // In milliseconde
     uint32_t const timingBudget = 200000; // In milliseconde, high accuracy mode
 
-    printf("Initialization of the range sensor... ");
+    printf("VL53L0X (Range sensor) initializing ... ");
     if (!_rangeSensor.Initialize(false))
     {
         printf(FAIL_MESSAGE);
@@ -32,13 +37,14 @@ bool MotionSensor::InitializeRangeSensor()
     }
     _rangeSensor.SetTimeout(timeout);
     _rangeSensor.SetMeasurementTimingBudget(timingBudget);
+
     printf(SUCCESS_MESSAGE);
     return true;
 }
 
 bool MotionSensor::InitializeOpticalFlowSensor()
 {
-    printf("Initialization of the flow sensor... ");
+    printf("PMW3901 (Flow sensor) initializing ... ");
 
     if (!_opticalFLowSensor.Initialize())
     {
@@ -104,11 +110,13 @@ float MotionSensor::GetRangeInMeters()
 
 bool MotionSensor::ValidDistanceToTheGround()
 {
+    printf("Validation of the minimum height required for the flow sensor ... ");
     if (GetRangeInMeters() < MINIMUM_WORKING_RANGE)
     {
-        printf("The flow sensor is too close to the ground. \n");
+        printf(FAIL_MESSAGE);
         return false;
     }
+    printf(SUCCESS_MESSAGE);
     return true;
 }
 

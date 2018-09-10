@@ -36,7 +36,7 @@
 
 // Constructors ////////////////////////////////////////////////////////////////
 
-VL53L0X::VL53L0X() : address(ADDRESS_DEFAULT), io_timeout(0), did_timeout(false)
+VL53L0X::VL53L0X() : address(ADDRESS_DEFAULT), io_timeout(1500), did_timeout(false)
 {
 }
 
@@ -59,7 +59,6 @@ void VL53L0X::SetAddress(uint8_t new_addr)
 bool VL53L0X::Initialize(bool io_2v8)
 {
   // VL53L0X_DataInit() begin
-
   // sensor uses 1V8 mode for I/O by default; switch to 2V8 mode if necessary
   if (io_2v8)
   {
@@ -96,10 +95,12 @@ bool VL53L0X::Initialize(bool io_2v8)
   // the API, but the same data seems to be more easily readable from
   // GLOBAL_CONFIG_SPAD_ENABLES_REF_0 through _6, so read it from there
   uint8_t ref_spad_map[6];
-  ReadMulti(GLOBAL_CONFIG_SPAD_ENABLES_REF_0, ref_spad_map, 6);
+  if (!ReadMulti(GLOBAL_CONFIG_SPAD_ENABLES_REF_0, ref_spad_map, 6))
+  {
+    return false;
+  }
 
   // -- VL53L0X_set_reference_spads() begin (assume NVM values are valid)
-
   WriteReg(0xFF, 0x01);
   WriteReg(DYNAMIC_SPAD_REF_EN_START_OFFSET, 0x00);
   WriteReg(DYNAMIC_SPAD_NUM_REQUESTED_REF_SPAD, 0x2C);
@@ -123,13 +124,12 @@ bool VL53L0X::Initialize(bool io_2v8)
     }
   }
 
-  WriteMulti(GLOBAL_CONFIG_SPAD_ENABLES_REF_0, ref_spad_map, 6);
-
-  // -- VL53L0X_set_reference_spads() end
+  if (!WriteMulti(GLOBAL_CONFIG_SPAD_ENABLES_REF_0, ref_spad_map, 6))
+  {
+    return false;
+  }
 
   // -- VL53L0X_load_tuning_settings() begin
-  // DefaultTuningSettings from vl53l0x_tuning.h
-
   WriteReg(0xFF, 0x01);
   WriteReg(0x00, 0x00);
 
@@ -224,103 +224,88 @@ bool VL53L0X::Initialize(bool io_2v8)
   WriteReg(0xFF, 0x00);
   WriteReg(0x80, 0x00);
 
-  // -- VL53L0X_load_tuning_settings() end
-
   // "Set interrupt config to new sample ready"
   // -- VL53L0X_SetGpioConfig() begin
-
   WriteReg(SYSTEM_INTERRUPT_CONFIG_GPIO, 0x04);
   WriteReg(GPIO_HV_MUX_ACTIVE_HIGH, ReadReg(GPIO_HV_MUX_ACTIVE_HIGH) & ~0x10); // active low
   WriteReg(SYSTEM_INTERRUPT_CLEAR, 0x01);
-
-  // -- VL53L0X_SetGpioConfig() end
-
-  measurement_timing_budget_us = GetMeasurementTimingBudget();
 
   // "Disable MSRC and TCC by default"
   // MSRC = Minimum Signal Rate Check
   // TCC = Target CentreCheck
   // -- VL53L0X_SetSequenceStepEnable() begin
-
   WriteReg(SYSTEM_SEQUENCE_CONFIG, 0xE8);
 
-  // -- VL53L0X_SetSequenceStepEnable() end
-
   // "Recalculate timing budget"
+  measurement_timing_budget_us = GetMeasurementTimingBudget();
   SetMeasurementTimingBudget(measurement_timing_budget_us);
 
-  // VL53L0X_StaticInit() end
-
-  // VL53L0X_PerformRefCalibration() begin (VL53L0X_perform_ref_calibration())
-
   // -- VL53L0X_perform_vhv_calibration() begin
-
   WriteReg(SYSTEM_SEQUENCE_CONFIG, 0x01);
   if (!PerformSingleRefCalibration(0x40))
   {
     return false;
   }
 
-  // -- VL53L0X_perform_vhv_calibration() end
-
   // -- VL53L0X_perform_phase_calibration() begin
-
   WriteReg(SYSTEM_SEQUENCE_CONFIG, 0x02);
   if (!PerformSingleRefCalibration(0x00))
   {
     return false;
   }
 
-  // -- VL53L0X_perform_phase_calibration() end
-
   // "restore the previous Sequence Config"
   WriteReg(SYSTEM_SEQUENCE_CONFIG, 0xE8);
-
-  // VL53L0X_PerformRefCalibration() end
-
+  
   return true;
 }
 
 // Write an 8-bit register
-void VL53L0X::WriteReg(uint8_t reg, uint8_t value)
+bool VL53L0X::WriteReg(uint8_t reg, uint8_t value)
 {
-  I2Cdev::WriteByte(address, reg, value);
+  return I2Cdev::WriteByte(address, reg, value);
 }
 
 // Write a 16-bit register
-void VL53L0X::WriteReg16Bit(uint8_t reg, uint16_t value)
+bool VL53L0X::WriteReg16Bit(uint8_t reg, uint16_t value)
 {
-  I2Cdev::WriteWord(address, reg, value);
+  return I2Cdev::WriteWord(address, reg, value);
 }
 
 // Read an 8-bit register
 uint8_t VL53L0X::ReadReg(uint8_t reg)
 {
   uint8_t value;
-  I2Cdev::ReadByte(address, reg, &value);
-  return value;
+  if(I2Cdev::ReadByte(address, reg, &value))
+  {
+    return value;
+  }
+  return 0x0;
 }
 
 // Read a 16-bit register
 uint16_t VL53L0X::ReadReg16Bit(uint8_t reg)
 {
   uint16_t value;
-  I2Cdev::ReadWord(address, reg, &value);
-  return value;
+  if(I2Cdev::ReadWord(address, reg, &value))
+  {
+    return value;
+  }
+  return 0x00;
 }
 
 // Write an arbitrary number of bytes from the given array to the sensor,
 // starting at the given register
-void VL53L0X::WriteMulti(uint8_t reg, uint8_t *src, uint8_t count)
+bool VL53L0X::WriteMulti(uint8_t reg, uint8_t *src, uint8_t count)
 {
-  I2Cdev::WriteBytes(address, reg, count, src);
+  return I2Cdev::WriteBytes(address, reg, count, src);
 }
 
 // Read an arbitrary number of bytes from the sensor, starting at the given
 // register, into the given array
-void VL53L0X::ReadMulti(uint8_t reg, uint8_t *dst, uint8_t count)
+bool VL53L0X::ReadMulti(uint8_t reg, uint8_t *dst, uint8_t count)
 {
-  I2Cdev::ReadBytes(address, reg, count, dst);
+  return I2Cdev::ReadBytes(address, reg, count, dst);
 }
 
 // Set the return signal rate limit check value in units of MCPS (mega counts
