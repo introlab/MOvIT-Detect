@@ -88,9 +88,15 @@ void Alarm::TurnOffGreenLed()
 
 void Alarm::TurnOffAlarm()
 {
+    StopBlinkGreenAlarm();
     TurnOffRedLed();
     TurnOffGreenLed();
     TurnOffDCMotor();
+}
+
+void Alarm::StopBlinkGreenAlarm()
+{
+    _isBlinkGreenAlarmRequired = false;
 }
 
 void Alarm::TurnOnBlinkLedsAlarm()
@@ -157,6 +163,33 @@ void Alarm::TurnOnGreenAlarm()
     TurnOffDCMotor();
 }
 
+void Alarm::TurnOnBlinkGreenAlarm()
+{
+    if (_isBlinkGreenAlarmOn)
+    {
+        return;
+    }
+
+    _isBlinkGreenAlarmOn = true;
+    _isBlinkGreenAlarmRequired = true;
+
+    std::lock_guard<std::mutex> lock(alarmMutex);
+
+    TurnOffDCMotor();
+    TurnOffRedLed();
+    TurnOnGreenLed();
+
+    while (_isBlinkGreenAlarmRequired)
+    {
+        _pca9536.ToggleState(GREEN_LED);
+        sleep_for_microseconds(_blinkFrequency * secondsToMicroseconds);
+    }
+
+    TurnOffGreenLed();
+
+    _isBlinkGreenAlarmOn = false;
+}
+
 std::thread Alarm::TurnOnRedAlarmThread()
 {
     return std::thread([=] {
@@ -168,5 +201,12 @@ std::thread Alarm::TurnOnBlinkLedsAlarmThread()
 {
     return std::thread([=] {
         TurnOnBlinkLedsAlarm();
+    });
+}
+
+std::thread Alarm::TurnOnBlinkGreenAlarmThread()
+{
+    return std::thread([=] {
+        TurnOnBlinkGreenAlarm();
     });
 }

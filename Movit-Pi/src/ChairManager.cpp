@@ -1,4 +1,5 @@
 #include "ChairManager.h"
+#include <chrono>
 
 #define REQUIRED_SITTING_TIME 5
 #define DELTA_ANGLE_THRESHOLD 5
@@ -7,11 +8,21 @@
 #define KEEP_ALIVE_PERIOD 300000
 #define MINIMUM_BACK_REST_ANGLE 2
 
+#define IS_MOVING_DEBOUNCE_CONSTANT 10
+
+using std::chrono::duration_cast;
+using std::chrono::milliseconds;
+using std::chrono::seconds;
+
 ChairManager::ChairManager(MosquittoBroker *mosquittoBroker, DeviceManager *devicemgr)
     : _mosquittoBroker(mosquittoBroker), _devicemgr(devicemgr)
 {
     _copCoord.x = 0;
     _copCoord.y = 0;
+}
+
+ChairManager::~ChairManager()
+{
 }
 
 void ChairManager::UpdateDevices()
@@ -44,9 +55,11 @@ void ChairManager::UpdateDevices()
 
 #ifdef DEBUG_PRINT
     //printf("getDateTime = %s\n", _currentDatetime.c_str());
+    printf("\n");
     printf("isSomeoneThere = %i\n", _devicemgr->IsSomeoneThere());
     printf("getCenterOfPressure x = %f, y = %f\n", _copCoord.x, _copCoord.y);
     printf("_currentChairAngle = %i\n", _currentChairAngle);
+    printf("_isMoving = %i\n", _isMoving);
     //printf("_prevChairAngle = %i\n\n", _prevChairAngle);
     //printf("Current Speed = %f\n\n", _currentSpeed);
 #endif
@@ -123,6 +136,7 @@ void ChairManager::CheckNotification()
     {
         _state = 1;
         _secondsCounter = 0;
+        _devicemgr->GetAlarm()->TurnOffAlarm();
         return;
     }
 
@@ -165,9 +179,17 @@ void ChairManager::CheckIfBackRestIsRequired()
 
     if (++_secondsCounter >= _requiredPeriod)
     {
-        _devicemgr->GetAlarm()->TurnOnRedAlarmThread().detach();
-        _state = 3;
-        _secondsCounter = 0;
+        if (!_isMoving)
+        {
+            _devicemgr->GetAlarm()->StopBlinkGreenAlarm();
+            _devicemgr->GetAlarm()->TurnOnRedAlarmThread().detach();
+            _state = 3;
+            _secondsCounter = 0;
+        }
+        else
+        {
+            _devicemgr->GetAlarm()->TurnOnBlinkGreenAlarmThread().detach();
+        }
     }
 }
 

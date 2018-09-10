@@ -12,6 +12,7 @@ class ChairManager
 {
   public:
     ChairManager(MosquittoBroker *mosquittoBroker, DeviceManager *devicemgr);
+    ~ChairManager();
 
     inline bool TestPattern() { return _devicemgr->TestDevices(); }
 
@@ -20,6 +21,7 @@ class ChairManager
     void CheckNotification();
 
   private:
+
     MosquittoBroker *_mosquittoBroker;
     DeviceManager *_devicemgr;
 
@@ -34,6 +36,7 @@ class ChairManager
     bool _isSomeoneThere = false;
     bool _prevIsSomeoneThere = false;
     bool _isMoving = false;
+
     bool _overrideNotificationPattern = false;
     bool _setAlarmOn = false;
 
