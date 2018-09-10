@@ -1,92 +1,68 @@
-#include <wiringPiI2C.h>
-#include <wiringPi.h>
+#include <signal.h>
+#include <stdlib.h>
 #include <stdio.h>
-#include <math.h>
+#include <string>
+#include <unistd.h>
+#include <ctime>
+#include "MosquittoBroker.h"
+#include "DeviceManager.h"
+#include "ChairManager.h"
+#include "Utils.h"
 
-#include "MPU6050.h"
+using std::string;
 
-int32_t fd;
-int acclX, acclY, acclZ;
-int gyroX, gyroY, gyroZ;
-double acclX_scaled, acclY_scaled, acclZ_scaled;
-double gyroX_scaled, gyroY_scaled, gyroZ_scaled;
+#define EXECUTION_PERIOD 1000000
 
-int read_word_2c(int addr)
+void exit_program_handler(int s)
 {
-    int val;
-    val = wiringPiI2CReadReg8(fd, addr);
-    val = val << 8;
-    val += wiringPiI2CReadReg8(fd, addr + 1);
-    if (val >= 0x8000)
-        val = -(65536 - val);
-
-    return val;
+    DeviceManager *devicemgr = DeviceManager::GetInstance();
+    devicemgr->TurnOff();
+    exit(1);
 }
 
-double dist(double a, double b)
+int main(int argc, char *argv[])
 {
-    return sqrt((a * a) + (b * b));
-}
+    I2Cdev::Initialize();
 
-double get_y_rotation(double x, double y, double z)
-{
-    double radians;
-    radians = atan2(x, dist(y, z));
-    return -(radians * (180.0 / M_PI));
-}
+    struct sigaction sigIntHandler;
 
-double get_x_rotation(double x, double y, double z)
-{
-    double radians;
-    radians = atan2(y, dist(x, z));
-    return (radians * (180.0 / M_PI));
-}
+    sigIntHandler.sa_handler = exit_program_handler;
+    sigemptyset(&sigIntHandler.sa_mask);
+    sigIntHandler.sa_flags = 0;
 
-int main()
-{
-    MPU6050 mpu(0x68);
+    sigaction(SIGINT, &sigIntHandler, NULL);
 
-    if(mpu.testConnection())
+    MosquittoBroker *mosquittoBroker = new MosquittoBroker("embedded");
+    DeviceManager *devicemgr = DeviceManager::GetInstance();
+    ChairManager chairmgr(mosquittoBroker, devicemgr);
+
+    devicemgr->InitializeDevices();
+    // Pour usage �ventuel (un jour, ce code sera d�comment�, pray for it)
+    // std::clock_t start;
+    // double duration;
+
+    bool done = false;
+
+    if (argc > 1 && std::string(argv[1]) == "-t")
     {
-        printf("WOUHOU\n");
+        while (!done)
+        {
+            done = devicemgr->TestDevices();
+        }
     }
     else
     {
-        printf("noooon\n");
+        while (!done)
+        {
+            chairmgr.UpdateDevices();
+            chairmgr.ReadFromServer();
+            chairmgr.CheckNotification();
+
+            // TODO: trouver une facon d'attendre vraiment EXACTEMENT 1 sec
+            sleep_for_microseconds(EXECUTION_PERIOD);
+        }
     }
 
-
-    mpu.initialize();
-
-
-
-
-    // fd = wiringPiI2CSetup(0x68);
-    // wiringPiI2CWriteReg8(fd, 0x6B, 0x00); //disable sleep mode
-    // printf("fd=%X\n", fd);
-    // printf("set 0x6B=%X\n", wiringPiI2CReadReg8(fd, 0x6B));
-
-    // delay(5000);
-
-    // while (1)
-    // {
-
-    //     acclX = read_word_2c(0x3B);
-    //     acclY = read_word_2c(0x3D);
-    //     acclZ = read_word_2c(0x3F);
-
-    //     acclX_scaled = acclX / 16384.0;
-    //     acclY_scaled = acclY / 16384.0;
-    //     acclZ_scaled = acclZ / 16384.0;
-
-    //     printf("My acclX_scaled: %f\n", acclX_scaled);
-    //     printf("My acclY_scaled: %f\n", acclY_scaled);
-    //     printf("My acclZ_scaled: %f\n", acclZ_scaled);
-
-    //     printf("My X rotation: %f\n", get_x_rotation(acclX_scaled, acclY_scaled, acclZ_scaled));
-    //     printf("My Y rotation: %f\n", get_y_rotation(acclX_scaled, acclY_scaled, acclZ_scaled));
-
-    //     delay(100);
-    // }
-    // return 0;
+    delete mosquittoBroker;
+    return 0;
 }

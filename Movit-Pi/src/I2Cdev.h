@@ -1,27 +1,11 @@
-// I2Cdev library collection - Main I2C device class header file
+// I2Cdev library collection - Main I2C device class
 // Abstracts bit and byte I2C R/W functions into a convenient class
-// 6/9/2012 by Jeff Rowberg <jeff@rowberg.net>
+// RaspberryPi bcm2835 library port: bcm2835 library available at http://www.airspayce.com/mikem/bcm2835/index.html
+// Based on Arduino's I2Cdev by Jeff Rowberg <jeff@rowberg.net>
 //
-// Changelog:
-//      2013-05-06 - add Francesco Ferrara's Fastwire v0.24 implementation with small modifications
-//      2013-05-05 - fix issue with writing bit values to words (Sasquatch/Farzanegan)
-//      2012-06-09 - fix major issue with reading > 32 bytes at a time with Arduino Wire
-//                 - add compiler warnings when using outdated or IDE or limited I2Cdev implementation
-//      2011-11-01 - fix write*Bits mask calculation (thanks sasquatch @ Arduino forums)
-//      2011-10-03 - added automatic Arduino version detection for ease of use
-//      2011-10-02 - added Gene Knight's NBWire TwoWire class implementation with small modifications
-//      2011-08-31 - added support for Arduino 1.0 Wire library (methods are different from 0.x)
-//      2011-08-03 - added optional timeout parameter to read* methods to easily change from default
-//      2011-08-02 - added support for 16-bit registers
-//                 - fixed incorrect Doxygen comments on some methods
-//                 - added timeout value for read operations (thanks mem @ Arduino forums)
-//      2011-07-30 - changed read/write function structures to return success or byte counts
-//                 - made all methods static for multi-device memory savings
-//      2011-07-28 - initial release
 
 /* ============================================
 I2Cdev device library code is placed under the MIT license
-Copyright (c) 2013 Jeff Rowberg
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -43,63 +27,43 @@ THE SOFTWARE.
 ===============================================
 */
 
-#ifndef _I2CDEV_H_
-#define _I2CDEV_H_
+#ifndef I2CDEV_H
+#define I2CDEV_H
 
-#define BUFFER_LENGTH 32
+#include "bcm2835.h"
+#include <math.h>
+#include <stdlib.h>
+#include <string>
 
-// -----------------------------------------------------------------------------
-// I2C interface implementation setting
-// -----------------------------------------------------------------------------
-#define I2CDEV_IMPLEMENTATION       I2CDEV_ARDUINO_WIRE
-//#define I2CDEV_IMPLEMENTATION       I2CDEV_BUILTIN_FASTWIRE
+#define SET_I2C_PINS false
+/* used to boolean for setting RPi I2C pins P1-03 (SDA) and P1-05 (SCL) to alternate function ALT0, which enables those pins for I2C interface.
+   setI2Cpin should be false, if the I2C are already configured in alt mode ... */
 
-// comment this out if you are using a non-optimal IDE/implementation setting
-// but want the compiler to shut up about it
-//#define I2CDEV_IMPLEMENTATION_WARNINGS
+#define I2C_BAUDRATE 400000
 
-// -----------------------------------------------------------------------------
-// I2C interface implementation options
-// -----------------------------------------------------------------------------
-#define I2CDEV_ARDUINO_WIRE         1 // Wire object from Arduino
-#define I2CDEV_BUILTIN_NBWIRE       2 // Tweaked Wire object from Gene Knight's NBWire project
-                                      // ^^^ NBWire implementation is still buggy w/some interrupts!
-#define I2CDEV_BUILTIN_FASTWIRE     3 // FastWire object from Francesco Ferrara's project
-#define I2CDEV_I2CMASTER_LIBRARY    4 // I2C object from DSSCircuits I2C-Master Library at https://github.com/DSSCircuits/I2C-Master-Library
-
-// -----------------------------------------------------------------------------
-// Arduino-style "Serial.print" debug constant (uncomment to enable)
-// -----------------------------------------------------------------------------
-//#define I2CDEV_SERIAL_DEBUG
-
-#include <stdint.h>
-
-// 1000ms default read timeout (modify with "I2Cdev::readTimeout = [ms];")
-#define I2CDEV_DEFAULT_READ_TIMEOUT     1000
-
-class I2Cdev {
-    public:
+class I2Cdev
+{
+      public:
         I2Cdev();
-        
-        static int8_t readBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data, uint16_t timeout=I2Cdev::readTimeout);
-        static int8_t readBitW(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint16_t *data, uint16_t timeout=I2Cdev::readTimeout);
-        static int8_t readBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data, uint16_t timeout=I2Cdev::readTimeout);
-        static int8_t readBitsW(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint16_t *data, uint16_t timeout=I2Cdev::readTimeout);
-        static int8_t readByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data, uint16_t timeout=I2Cdev::readTimeout);
-        static int8_t readWord(uint8_t devAddr, uint8_t regAddr, uint16_t *data, uint16_t timeout=I2Cdev::readTimeout);
-        static int8_t readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data, uint16_t timeout=I2Cdev::readTimeout);
-        static int8_t readWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data, uint16_t timeout=I2Cdev::readTimeout);
 
-        static bool writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data);
-        static bool writeBitW(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint16_t data);
-        static bool writeBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data);
-        static bool writeBitsW(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint16_t data);
-        static bool writeByte(uint8_t devAddr, uint8_t regAddr, uint8_t data);
-        static bool writeWord(uint8_t devAddr, uint8_t regAddr, uint16_t data);
-        static bool writeBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
-        static bool writeWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data);
+        static void Initialize();
+        static void Enable(bool isEnabled);
 
-        static uint16_t readTimeout;
+        static bool ReadBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data);
+        static bool ReadBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data);
+        static bool ReadByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data);
+        static bool ReadWord(uint8_t devAddr, uint8_t regAddr, uint16_t *data);
+        static bool ReadBytes(uint8_t devAddr, uint8_t length, uint8_t *data);
+        static bool ReadBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
+        static bool ReadWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data);
+
+        static bool WriteBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data);
+        static bool WriteBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data);
+        static bool WriteByte(uint8_t devAddr, uint8_t data);
+        static bool WriteByte(uint8_t devAddr, uint8_t regAddr, uint8_t data);
+        static bool WriteWord(uint8_t devAddr, uint8_t regAddr, uint16_t data);
+        static bool WriteBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
+        static bool WriteWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data);
 };
 
-#endif /* _I2CDEV_H_ */
+#endif // I2CDEV_H
