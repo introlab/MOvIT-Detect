@@ -28,6 +28,10 @@ The embedded system part of the MOvIT-Detect project.
 ```shell
     make
 ```
+- Note: Si vous buildé sur une VM à partir d'un dossier partagé et que vous voyez `Clock skew detected.  Your build may be incomplete.` dans le build, vous pouvez utiliser la commande suivante pour regler ce problème:
+``` shell
+find . -exec touch {} \;
+```
 
 ## Exécuter le code sur le RaspberryPi
 
@@ -36,7 +40,7 @@ The embedded system part of the MOvIT-Detect project.
 ```shell
     sudo ./movit-pi
 ```
-N.B.: Si le fichier est présent mais qu'en essayant de l'éxécuter ça ne trouve pas le fichier c'est surement parce que le fichier n'a pas les permissions pour être exécuter. Pour regler ce problème il suffit de faire:
+Note: Si le fichier est présent mais qu'en essayant de l'éxécuter ça ne trouve pas le fichier c'est surement parce que le fichier n'a pas les permissions pour être exécuter. Pour regler ce problème il suffit de faire:
 ```shell
     sudo chmod +x movit-pi
 ```
