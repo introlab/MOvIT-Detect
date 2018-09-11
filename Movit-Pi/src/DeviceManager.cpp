@@ -10,6 +10,7 @@
 
 DeviceManager::DeviceManager() : _alarm(700, 0.1)
 {
+    _motionSensor = MotionSensor::GetInstance();
     _mobileImu = MobileImu::GetInstance();
     _fixedImu = FixedImu::GetInstance();
     _datetimeRTC = DateTimeRTC::GetInstance();
@@ -25,7 +26,7 @@ void DeviceManager::InitializeDevices()
     _alarm.Initialize();
     _isMobileImuInitialized = _mobileImu->isInitialized();
     _isFixedImuInitialized = _fixedImu->isInitialized();
-    _motionSensor.Initialize();
+    _motionSensor->Initialize();
     _forcePlateValid = InitializeForcePlate();
 
     printf("Setup Done\n");
@@ -78,7 +79,7 @@ bool DeviceManager::InitializeForcePlate()
 void DeviceManager::Update()
 {
     _timeSinceEpoch = _datetimeRTC->GetTimeSinceEpoch();
-    _isMoving = _motionSensor.GetIsMoving();
+    _isMoving = _motionSensor->GetIsMoving();
 
     if (_isFixedImuInitialized && _isMobileImuInitialized)
     {

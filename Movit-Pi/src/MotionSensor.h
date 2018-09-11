@@ -14,11 +14,23 @@
 class MotionSensor
 {
   public:
+    // Singleton
+    static MotionSensor *GetInstance()
+    {
+      static MotionSensor instance;
+      return &instance;
+    }
+
     void Initialize();
     float GetLastTravel();
     bool GetIsMoving();
 
   private:
+    //Singleton
+    MotionSensor();
+    MotionSensor(MotionSensor const &);   // Don't Implement.
+    void operator=(MotionSensor const &); // Don't implement.
+
     std::thread GetDeltaXYThread();
     bool InitializeOpticalFlowSensor();
     bool InitializeRangeSensor();

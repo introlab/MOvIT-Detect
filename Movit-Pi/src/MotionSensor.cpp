@@ -11,6 +11,11 @@
 const char *FAIL_MESSAGE = "FAIL \n";
 const char *SUCCESS_MESSAGE = "SUCCESS \n";
 
+MotionSensor::MotionSensor()
+{
+
+}
+
 void MotionSensor::Initialize()
 {
     bool rangeSensorInit = InitializeRangeSensor();
