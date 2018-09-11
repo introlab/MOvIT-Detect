@@ -1,5 +1,7 @@
 #include "DeviceManager.h"
 #include "NetworkManager.h"
+#include "FixedImu.h"
+#include "MobileImu.h"
 #include "I2Cdev.h"
 #include "Utils.h"
 
@@ -8,6 +10,8 @@
 
 DeviceManager::DeviceManager() : _alarm(700, 0.1)
 {
+    _mobileImu = MobileImu::GetInstance();
+    _fixedImu = FixedImu::GetInstance();
     _datetimeRTC = DateTimeRTC::GetInstance();
     _COPCoord.x = 0;
     _COPCoord.y = 0;
@@ -19,7 +23,8 @@ void DeviceManager::InitializeDevices()
     _datetimeRTC->SetCurrentDateTimeIfConnectedThread().detach();
 
     _alarm.Initialize();
-    _imuValid = _imu.Initialize();
+    _isMobileImuInitialized = _mobileImu->isInitialized();
+    _isFixedImuInitialized = _fixedImu->isInitialized();
     _motionSensor.Initialize();
     _forcePlateValid = InitializeForcePlate();
 
@@ -39,7 +44,11 @@ void DeviceManager::CalibratePressureMat()
 
 void DeviceManager::CalibrateIMU()
 {
-    _imu.Calibrate();
+    MobileImu *mobileImu = MobileImu::GetInstance();
+    FixedImu *fixedImu = FixedImu::GetInstance();
+
+    fixedImu->CalibrateAndSetOffsets();
+    mobileImu->CalibrateAndSetOffsets();
 }
 
 bool DeviceManager::InitializeForcePlate()
@@ -71,10 +80,14 @@ void DeviceManager::Update()
     _timeSinceEpoch = _datetimeRTC->GetTimeSinceEpoch();
     _isMoving = _motionSensor.GetIsMoving();
 
-    if (_imuValid)
+    if (_isFixedImuInitialized && _isMobileImuInitialized)
     {
         // Data: Angle (centrales intertielles mobile/fixe)
         _backSeatAngle = _backSeatAngleTracker.GetBackSeatAngle();
+    }
+
+    if (_isFixedImuInitialized) {
+        _xAcceleration = _fixedImu->GetXAcceleration();
     }
 
     if (_forcePlateValid)

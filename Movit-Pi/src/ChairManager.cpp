@@ -6,6 +6,7 @@
 
 #define CENTER_OF_PRESSURE_EMISSION_PERIOD 15
 #define KEEP_ALIVE_PERIOD 300000
+#define VIBRATION_EMISSION_PERIOD 1000
 #define MINIMUM_BACK_REST_ANGLE 2
 
 #define IS_MOVING_DEBOUNCE_CONSTANT 10
@@ -77,6 +78,14 @@ void ChairManager::UpdateDevices()
     {
         _keepAliveTimer.Reset();
         _mosquittoBroker->SendKeepAlive(_currentDatetime);
+    }
+
+    if (_vibrationTimer.Elapsed() >= VIBRATION_EMISSION_PERIOD)
+    {
+        double acceleration = _devicemgr->GetXAcceleration();
+        printf("getXAcceleration (vibration) = %f\n", acceleration);
+        _vibrationTimer.Reset();
+        _mosquittoBroker->SendVibration(acceleration, _currentDatetime);
     }
 
     if ((_currentChairAngle != _prevChairAngle) && _isSomeoneThere)

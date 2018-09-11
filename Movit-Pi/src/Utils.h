@@ -1,6 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <string>
 #include <stdint.h>
 #include <math.h>
 
@@ -9,6 +10,9 @@
 #define ONES_MASK 0x0F
 #define TENS_MASK 0xF0
 
+enum AXIS { x, y, z };
+const std::string FIXED_IMU_NAME = "fixedImu";
+const std::string MOBILE_IMU_NAME = "mobileImu";
 const double radiansToDegrees = 180.0 / M_PI;
 const int secondsToMicroseconds = 1000000;
 

@@ -46,6 +46,7 @@ class ChairManager
 
     Timer _timer;
     Timer _keepAliveTimer;
+    Timer _vibrationTimer;
 
     void CheckIfUserHasBeenSittingForRequiredTime();
     void CheckIfBackRestIsRequired();

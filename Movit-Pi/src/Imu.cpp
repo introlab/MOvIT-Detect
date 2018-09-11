@@ -3,69 +3,25 @@
 
 #include <algorithm>
 #include <math.h>
-#include <string>
 #include <unistd.h>
-
-enum _axis { x, y, z };
-const std::string fixedImuName = "fixedImu";
-const std::string mobileImuName = "mobileImu";
 
 Imu::Imu()
 {
 }
 
-bool Imu::Initialize()
+bool Imu::isInitialized()
 {
-    _fileManager.ReadCalibrationOffsetsFromFile(fixedImuName, mobileImuName);
-    bool mobileIMUInitialized = InitializeMobileImu();
-    bool fixedIMUInitialized = InitializeFixedImu();
-    return mobileIMUInitialized && fixedIMUInitialized;
+    _fileManager.ReadCalibrationOffsetsFromFile(_imuName);
+    return isSetup();
 }
 
-bool Imu::InitializeImu(MPU6050 &mpu, std::string name, int *accelerometerOffsets, int *gyroscopeOffsets)
+void Imu::CalibrateAndSetOffsets()
 {
-    printf("MPU6050 %s initializing ... ", name.c_str());
-    fflush(stdout);
+    ResetIMUOffsets(_imu);
+    Calibrate(_imu, _imuName);
+    SetImuOffsets(_imu);
 
-    if (!mpu.TestConnection())
-    {
-        printf("FAIL\n");
-        return false;
-    }
-
-    mpu.Initialize();
-
-    ResetIMUOffsets(mpu);
-
-    if (accelerometerOffsets == NULL || gyroscopeOffsets == NULL)
-    {
-        Calibrate(mpu, name);
-    }
-    else
-    {
-        std::copy(accelerometerOffsets, accelerometerOffsets + NUMBER_OF_AXIS, std::begin(_accelerometerOffsets));
-        std::copy(gyroscopeOffsets, gyroscopeOffsets + NUMBER_OF_AXIS, std::begin(_gyroscopeOffsets));
-    }
-
-    SetImuOffsets(mpu);
-    printf("SUCCESS\n");
-    return true;
-}
-
-bool Imu::InitializeFixedImu()
-{
-    int *accelerometerOffsets = _fileManager.GetFixedImuAccelOffsets();
-    int *gyroscopeOffsets = _fileManager.GetFixedImuGyroOffsets();
-
-    return InitializeImu(_fixedImu, fixedImuName, accelerometerOffsets, gyroscopeOffsets);
-}
-
-bool Imu::InitializeMobileImu()
-{
-    int *accelerometerOffsets = _fileManager.GetMobileImuAccelOffsets();
-    int *gyroscopeOffsets = _fileManager.GetMobileImuGyroOffsets();
-
-    return InitializeImu(_mobileImu, mobileImuName, accelerometerOffsets, gyroscopeOffsets);
+    _fileManager.WriteCalibrationOffsetsToFile(_accelerometerOffsets, _gyroscopeOffsets, _imuName);
 }
 
 void Imu::ResetIMUOffsets(MPU6050 &mpu)
@@ -96,16 +52,16 @@ void Imu::SetImuOffsets(MPU6050 &mpu)
 
 void Imu::SetImuAccelOffsets(MPU6050 &mpu)
 {
-    mpu.SetXAccelOffset(_accelerometerOffsets[_axis::x]);
-    mpu.SetYAccelOffset(_accelerometerOffsets[_axis::y]);
-    mpu.SetZAccelOffset(_accelerometerOffsets[_axis::z]);
+    mpu.SetXAccelOffset(_accelerometerOffsets[AXIS::x]);
+    mpu.SetYAccelOffset(_accelerometerOffsets[AXIS::y]);
+    mpu.SetZAccelOffset(_accelerometerOffsets[AXIS::z]);
 }
 
 void Imu::SetImuGyroOffsets(MPU6050 &mpu)
 {
-    mpu.SetXGyroOffset(_gyroscopeOffsets[_axis::x]);
-    mpu.SetYGyroOffset(_gyroscopeOffsets[_axis::y]);
-    mpu.SetZGyroOffset(_gyroscopeOffsets[_axis::z]);
+    mpu.SetXGyroOffset(_gyroscopeOffsets[AXIS::x]);
+    mpu.SetYGyroOffset(_gyroscopeOffsets[AXIS::y]);
+    mpu.SetZGyroOffset(_gyroscopeOffsets[AXIS::z]);
 }
 
 void Imu::GetGyroscopeMeans(MPU6050 &mpu, int gyroscopeMeans[])
@@ -122,17 +78,17 @@ void Imu::GetGyroscopeMeans(MPU6050 &mpu, int gyroscopeMeans[])
 
         if (i++ > numberOfDiscardedMeasures)
         {
-            gyroscopeMeans[_axis::x] += gx;
-            gyroscopeMeans[_axis::y] += gy;
-            gyroscopeMeans[_axis::z] += gz;
+            gyroscopeMeans[AXIS::x] += gx;
+            gyroscopeMeans[AXIS::y] += gy;
+            gyroscopeMeans[AXIS::z] += gz;
         }
 
         sleep_for_microseconds(timeBetweenMeasures);
     }
 
-    gyroscopeMeans[_axis::x] /= BUFFER_SIZE;
-    gyroscopeMeans[_axis::y] /= BUFFER_SIZE;
-    gyroscopeMeans[_axis::z] /= BUFFER_SIZE;
+    gyroscopeMeans[AXIS::x] /= BUFFER_SIZE;
+    gyroscopeMeans[AXIS::y] /= BUFFER_SIZE;
+    gyroscopeMeans[AXIS::z] /= BUFFER_SIZE;
 }
 
 void Imu::GetAccelerometerMeans(MPU6050 &mpu, int accelerationBuffer[])
@@ -149,17 +105,17 @@ void Imu::GetAccelerometerMeans(MPU6050 &mpu, int accelerationBuffer[])
 
         if (i++ > numberOfDiscardedMeasures)
         {
-            accelerationBuffer[_axis::x] += ax;
-            accelerationBuffer[_axis::y] += ay;
-            accelerationBuffer[_axis::z] += az;
+            accelerationBuffer[AXIS::x] += ax;
+            accelerationBuffer[AXIS::y] += ay;
+            accelerationBuffer[AXIS::z] += az;
         }
 
         sleep_for_microseconds(timeBetweenMeasures);
     }
 
-    accelerationBuffer[_axis::x] /= BUFFER_SIZE;
-    accelerationBuffer[_axis::y] /= BUFFER_SIZE;
-    accelerationBuffer[_axis::z] /= BUFFER_SIZE;
+    accelerationBuffer[AXIS::x] /= BUFFER_SIZE;
+    accelerationBuffer[AXIS::y] /= BUFFER_SIZE;
+    accelerationBuffer[AXIS::z] /= BUFFER_SIZE;
 }
 
 void Imu::CalibrateAccelerometer(MPU6050 &mpu)
@@ -168,9 +124,9 @@ void Imu::CalibrateAccelerometer(MPU6050 &mpu)
     int accelerometerMeans[NUMBER_OF_AXIS] = {0, 0, 0};
     GetAccelerometerMeans(mpu, accelerometerMeans);
 
-    _accelerometerOffsets[_axis::x] = (_calibrationArray[_axis::x] - accelerometerMeans[_axis::x]) / 8;
-    _accelerometerOffsets[_axis::y] = (_calibrationArray[_axis::y] - accelerometerMeans[_axis::y]) / 8;
-    _accelerometerOffsets[_axis::z] = (_calibrationArray[_axis::z] - accelerometerMeans[_axis::z]) / 8;
+    _accelerometerOffsets[AXIS::x] = (_calibrationArray[AXIS::x] - accelerometerMeans[AXIS::x]) / 8;
+    _accelerometerOffsets[AXIS::y] = (_calibrationArray[AXIS::y] - accelerometerMeans[AXIS::y]) / 8;
+    _accelerometerOffsets[AXIS::z] = (_calibrationArray[AXIS::z] - accelerometerMeans[AXIS::z]) / 8;
 
     while (ready < NUMBER_OF_AXIS)
     {
@@ -200,9 +156,9 @@ void Imu::CalibrateGyroscope(MPU6050 &mpu)
     int gyroscopeMeans[NUMBER_OF_AXIS] = {0, 0, 0};
     GetGyroscopeMeans(mpu, gyroscopeMeans);
 
-    _gyroscopeOffsets[_axis::x] = -gyroscopeMeans[_axis::x] / 4;
-    _gyroscopeOffsets[_axis::y] = -gyroscopeMeans[_axis::y] / 4;
-    _gyroscopeOffsets[_axis::z] = -gyroscopeMeans[_axis::z] / 4;
+    _gyroscopeOffsets[AXIS::x] = -gyroscopeMeans[AXIS::x] / 4;
+    _gyroscopeOffsets[AXIS::y] = -gyroscopeMeans[AXIS::y] / 4;
+    _gyroscopeOffsets[AXIS::z] = -gyroscopeMeans[AXIS::z] / 4;
 
     while (ready < NUMBER_OF_AXIS)
     {
@@ -232,38 +188,15 @@ void Imu::Calibrate(MPU6050 &mpu, std::string name)
     _fileManager.WriteCalibrationOffsetsToFile(_accelerometerOffsets, _gyroscopeOffsets, name);
 }
 
-void Imu::Calibrate()
-{
-    // Calibrate fixed IMU:
-    ResetIMUOffsets(_fixedImu);
-    Calibrate(_fixedImu, fixedImuName);
-    SetImuOffsets(_fixedImu);
-
-    _fileManager.WriteCalibrationOffsetsToFile(_accelerometerOffsets, _gyroscopeOffsets, fixedImuName);
-
-    // Calibrate mobile IMU:
-    ResetIMUOffsets(_mobileImu);
-    Calibrate(_mobileImu, mobileImuName);
-    SetImuOffsets(_mobileImu);
-
-    _fileManager.WriteCalibrationOffsetsToFile(_accelerometerOffsets, _gyroscopeOffsets, mobileImuName);
-}
-
-void Imu::GetAcceleration(double *accelerations, std::string imuName)
+void Imu::GetAccelerations(double *accelerations)
 {
     int16_t ax, ay, az;
-    if (imuName == fixedImuName)
-    {
-      _fixedImu.GetAcceleration(&ax, &ay, &az);
-    }
-    else
-    {
-      _mobileImu.GetAcceleration(&ax, &ay, &az);
-    }
+    
+    _imu.GetAcceleration(&ax, &ay, &az);
 
     // TODO: Add low-pass filter
 
-    accelerations[_axis::x] = double(ax) * 2 / 32768.0f;
-    accelerations[_axis::y] = double(ay) * 2 / 32768.0f;
-    accelerations[_axis::z] = double(az) * 2 / 32768.0f;
+    accelerations[AXIS::x] = double(ax) * 2 / 32768.0f;
+    accelerations[AXIS::y] = double(ay) * 2 / 32768.0f;
+    accelerations[AXIS::z] = double(az) * 2 / 32768.0f;
 }

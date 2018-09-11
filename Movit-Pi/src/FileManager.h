@@ -14,7 +14,7 @@ class FileManager
     int *GetMobileImuGyroOffsets();
 
     void WriteCalibrationOffsetsToFile(int *accelerationOffsets, int *gyroOffsets, std::string type);
-    void ReadCalibrationOffsetsFromFile(std::string fixedImuName, std::string mobileImuName);
+    void ReadCalibrationOffsetsFromFile(std::string imuName);
 
   private:
     int _fixedImuAccelerationOffsets[NUMBER_OF_AXIS];

@@ -5,6 +5,8 @@
 #include "Alarm.h"
 #include "ForcePlate.h"
 #include "ForceSensor.h"
+#include "FixedImu.h"
+#include "MobileImu.h"
 #include "BackSeatAngleTracker.h"
 #include "DateTimeRTC.h"
 #include "MotionSensor.h"
@@ -33,6 +35,7 @@ class DeviceManager
     int GetBackSeatAngle() { return _backSeatAngle; }
     int GetTimeSinceEpoch() { return _timeSinceEpoch; }
     bool GetIsMoving() { return _isMoving; }
+    double GetXAcceleration() { return _xAcceleration; }
     void CalibratePressureMat();
     void CalibrateIMU();
     void TurnOff();
@@ -55,7 +58,8 @@ class DeviceManager
     void UpdateForcePlateData();
     bool InitializeForcePlate();
 
-    bool _imuValid = false;
+    bool _isFixedImuInitialized = false;
+    bool _isMobileImuInitialized = false;
     bool _forcePlateValid = false;
     bool _isMoving = false;
     bool _isSomeoneThere = false;
@@ -65,9 +69,11 @@ class DeviceManager
 
     DateTimeRTC *_datetimeRTC;
     Alarm _alarm;
+    MobileImu *_mobileImu;
+    FixedImu *_fixedImu;
     BackSeatAngleTracker _backSeatAngleTracker;
-    Imu _imu;
     int _backSeatAngle = 0;
+    double _xAcceleration = 0;
 
     uint16_t _max11611Data[9];
     ForceSensor _sensorMatrix;

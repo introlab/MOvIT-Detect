@@ -23,6 +23,7 @@ class MosquittoBroker : public mosqpp::mosquittopp
     void SendIsIMUCalib(const bool state, const std::string datetime);
     void SendSpeed(const float speed, const std::string datetime);
     void SendKeepAlive(const std::string datetime);
+    void SendVibration(double acceleration, const std::string datetime);
 
     bool GetSetAlarmOn();
     uint32_t GetRequiredBackRestAngle();

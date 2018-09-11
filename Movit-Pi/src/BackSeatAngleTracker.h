@@ -3,8 +3,6 @@
 
 #define NUMBER_OF_AXIS 3
 
-#include "Imu.h"
-
 class BackSeatAngleTracker
 {
   public:
@@ -12,7 +10,6 @@ class BackSeatAngleTracker
     int GetBackSeatAngle();
 
   private:
-    Imu _imu;
     double GetPitch(double acceleration[]);
 };
 
