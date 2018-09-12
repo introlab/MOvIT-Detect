@@ -4,14 +4,15 @@
 #include <string>
 #include <unistd.h>
 #include <ctime>
+#include <chrono>
 #include "MosquittoBroker.h"
 #include "DeviceManager.h"
 #include "ChairManager.h"
 #include "Utils.h"
 
 using std::string;
-
-#define EXECUTION_PERIOD 1000000
+using std::chrono::duration;
+using std::chrono::milliseconds;
 
 void exit_program_handler(int s)
 {
@@ -37,9 +38,10 @@ int main(int argc, char *argv[])
     ChairManager chairmgr(mosquittoBroker, devicemgr);
 
     devicemgr->InitializeDevices();
-    // Pour usage �ventuel (un jour, ce code sera d�comment�, pray for it)
-    // std::clock_t start;
-    // double duration;
+
+    auto start = std::chrono::system_clock::now();
+    auto end = std::chrono::system_clock::now();
+    auto period = milliseconds(1000);
 
     bool done = false;
 
@@ -54,12 +56,16 @@ int main(int argc, char *argv[])
     {
         while (!done)
         {
+            start = std::chrono::system_clock::now();
+
             chairmgr.UpdateDevices();
             chairmgr.ReadFromServer();
             chairmgr.CheckNotification();
 
-            // TODO: trouver une facon d'attendre vraiment EXACTEMENT 1 sec
-            sleep_for_microseconds(EXECUTION_PERIOD);
+            end = std::chrono::system_clock::now();
+            auto elapse_time = std::chrono::duration_cast<milliseconds>(end - start);
+
+            sleep_for_milliseconds(period.count() - elapse_time.count());
         }
     }
 

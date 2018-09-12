@@ -24,7 +24,7 @@ int BackSeatAngleTracker::GetBackSeatAngle()
 {
     double fixedImuAccelerations[NUMBER_OF_AXIS] = {0, 0, 0};
     double mobileImuAccelerations[NUMBER_OF_AXIS] = {0, 0, 0};
- 
+
     MobileImu *mobileImu = MobileImu::GetInstance();
     FixedImu *fixedImu = FixedImu::GetInstance();
     fixedImu->GetAccelerations(fixedImuAccelerations);

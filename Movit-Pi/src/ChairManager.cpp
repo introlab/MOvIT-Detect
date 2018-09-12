@@ -4,7 +4,6 @@
 #define REQUIRED_SITTING_TIME 5
 #define DELTA_ANGLE_THRESHOLD 5
 
-#define CENTER_OF_PRESSURE_EMISSION_PERIOD 15
 #define KEEP_ALIVE_PERIOD 300000
 #define VIBRATION_EMISSION_PERIOD 1000
 #define MINIMUM_BACK_REST_ANGLE 2
@@ -36,7 +35,7 @@ void ChairManager::UpdateDevices()
         _devicemgr->CalibratePressureMat();
         _mosquittoBroker->SendIsPressureMatCalib(true, _currentDatetime);
         printf("FIN de la calibration du tapis de pression\n");
-    } 
+    }
 
     if (_mosquittoBroker->CalibIMURequired())
     {
@@ -47,10 +46,10 @@ void ChairManager::UpdateDevices()
     }
 
     _prevIsSomeoneThere = _isSomeoneThere;
+
     _devicemgr->Update();
     _isSomeoneThere = _devicemgr->IsSomeoneThere();
-    Coord_t _copCoord = _devicemgr->GetCenterOfPressure();
-    _prevChairAngle = _currentChairAngle;
+    _copCoord = _devicemgr->GetCenterOfPressure();
     _currentChairAngle = _devicemgr->GetBackSeatAngle();
     _isMoving = _devicemgr->GetIsMoving();
 
@@ -65,13 +64,20 @@ void ChairManager::UpdateDevices()
     //printf("Current Speed = %f\n\n", _currentSpeed);
 #endif
 
-    // Envoi de la moyenne de la position dans les 5 dernieres minutes.
-    // TODO Ceci est temporaire, il va falloir envoyer le centre de pression quand il y a un changement majeur.
-    // Ceci sera revue en même temps que tous le scheduling
-    if (_timer.Elapsed() >= CENTER_OF_PRESSURE_EMISSION_PERIOD * 1000 && _isSomeoneThere)
+    if (_isSomeoneThere)
     {
-        _timer.Reset();
-        _mosquittoBroker->SendCenterOfPressure(_copCoord.x, _copCoord.y, _currentDatetime);
+        if (_centerOfPressureTimer.Elapsed() >= CENTER_OF_PRESSURE_EMISSION_PERIOD.count())
+        {
+            _centerOfPressureTimer.Reset();
+            _mosquittoBroker->SendCenterOfPressure(_copCoord.x, _copCoord.y, _currentDatetime);
+        }
+
+        if ((_chairAngleTimer.Elapsed() >= CHAIR_ANGLE_EMISSION_PERIOD.count()) && (_currentChairAngle != _prevChairAngle))
+        {
+            _prevChairAngle = _currentChairAngle;
+            _chairAngleTimer.Reset();
+            _mosquittoBroker->SendBackRestAngle(_currentChairAngle, _currentDatetime);
+        }
     }
 
     if (_keepAliveTimer.Elapsed() >= KEEP_ALIVE_PERIOD)
@@ -86,11 +92,6 @@ void ChairManager::UpdateDevices()
         printf("getXAcceleration (vibration) = %f\n", acceleration);
         _vibrationTimer.Reset();
         _mosquittoBroker->SendVibration(acceleration, _currentDatetime);
-    }
-
-    if ((_currentChairAngle != _prevChairAngle) && _isSomeoneThere)
-    {
-        _mosquittoBroker->SendBackRestAngle(_currentChairAngle, _currentDatetime);
     }
 
     if (_prevIsSomeoneThere != _isSomeoneThere)
