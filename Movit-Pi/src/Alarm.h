@@ -18,6 +18,8 @@ class Alarm
 
     bool _isBlinkGreenAlarmRequired = false;
 
+    bool _deactivateVibration = false;
+
     double _blinkFrequency;
     int _blinkDuration;
 
@@ -30,6 +32,8 @@ class Alarm
     void Initialize();
     void SetBlinkDuration(int blinkDuraction);
     void SetBlinkFrequency(double blinkFrequency);
+
+    void DeactivateVibration(bool state) { _deactivateVibration = state; }
 
     void TurnOnDCMotor();
     void TurnOffDCMotor();

@@ -23,6 +23,7 @@ const char *REQUIRED_PERIOD_TOPIC = "data/required_period";
 const char *REQUIRED_DURATION_TOPIC = "data/required_duration";
 const char *CALIB_PRESSURE_MAT_TOPIC = "config/calib_pressure_mat";
 const char *CALIB_IMU_TOPIC = "config/calib_imu";
+const char *DEACTIVATE_VIBRATION = "config/deactivate_vibration";
 
 const char *CURRENT_BACK_REST_ANGLE_TOPIC = "data/current_back_rest_angle";
 const char *CURRENT_CENTER_OF_PRESSURE_TOPIC = "data/current_center_of_pressure";
@@ -81,6 +82,7 @@ void MosquittoBroker::on_connect(int rc)
         subscribe(NULL, REQUIRED_DURATION_TOPIC);
         subscribe(NULL, CALIB_PRESSURE_MAT_TOPIC);
         subscribe(NULL, CALIB_IMU_TOPIC);
+        subscribe(NULL, DEACTIVATE_VIBRATION);
     }
 }
 
@@ -184,6 +186,20 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
             printf(EXCEPTION_MESSAGE, e.what());
             printf("Setting _requiredDuration to 0\n");
             _calibIMURequired = false;
+        }
+    }
+    if (topic == DEACTIVATE_VIBRATION)
+    {
+        try
+        {
+            printf("Something new for _isVibrationDeactivated = %s\n", message.c_str());
+            _isVibrationDeactivated = std::stoi(message);
+        }
+        catch (const std::exception &e)
+        {
+            printf(EXCEPTION_MESSAGE, e.what());
+            printf("Setting _deactivate_vibration to 0\n");
+            _isVibrationDeactivated = false;
         }
     }
 }

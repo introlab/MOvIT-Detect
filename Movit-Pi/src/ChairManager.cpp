@@ -132,6 +132,8 @@ void ChairManager::ReadFromServer()
         _state = 1;
         printf("Something new for _requiredDuration = %i\n", _requiredDuration);
     }
+
+    _devicemgr->GetAlarm()->DeactivateVibration(_mosquittoBroker->IsVibrationDeactivated());
 }
 
 void ChairManager::CheckNotification()

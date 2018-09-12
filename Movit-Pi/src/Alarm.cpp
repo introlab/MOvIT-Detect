@@ -139,7 +139,12 @@ void Alarm::TurnOnRedAlarm()
     std::lock_guard<std::mutex> lock(alarmMutex);
 
     int count = 0;
-    TurnOnDCMotor();
+
+    if (!_deactivateVibration)
+    {
+        TurnOnDCMotor();
+    }
+
     TurnOnRedLed();
     TurnOffGreenLed();
 
