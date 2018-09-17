@@ -36,7 +36,7 @@
 
 // Constructors ////////////////////////////////////////////////////////////////
 
-VL53L0X::VL53L0X() : address(ADDRESS_DEFAULT), io_timeout(1500), did_timeout(false)
+VL53L0X::VL53L0X() : address(ADDRESS_DEFAULT), io_timeout(500), did_timeout(false)
 {
 }
 

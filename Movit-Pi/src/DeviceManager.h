@@ -78,8 +78,8 @@ class DeviceManager
     uint16_t _max11611Data[9];
     ForceSensor _sensorMatrix;
     ForcePlate _globalForcePlate;
-    MotionSensor *_motionSensor;
     MAX11611 _max11611;
+    MotionSensor *_motionSensor;
 };
 
 #endif // DEVICE_MANAGER_H
