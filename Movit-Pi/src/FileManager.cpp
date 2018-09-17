@@ -83,6 +83,7 @@ void FileManager::ReadCalibrationOffsetsFromFile(std::string imuName)
         if (name == imuName)
         {
             getline(file, line);
+            break;
         }
     }
 
@@ -95,11 +96,11 @@ void FileManager::ReadCalibrationOffsetsFromFile(std::string imuName)
 
     if (imuName == FIXED_IMU_NAME)
     {
-        SetFixedImuOffsets(line);
+        SetImuOffsets(line, _fixedImuAccelerationOffsets, _fixedImuGyroOffsets);
     }
     else
     {
-        SetMobileImuOffsets(line);
+        SetImuOffsets(line, _mobileImuAccelerationOffsets, _mobileImuGyroOffsets);
     }
 }
 
@@ -135,26 +136,22 @@ void FileManager::SetOffsetsFromLine(std::string line, int *offsets, std::string
     offsets[i] = value;
 }
 
-void FileManager::SetFixedImuOffsets(std::string line)
+void FileManager::SetImuOffsets(std::string line, int accelOffsets[], int gyroOffsets[])
 {
     std::string accelOffsetsLine = line.substr(0, line.find(SENSOR_SEPARATOR));
-    accelOffsetsLine = accelOffsetsLine.substr(accelOffsetsLine.find(ACCEL_FIELDNAME) + ACCEL_FIELDNAME.length());
-
     std::string gyroOffsetsLine = line.substr(line.find(SENSOR_SEPARATOR) + SENSOR_SEPARATOR.length());
-    gyroOffsetsLine = gyroOffsetsLine.substr(gyroOffsetsLine.find(GYRO_FIELDNAME) + GYRO_FIELDNAME.length());
 
-    SetOffsetsFromLine(line, _fixedImuAccelerationOffsets, accelOffsetsLine);
-    SetOffsetsFromLine(line, _fixedImuGyroOffsets, gyroOffsetsLine);
-}
+    int accelOffsetsPosition = accelOffsetsLine.find(ACCEL_FIELDNAME);
+    int gyroOffsetsPosition = gyroOffsetsLine.find(GYRO_FIELDNAME);
 
-void FileManager::SetMobileImuOffsets(std::string line)
-{
-    std::string accelOffsetsLine = line.substr(0, line.find(SENSOR_SEPARATOR));
-    accelOffsetsLine = accelOffsetsLine.substr(accelOffsetsLine.find(ACCEL_FIELDNAME) + ACCEL_FIELDNAME.length());
-
-    std::string gyroOffsetsLine = line.substr(line.find(SENSOR_SEPARATOR) + SENSOR_SEPARATOR.length());
-    gyroOffsetsLine = gyroOffsetsLine.substr(gyroOffsetsLine.find(GYRO_FIELDNAME) + GYRO_FIELDNAME.length());
-
-    SetOffsetsFromLine(line, _mobileImuAccelerationOffsets, accelOffsetsLine);
-    SetOffsetsFromLine(line, _mobileImuGyroOffsets, gyroOffsetsLine);
+    if (accelOffsetsPosition != -1)
+    {
+        std::string line = accelOffsetsLine.substr(accelOffsetsPosition + ACCEL_FIELDNAME.length());
+        SetOffsetsFromLine(line, accelOffsets, line);
+    }
+    if (gyroOffsetsPosition != -1)
+    {
+        std::string line = gyroOffsetsLine.substr(gyroOffsetsPosition + GYRO_FIELDNAME.length());
+        SetOffsetsFromLine(line, gyroOffsets, line);
+    }
 }
