@@ -26,6 +26,7 @@ class MotionSensor
     bool GetIsMoving();
 
   private:
+
     //Singleton
     MotionSensor();
     MotionSensor(MotionSensor const &);   // Don't Implement.
@@ -48,9 +49,9 @@ class MotionSensor
     PMW3901 _opticalFLowSensor; // Optical Flow Sensor
     VL53L0X _rangeSensor;       // Range Sensor
     uint16_t _isMovingTravel;
-    MovingAverage<uint16_t> *_rangeAverage;
-    MovingAverage<int16_t> *_deltaXAverage;
-    MovingAverage<int16_t> *_deltaYAverage;
+    MovingAverage<uint16_t> _rangeAverage;
+    MovingAverage<int16_t> _deltaXAverage;
+    MovingAverage<int16_t> _deltaYAverage;
     Timer _timer;
 };
 

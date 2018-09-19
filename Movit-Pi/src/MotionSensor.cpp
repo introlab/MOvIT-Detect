@@ -7,21 +7,19 @@
 
 #define WHEELCHAIR_MOVING_THRESHOLD 2500
 #define WHEELCHAIR_MOVING_TIMEOUT 3000 // In milliseconde
-#define MAX_BUFFER_VALUES 10
+#define MOVING_AVG_WINDOW_SIZE 10
 
 const char *FAIL_MESSAGE = "FAIL \n";
 const char *SUCCESS_MESSAGE = "SUCCESS \n";
 
-MotionSensor::MotionSensor()
+MotionSensor::MotionSensor() : _rangeAverage(MOVING_AVG_WINDOW_SIZE),
+                               _deltaXAverage(MOVING_AVG_WINDOW_SIZE),
+                               _deltaYAverage(MOVING_AVG_WINDOW_SIZE)
 {
 }
 
 void MotionSensor::Initialize()
 {
-    _rangeAverage = new MovingAverage<uint16_t>(MAX_BUFFER_VALUES);
-    _deltaXAverage = new MovingAverage<int16_t>(MAX_BUFFER_VALUES);
-    _deltaYAverage = new MovingAverage<int16_t>(MAX_BUFFER_VALUES);
-
     bool rangeSensorInit = InitializeRangeSensor();
     bool flowSensorInit = InitializeOpticalFlowSensor();
     if (rangeSensorInit && flowSensorInit && ValidDistanceToTheGround())
@@ -81,7 +79,7 @@ void MotionSensor::ReadRangeSensor()
     uint16_t range = _rangeSensor.ReadRangeSingleMillimeters();
     if (range != 8190)
     {
-        _rangeAverage->AddSample(range);
+        _rangeAverage.AddSample(range);
     }
 }
 
@@ -91,16 +89,16 @@ void MotionSensor::ReadFlowSensor()
     int16_t deltaY = 0;
     _opticalFLowSensor.ReadMotionCount(&deltaX, &deltaY);
 
-    _deltaXAverage->AddSample(deltaX);
-    _deltaYAverage->AddSample(deltaY);
+    _deltaXAverage.AddSample(deltaX);
+    _deltaYAverage.AddSample(deltaY);
 
     UpdateTravel();
 }
 
 void MotionSensor::UpdateTravel()
 {
-    int16_t deltaX = _deltaXAverage->GetAverage();
-    int16_t deltaY = _deltaYAverage->GetAverage();
+    int16_t deltaX = _deltaXAverage.GetAverage();
+    int16_t deltaY = _deltaYAverage.GetAverage();
     double travelInPixels = sqrt((double)((deltaX * deltaX) + (deltaY * deltaY)));
     uint16_t travelInMillimeter = PixelsToMillimeter(travelInPixels);
     _isMovingTravel += travelInMillimeter;
@@ -128,7 +126,7 @@ double MotionSensor::GetAverageRange()
     {
         printf("ERROR: Timeout occurred in range sensor \n");
     }
-    return _rangeAverage->GetAverage();
+    return _rangeAverage.GetAverage();
 }
 
 bool MotionSensor::ValidDistanceToTheGround()
@@ -152,9 +150,9 @@ bool MotionSensor::GetIsMoving()
     else if (_timer.Elapsed() < WHEELCHAIR_MOVING_TIMEOUT && _isMovingTravel >= WHEELCHAIR_MOVING_THRESHOLD)
     {
         _isMovingTravel = 0;
-        _deltaXAverage->Reset();
-        _deltaYAverage->Reset();
-        _rangeAverage->Reset();
+        _deltaXAverage.Reset();
+        _deltaYAverage.Reset();
+        _rangeAverage.Reset();
         _timer.Reset();
         return true;
     }

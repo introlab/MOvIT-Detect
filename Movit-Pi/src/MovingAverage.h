@@ -45,7 +45,7 @@ class MovingAverage
         _windowFilled = false;
         for (int i = 0; i < WINDOW_SIZE_BUFFER; i++)
         {
-            _values = 0;
+            _values[i] = static_cast<T>(0);
         }
     }
 
