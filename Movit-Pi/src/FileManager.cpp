@@ -49,21 +49,63 @@ int *FileManager::GetMobileImuGyroOffsets()
     return NULL;
 }
 
-void FileManager::WriteCalibrationOffsetsToFile(int *accelerationOffsets, int *gyroOffsets, std::string imuName)
+void FileManager::DeleteExistingOffsets(std::string imuName)
 {
-    std::ofstream file;
+    std::string line;
+    std::fstream fs;
+    std::string tempString;
 
-    file.open(OFFSETS_FILENAME, std::ofstream::out | std::ofstream::app);
+    fs.open(OFFSETS_FILENAME);
 
-    if (!file.is_open())
+    if (!fs.is_open())
     {
         return;
     }
 
-    file << imuName << std::endl;
-    file << ACCEL_FIELDNAME << accelerationOffsets[AXIS::x] << VALUE_SEPARATOR << accelerationOffsets[AXIS::y] << VALUE_SEPARATOR << accelerationOffsets[AXIS::z] << SENSOR_SEPARATOR;
-    file << GYRO_FIELDNAME << gyroOffsets[AXIS::x] << VALUE_SEPARATOR << gyroOffsets[AXIS::y] << VALUE_SEPARATOR << gyroOffsets[AXIS::z] << std::endl;
-    file.close();
+    while (getline(fs, line))
+    {
+        if (line == imuName)
+        {
+            getline(fs, line);
+        }
+        else
+        {
+            tempString += line.c_str();
+            tempString += "\n";
+        }
+    }
+
+    fs.close();
+    fs.open(OFFSETS_FILENAME,  std::ofstream::out | std::ofstream::trunc);
+
+    if (!fs.is_open())
+    {
+        printf("Error opening the file...\n");
+        return;
+    }
+
+    fs << tempString;
+    fs.close();
+}
+
+void FileManager::WriteCalibrationOffsetsToFile(int *accelerationOffsets, int *gyroOffsets, std::string imuName)
+{
+    DeleteExistingOffsets(imuName);
+
+    std::ofstream fileout;
+
+    fileout.open(OFFSETS_FILENAME, std::ofstream::out | std::ofstream::app);
+
+    if (!fileout.is_open())
+    {
+        printf("Error opening the file...\n");
+        return;
+    }
+
+    fileout << imuName << std::endl;
+    fileout << ACCEL_FIELDNAME << accelerationOffsets[AXIS::x] << VALUE_SEPARATOR << accelerationOffsets[AXIS::y] << VALUE_SEPARATOR << accelerationOffsets[AXIS::z] << SENSOR_SEPARATOR;
+    fileout << GYRO_FIELDNAME << gyroOffsets[AXIS::x] << VALUE_SEPARATOR << gyroOffsets[AXIS::y] << VALUE_SEPARATOR << gyroOffsets[AXIS::z] << std::endl;
+    fileout.close();
 }
 
 void FileManager::ReadCalibrationOffsetsFromFile(std::string imuName)
@@ -75,6 +117,7 @@ void FileManager::ReadCalibrationOffsetsFromFile(std::string imuName)
 
     if (!file.is_open())
     {
+        printf("Error opening the file...\n");
         return;
     }
 

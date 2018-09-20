@@ -22,6 +22,7 @@ class FileManager
     int _fixedImuGyroOffsets[NUMBER_OF_AXIS];
     int _mobileImuGyroOffsets[NUMBER_OF_AXIS];
 
+    void DeleteExistingOffsets(std::string imuName);
     void SetImuOffsets(std::string line, int accelOffsets[], int gyroOffsets[]);
     void SetOffsetsFromLine(std::string line, int *offsets, std::string offsetsLine);
 };
