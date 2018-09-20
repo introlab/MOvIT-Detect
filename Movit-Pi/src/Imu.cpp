@@ -200,3 +200,21 @@ void Imu::GetAccelerations(double *accelerations)
     accelerations[AXIS::y] = double(ay) * 2 / 32768.0f;
     accelerations[AXIS::z] = double(az) * 2 / 32768.0f;
 }
+
+double Imu::GetPitch()
+{
+    double accelerations[NUMBER_OF_AXIS] = {0, 0, 0};
+
+    this->GetAccelerations(accelerations);
+
+    return atan2(-1 * accelerations[AXIS::z], sqrt(accelerations[AXIS::x] * accelerations[AXIS::x] + accelerations[AXIS::y] * accelerations[AXIS::y])) * radiansToDegrees;
+}
+
+double Imu::GetRoll()
+{
+    double accelerations[NUMBER_OF_AXIS] = {0, 0, 0};
+
+    this->GetAccelerations(accelerations);
+
+    return atan2(accelerations[AXIS::x], accelerations[AXIS::y]) * radiansToDegrees + 90;
+}

@@ -31,6 +31,7 @@ class DeviceManager
     Alarm *GetAlarm() { return &_alarm; }
 
     bool IsSomeoneThere() { return _isSomeoneThere; }
+    bool IsChairInclined() { return _isChairInclined; }
     Coord_t GetCenterOfPressure() { return _COPCoord; }
     int GetBackSeatAngle() { return _backSeatAngle; }
     int GetTimeSinceEpoch() { return _timeSinceEpoch; }
@@ -63,6 +64,7 @@ class DeviceManager
     bool _forcePlateValid = false;
     bool _isMoving = false;
     bool _isSomeoneThere = false;
+    bool _isChairInclined = false;
 
     Coord_t _COPCoord;
     int _timeSinceEpoch = 0;

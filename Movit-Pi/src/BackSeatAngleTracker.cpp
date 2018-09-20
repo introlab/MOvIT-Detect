@@ -8,30 +8,23 @@ BackSeatAngleTracker::BackSeatAngleTracker()
 {
 }
 
-double BackSeatAngleTracker::GetPitch(double acceleration[])
+bool BackSeatAngleTracker::IsInclined()
 {
-    if (acceleration[AXIS::z] > 0)
-    {
-        return atan2(acceleration[AXIS::x], -1 * sqrt(acceleration[AXIS::y] * acceleration[AXIS::y] + acceleration[AXIS::z] * acceleration[AXIS::z])) * radiansToDegrees;
-    }
-    else
-    {
-        return atan2(acceleration[AXIS::x], sqrt(acceleration[AXIS::y] * acceleration[AXIS::y] + acceleration[AXIS::z] * acceleration[AXIS::z])) * radiansToDegrees;
-    }
+    FixedImu *fixedImu = FixedImu::GetInstance();
+    double pitch = fixedImu->GetPitch();
+    double roll = fixedImu->GetRoll();
+
+    return pitch > ALLOWED_INCLINATION_ANGLE || pitch < ALLOWED_INCLINATION_ANGLE * -1
+        || roll > ALLOWED_INCLINATION_ANGLE || roll < ALLOWED_INCLINATION_ANGLE * -1;
 }
 
 int BackSeatAngleTracker::GetBackSeatAngle()
 {
-    double fixedImuAccelerations[NUMBER_OF_AXIS] = {0, 0, 0};
-    double mobileImuAccelerations[NUMBER_OF_AXIS] = {0, 0, 0};
-
     MobileImu *mobileImu = MobileImu::GetInstance();
     FixedImu *fixedImu = FixedImu::GetInstance();
-    fixedImu->GetAccelerations(fixedImuAccelerations);
-    mobileImu->GetAccelerations(mobileImuAccelerations);
 
-    double fixedPitch = GetPitch(fixedImuAccelerations);
-    double mobilePitch = GetPitch(mobileImuAccelerations);
+    double fixedPitch = mobileImu->GetPitch();
+    double mobilePitch = fixedImu->GetPitch();
 
     return int(fixedPitch - mobilePitch);
 }

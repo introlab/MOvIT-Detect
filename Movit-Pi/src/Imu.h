@@ -20,6 +20,8 @@ class Imu
     void CalibrateAndSetOffsets();
     void GetAccelerations(double *accelerations);
     virtual bool isSetup() = 0;
+    double GetPitch();
+    double GetRoll();
 
   protected:
     FileManager _fileManager;

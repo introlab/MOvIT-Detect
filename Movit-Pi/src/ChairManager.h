@@ -40,6 +40,7 @@ class ChairManager
     bool _isSomeoneThere = false;
     bool _prevIsSomeoneThere = false;
     bool _isMoving = false;
+    bool _isChairInclined = false;
 
     bool _overrideNotificationPattern = false;
     bool _setAlarmOn = false;

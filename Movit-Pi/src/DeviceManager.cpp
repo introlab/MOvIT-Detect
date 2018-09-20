@@ -89,6 +89,7 @@ void DeviceManager::Update()
 
     if (_isFixedImuInitialized) {
         _xAcceleration = _fixedImu->GetXAcceleration();
+        _isChairInclined = _backSeatAngleTracker.IsInclined();
     }
 
     if (_forcePlateValid)

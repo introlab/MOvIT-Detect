@@ -52,6 +52,7 @@ void ChairManager::UpdateDevices()
     _copCoord = _devicemgr->GetCenterOfPressure();
     _currentChairAngle = _devicemgr->GetBackSeatAngle();
     _isMoving = _devicemgr->GetIsMoving();
+    _isChairInclined = _devicemgr->IsChairInclined();
 
 #ifdef DEBUG_PRINT
     //printf("getDateTime = %s\n", _currentDatetime.c_str());
@@ -60,6 +61,7 @@ void ChairManager::UpdateDevices()
     printf("getCenterOfPressure x = %f, y = %f\n", _copCoord.x, _copCoord.y);
     printf("_currentChairAngle = %i\n", _currentChairAngle);
     printf("_isMoving = %i\n", _isMoving);
+    printf("_isChairInclined = %i\n", _isChairInclined);
     //printf("_prevChairAngle = %i\n\n", _prevChairAngle);
     //printf("Current Speed = %f\n\n", _currentSpeed);
 #endif
@@ -144,7 +146,8 @@ void ChairManager::CheckNotification()
         return;
     }
 
-    if (!_isSomeoneThere || _requiredDuration == 0 || _requiredPeriod == 0 || _requiredBackRestAngle == 0)
+    if (!_isSomeoneThere || _requiredDuration == 0 || _requiredPeriod == 0 
+        || _requiredBackRestAngle == 0)
     {
         _state = 1;
         _secondsCounter = 0;
@@ -191,7 +194,7 @@ void ChairManager::CheckIfBackRestIsRequired()
 
     if (++_secondsCounter >= _requiredPeriod)
     {
-        if (!_isMoving)
+        if (!_isMoving && !_isChairInclined)
         {
             _devicemgr->GetAlarm()->StopBlinkGreenAlarm();
             _devicemgr->GetAlarm()->TurnOnRedAlarmThread().detach();
