@@ -51,6 +51,7 @@ void ChairManager::UpdateDevices()
     _isSomeoneThere = _devicemgr->IsSomeoneThere();
     _copCoord = _devicemgr->GetCenterOfPressure();
     _currentChairAngle = _devicemgr->GetBackSeatAngle();
+    bool prevIsMoving = _isMoving;
     _isMoving = _devicemgr->GetIsMoving();
     _isChairInclined = _devicemgr->IsChairInclined();
 
@@ -99,6 +100,11 @@ void ChairManager::UpdateDevices()
     if (_prevIsSomeoneThere != _isSomeoneThere)
     {
         _mosquittoBroker->SendIsSomeoneThere(_isSomeoneThere, _currentDatetime);
+    }
+
+    if (_isMoving != prevIsMoving)
+    {
+        _mosquittoBroker->SendIsMoving(_isMoving, _currentDatetime);
     }
 }
 

@@ -31,6 +31,7 @@ const char *CURRENT_IS_SOMEONE_THERE_TOPIC = "data/current_is_someone_there";
 const char *CURRENT_CHAIR_SPEED_TOPIC = "data/current_chair_speed";
 const char *KEEP_ALIVE = "data/keep_alive";
 const char *VIBRATION_TOPIC = "data/vibration";
+const char *IS_MOVING_TOPIC = "data/is_moving";
 
 const char *EXCEPTION_MESSAGE = "Exception thrown by %s()\n";
 MosquittoBroker::MosquittoBroker(const char *id) : mosquittopp(id)
@@ -263,6 +264,14 @@ void MosquittoBroker::SendVibration(double acceleration, const std::string datet
     std::string strMsg = "{\"datetime\":" + datetime + ",\"vibration\":" + strAcceleration + "}";
 
     publish(NULL, VIBRATION_TOPIC, strMsg.length(), strMsg.c_str());
+}
+
+void MosquittoBroker::SendIsMoving(const bool state, const std::string datetime)
+{
+    std::string strState = std::to_string(state);
+    std::string strMsg = "{\"datetime\":" + datetime + ",\"isMoving\":" + strState + "}";
+
+    publish(NULL, IS_MOVING_TOPIC, strMsg.length(), strMsg.c_str());
 }
 
 bool MosquittoBroker::GetSetAlarmOn()
