@@ -44,3 +44,53 @@ Note: Si le fichier est présent mais qu'en essayant de l'éxécuter ça ne trou
 ```shell
     sudo chmod +x movit-pi
 ```
+
+## Configurer la connection à internet sur le RaspberryPi
+
+### Si vous avez accès au système de fichier du RaspberryPi
+- Ouvrir le fichier `wpa_supplicant.conf`
+```shell
+sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
+```
+- Entrer les informations du WiFi auquel vous voulez vous connecter. Voici un exemple de a quoi devrais ressembler le contenu:
+```
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+
+network={
+ssid="NOM_DU_WIFI"
+psk="PASSWORD_DU_WIFI"
+proto=RSN
+key_mgmt=WPA-PSK
+pairwise=CCMP
+auth_alg=OPEN
+}
+
+```
+- Redémarrer le RaspberryPi
+```shell
+sudo reboot
+```
+
+### Si vous n'avez pas accès au système de fichier du RaspberryPi
+- Brancher la carte microSD de votre RaspberryPi dans votre ordinateur. Vous allez voir le drive `boot` apparaitre. Ouvrez le. 
+- Ajouter le fichier `wpa_supplicant.conf` sur ce drive avec le contenu suivant:
+```
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+
+network={
+ssid="NOM_DU_WIFI"
+psk="PASSWORD_DU_WIFI"
+proto=RSN
+key_mgmt=WPA-PSK
+pairwise=CCMP
+auth_alg=OPEN
+}
+
+```
+- Sauvegardez le fichier et ejectez le drive
+- Inserez la carte microSD dans votre RaspberryPi et branchez le.
+- Et voila, le RaspberryPi devrais être connecté a votre Wifi.
+Note: Ca ne fonctionnera pas à l'école
+
