@@ -20,6 +20,8 @@ class ChairManager
     void UpdateDevices();
     void ReadFromServer();
     void CheckNotification();
+    void SetVibrationsActivated(bool isVibrationsActivated);
+    std::thread ReadVibrationsThread();
 
   private:
 
@@ -44,6 +46,7 @@ class ChairManager
 
     bool _overrideNotificationPattern = false;
     bool _setAlarmOn = false;
+    bool _isVibrationsActivated = true;
 
     int _requiredBackRestAngle = 0;
     uint32_t _requiredPeriod = 0;
@@ -52,7 +55,6 @@ class ChairManager
     Timer _centerOfPressureTimer;
     Timer _chairAngleTimer;
     Timer _keepAliveTimer;
-    Timer _vibrationTimer;
 
     void CheckIfUserHasBeenSittingForRequiredTime();
     void CheckIfBackRestIsRequired();
@@ -60,6 +62,7 @@ class ChairManager
     void CheckIfRequiredBackSeatAngleIsMaintained();
     void CheckIfBackSeatIsBackToInitialPosition();
     void OverrideNotificationPattern();
+    void ReadVibrations();
 };
 
 #endif // CHAIR_MANAGER_H

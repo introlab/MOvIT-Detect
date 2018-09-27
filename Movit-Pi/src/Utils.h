@@ -13,8 +13,9 @@
 enum AXIS { x, y, z };
 const std::string FIXED_IMU_NAME = "fixedImu";
 const std::string MOBILE_IMU_NAME = "mobileImu";
-const double radiansToDegrees = 180.0 / M_PI;
-const int secondsToMicroseconds = 1000000;
+const double RADIANS_TO_DEGREES = 180.0 / M_PI;
+const int SECONDS_TO_MICROSECONDS = 1000000;
+const int SECONDS_TO_MILLISECONDS = 1000;
 
 uint8_t BCDToDEC(const uint8_t &value);
 uint8_t DECToBCD(const uint8_t &value);

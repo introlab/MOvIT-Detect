@@ -3,6 +3,8 @@
 #include <string>
 #include <unistd.h>
 
+#define GRAVITY 9.80665
+
 FixedImu::FixedImu()
 {
     _imuName = FIXED_IMU_NAME;
@@ -48,5 +50,9 @@ double FixedImu::GetXAcceleration()
 
     _imu.GetAcceleration(&ax, &ay, &az);
 
-    return double(ax) * 2 / 32768.0f;
+    const int g = -1;
+    double accelerationGravity = double(ax) * 2 / 32768.0f;
+    double accelerationMeterSquare = (accelerationGravity - g) * GRAVITY;
+
+    return accelerationMeterSquare;
 }

@@ -54,6 +54,8 @@ int main(int argc, char *argv[])
     }
     else
     {
+        chairmgr.ReadVibrationsThread().detach();
+
         while (!done)
         {
             start = std::chrono::system_clock::now();
@@ -69,6 +71,7 @@ int main(int argc, char *argv[])
         }
     }
 
+    chairmgr.SetVibrationsActivated(false);
     delete mosquittoBroker;
     return 0;
 }

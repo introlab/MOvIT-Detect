@@ -207,7 +207,7 @@ double Imu::GetPitch()
 
     this->GetAccelerations(accelerations);
 
-    return atan2(-1 * accelerations[AXIS::z], sqrt(accelerations[AXIS::x] * accelerations[AXIS::x] + accelerations[AXIS::y] * accelerations[AXIS::y])) * radiansToDegrees;
+    return atan2(-1 * accelerations[AXIS::z], sqrt(accelerations[AXIS::x] * accelerations[AXIS::x] + accelerations[AXIS::y] * accelerations[AXIS::y])) * RADIANS_TO_DEGREES;
 }
 
 double Imu::GetRoll()
@@ -216,5 +216,5 @@ double Imu::GetRoll()
 
     this->GetAccelerations(accelerations);
 
-    return atan2(accelerations[AXIS::x], accelerations[AXIS::y]) * radiansToDegrees + 90;
+    return atan2(accelerations[AXIS::x], accelerations[AXIS::y]) * RADIANS_TO_DEGREES + 90;
 }

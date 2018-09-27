@@ -88,7 +88,6 @@ void DeviceManager::Update()
     }
 
     if (_isFixedImuInitialized) {
-        _xAcceleration = _fixedImu->GetXAcceleration();
         _isChairInclined = _backSeatAngleTracker.IsInclined();
     }
 
@@ -110,6 +109,15 @@ void DeviceManager::Update()
             _COPCoord.y = 0;
         }
     }
+}
+
+double DeviceManager::GetXAcceleration()
+{
+    if (_isFixedImuInitialized)
+    {
+        return _fixedImu->GetXAcceleration();
+    }
+    return 0;
 }
 
 void DeviceManager::UpdateForcePlateData()

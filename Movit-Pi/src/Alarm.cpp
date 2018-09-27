@@ -119,7 +119,7 @@ void Alarm::TurnOnBlinkLedsAlarm()
     {
         _pca9536.ToggleState(RED_LED);
         _pca9536.ToggleState(GREEN_LED);
-        sleep_for_microseconds(_blinkFrequency * secondsToMicroseconds);
+        sleep_for_microseconds(_blinkFrequency * SECONDS_TO_MICROSECONDS);
     }
 
     TurnOffRedLed();
@@ -151,7 +151,7 @@ void Alarm::TurnOnRedAlarm()
     while (GetPinState(PUSH_BUTTON) && (count++ <= (int)(_blinkFrequency * _blinkDuration)))
     {
         _pca9536.ToggleState(RED_LED);
-        sleep_for_microseconds(_blinkFrequency * secondsToMicroseconds);
+        sleep_for_microseconds(_blinkFrequency * SECONDS_TO_MICROSECONDS);
     }
 
     TurnOnRedLed();
@@ -187,7 +187,7 @@ void Alarm::TurnOnBlinkGreenAlarm()
     while (_isBlinkGreenAlarmRequired)
     {
         _pca9536.ToggleState(GREEN_LED);
-        sleep_for_microseconds(_blinkFrequency * secondsToMicroseconds);
+        sleep_for_microseconds(_blinkFrequency * SECONDS_TO_MICROSECONDS);
     }
 
     TurnOffGreenLed();

@@ -36,7 +36,7 @@ class DeviceManager
     int GetBackSeatAngle() { return _backSeatAngle; }
     int GetTimeSinceEpoch() { return _timeSinceEpoch; }
     bool GetIsMoving() { return _isMoving; }
-    double GetXAcceleration() { return _xAcceleration; }
+    double GetXAcceleration();
     void CalibratePressureMat();
     void CalibrateIMU();
     void TurnOff();
@@ -75,7 +75,6 @@ class DeviceManager
     FixedImu *_fixedImu;
     BackSeatAngleTracker _backSeatAngleTracker;
     int _backSeatAngle = 0;
-    double _xAcceleration = 0;
 
     uint16_t _max11611Data[9];
     ForceSensor _sensorMatrix;

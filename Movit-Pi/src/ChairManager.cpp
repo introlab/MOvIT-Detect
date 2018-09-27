@@ -5,7 +5,8 @@
 #define DELTA_ANGLE_THRESHOLD 5
 
 #define KEEP_ALIVE_PERIOD 300000
-#define VIBRATION_EMISSION_PERIOD 1000
+#define VIBRATION_EMISSION_FREQUENCY 60 // Hz
+#define VIBRATION_EMISSION_THRESOLD 2 // m/s^2
 #define MINIMUM_BACK_REST_ANGLE 2
 
 #define IS_MOVING_DEBOUNCE_CONSTANT 10
@@ -89,14 +90,6 @@ void ChairManager::UpdateDevices()
         _mosquittoBroker->SendKeepAlive(_currentDatetime);
     }
 
-    if (_vibrationTimer.Elapsed() >= VIBRATION_EMISSION_PERIOD)
-    {
-        double acceleration = _devicemgr->GetXAcceleration();
-        printf("getXAcceleration (vibration) = %f\n", acceleration);
-        _vibrationTimer.Reset();
-        _mosquittoBroker->SendVibration(acceleration, _currentDatetime);
-    }
-
     if (_prevIsSomeoneThere != _isSomeoneThere)
     {
         _mosquittoBroker->SendIsSomeoneThere(_isSomeoneThere, _currentDatetime);
@@ -106,6 +99,32 @@ void ChairManager::UpdateDevices()
     {
         _mosquittoBroker->SendIsMoving(_isMoving, _currentDatetime);
     }
+}
+
+void ChairManager::ReadVibrations()
+{
+    while (_isVibrationsActivated)
+    {
+        double acceleration = _devicemgr->GetXAcceleration();
+        if (acceleration > VIBRATION_EMISSION_THRESOLD || acceleration < -VIBRATION_EMISSION_THRESOLD)
+        {
+            // printf("getXAcceleration (vibration) = %f\n", acceleration);
+            _mosquittoBroker->SendVibration(acceleration, _currentDatetime);
+        }
+        sleep_for_milliseconds(SECONDS_TO_MILLISECONDS / VIBRATION_EMISSION_FREQUENCY);
+    }
+}
+
+void ChairManager::SetVibrationsActivated(bool isVibrationsActivated)
+{
+    _isVibrationsActivated = isVibrationsActivated;
+}
+
+std::thread ChairManager::ReadVibrationsThread()
+{
+    return std::thread([=] {
+        ReadVibrations();
+    });
 }
 
 void ChairManager::ReadFromServer()
