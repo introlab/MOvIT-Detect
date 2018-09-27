@@ -28,6 +28,7 @@ class ChairManager
     static constexpr auto CENTER_OF_PRESSURE_EMISSION_PERIOD = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::minutes(5));
     static constexpr auto CHAIR_ANGLE_EMISSION_PERIOD = std::chrono::seconds(1);
 
+    Alarm *_alarm;
     MosquittoBroker *_mosquittoBroker;
     DeviceManager *_devicemgr;
 

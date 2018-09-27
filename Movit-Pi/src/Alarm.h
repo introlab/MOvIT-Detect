@@ -50,6 +50,10 @@ class Alarm
 
     void StopBlinkGreenAlarm();
 
+    bool IsRedAlarmOn() { return _isRedAlarmOn; }
+    bool IsBlinkLedsAlarmOn() { return _isBlinkLedsAlarmOn; }
+    bool IsBlinkGreenAlarmOn() { return _isBlinkGreenAlarmOn; }
+
     std::thread TurnOnRedAlarmThread();
     std::thread TurnOnBlinkLedsAlarmThread();
     std::thread TurnOnBlinkGreenAlarmThread();

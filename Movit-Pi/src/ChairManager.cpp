@@ -18,6 +18,7 @@ using std::chrono::seconds;
 ChairManager::ChairManager(MosquittoBroker *mosquittoBroker, DeviceManager *devicemgr)
     : _mosquittoBroker(mosquittoBroker), _devicemgr(devicemgr)
 {
+    _alarm = _devicemgr->GetAlarm();
     _copCoord.x = 0;
     _copCoord.y = 0;
 }
@@ -176,7 +177,7 @@ void ChairManager::CheckNotification()
     {
         _state = 1;
         _secondsCounter = 0;
-        _devicemgr->GetAlarm()->TurnOffAlarm();
+        _alarm->TurnOffAlarm();
         return;
     }
 
@@ -221,14 +222,17 @@ void ChairManager::CheckIfBackRestIsRequired()
     {
         if (!_isMoving && !_isChairInclined)
         {
-            _devicemgr->GetAlarm()->StopBlinkGreenAlarm();
-            _devicemgr->GetAlarm()->TurnOnRedAlarmThread().detach();
+            _alarm->StopBlinkGreenAlarm();
+            if (!_alarm->IsRedAlarmOn())
+            {
+                _alarm->TurnOnRedAlarmThread().detach();
+            }
             _state = 3;
             _secondsCounter = 0;
         }
-        else
+        else if (!_alarm->IsBlinkGreenAlarmOn())
         {
-            _devicemgr->GetAlarm()->TurnOnBlinkGreenAlarmThread().detach();
+            _alarm->TurnOnBlinkGreenAlarmThread().detach();
         }
     }
 }
@@ -239,7 +243,7 @@ void ChairManager::CheckIfRequiredBackSeatAngleIsReached()
 
     if (_currentChairAngle > (_requiredBackRestAngle - DELTA_ANGLE_THRESHOLD))
     {
-        _devicemgr->GetAlarm()->TurnOnGreenAlarm();
+        _alarm->TurnOnGreenAlarm();
         _state = 4;
     }
 }
@@ -254,14 +258,20 @@ void ChairManager::CheckIfRequiredBackSeatAngleIsMaintained()
 
         if (++_secondsCounter >= _requiredDuration)
         {
-            _devicemgr->GetAlarm()->TurnOnBlinkLedsAlarmThread().detach();
+            if (!_alarm->IsBlinkGreenAlarmOn())
+            {
+                _alarm->TurnOnBlinkLedsAlarmThread().detach();
+            }
             _state = 5;
         }
     }
     else
     {
         printf("State 4 il faut remonter\n");
-        _devicemgr->GetAlarm()->TurnOnRedAlarmThread().detach();
+        if (!_alarm->IsRedAlarmOn())
+        {
+            _alarm->TurnOnRedAlarmThread().detach();
+        }
         _state = 3;
         _secondsCounter = 0;
     }
@@ -282,13 +292,13 @@ void ChairManager::OverrideNotificationPattern()
 {
     if (_setAlarmOn)
     {
-        _devicemgr->GetAlarm()->TurnOnRedLed();
-        _devicemgr->GetAlarm()->TurnOnGreenLed();
-        _devicemgr->GetAlarm()->TurnOnDCMotor();
+        _alarm->TurnOnRedLed();
+        _alarm->TurnOnGreenLed();
+        _alarm->TurnOnDCMotor();
     }
     else
     {
-        _devicemgr->GetAlarm()->TurnOffAlarm();
+        _alarm->TurnOffAlarm();
     }
     _overrideNotificationPattern = false;
 }

@@ -101,11 +101,6 @@ void Alarm::StopBlinkGreenAlarm()
 
 void Alarm::TurnOnBlinkLedsAlarm()
 {
-    if (_isBlinkLedsAlarmOn)
-    {
-        return;
-    }
-
     _isBlinkLedsAlarmOn = true;
 
     std::lock_guard<std::mutex> lock(alarmMutex);
@@ -129,11 +124,6 @@ void Alarm::TurnOnBlinkLedsAlarm()
 
 void Alarm::TurnOnRedAlarm()
 {
-    if (_isRedAlarmOn)
-    {
-        return;
-    }
-
     _isRedAlarmOn = true;
 
     std::lock_guard<std::mutex> lock(alarmMutex);
@@ -170,11 +160,6 @@ void Alarm::TurnOnGreenAlarm()
 
 void Alarm::TurnOnBlinkGreenAlarm()
 {
-    if (_isBlinkGreenAlarmOn)
-    {
-        return;
-    }
-
     _isBlinkGreenAlarmOn = true;
     _isBlinkGreenAlarmRequired = true;
 
