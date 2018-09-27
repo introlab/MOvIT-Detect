@@ -117,4 +117,4 @@ Sous Windows cela équivaut à rajouter par exemple le dossier "C:\SonarScanner\
 sonar-scanner
 ```
 - Laisse le processus s’exécuter.
-- Pour consulter les résultats, se rendre [ici](sonarqubemovitplus.ddns.net:9000).
+- Pour consulter les résultats, se rendre [ici](http://sonarqubemovitplus.ddns.net:9000).
