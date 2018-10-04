@@ -43,6 +43,12 @@ class DeviceManager
 
     bool TestDevices();
 
+    bool GetIsAlarmInitialized() { return _isAlarmInitialized; }
+    bool GetIsFixedImuInitialized() { return _isFixedImuInitialized; }
+    bool GetIsMobileInitialized() { return _isMobileImuInitialized; }
+    bool GetIsMotionSensorInitialized() { return _isMotionSensorInitialized; }
+    bool GetIsForcePlateInitialized() { return _isForcePlateInitialized; }
+
     // Singleton
     static DeviceManager *GetInstance()
     {
@@ -59,9 +65,12 @@ class DeviceManager
     void UpdateForcePlateData();
     bool InitializeForcePlate();
 
+    bool _isAlarmInitialized = false;
     bool _isFixedImuInitialized = false;
     bool _isMobileImuInitialized = false;
-    bool _forcePlateValid = false;
+    bool _isMotionSensorInitialized = false;
+    bool _isForcePlateInitialized = false;
+
     bool _isMoving = false;
     bool _isSomeoneThere = false;
     bool _isChairInclined = false;

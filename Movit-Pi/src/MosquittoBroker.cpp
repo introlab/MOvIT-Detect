@@ -33,7 +33,10 @@ const char *KEEP_ALIVE = "data/keep_alive";
 const char *VIBRATION_TOPIC = "data/vibration";
 const char *IS_MOVING_TOPIC = "data/is_moving";
 
+const char *SENSORS_STATUS_TOPIC = "status/sensors";
+
 const char *EXCEPTION_MESSAGE = "Exception thrown by %s()\n";
+
 MosquittoBroker::MosquittoBroker(const char *id) : mosquittopp(id)
 {
     mosqpp::lib_init();
@@ -272,6 +275,21 @@ void MosquittoBroker::SendIsMoving(const bool state, const std::string datetime)
     std::string strMsg = "{\"datetime\":" + datetime + ",\"isMoving\":" + strState + "}";
 
     publish(NULL, IS_MOVING_TOPIC, strMsg.length(), strMsg.c_str());
+}
+
+void MosquittoBroker::SendSensorsStatus(const bool alarmStatus, const bool mobileImuStatus,
+    const bool fixedImuStatus, const bool motionSensorStatus, const bool plateSensorStatus, 
+    const std::string datetime)
+{
+    std::string strMsg = "{"
+        "\"datetime\":" +  datetime + ","
+        "\"alarm\":" + std::to_string(alarmStatus) + ","
+        "\"mobileImu\":" + std::to_string(mobileImuStatus) + ","
+        "\"fixedImu\":" + std::to_string(fixedImuStatus) + ","
+        "\"motionSensor\":" + std::to_string(motionSensorStatus) + ","
+        "\"forcePlate\":" + std::to_string(plateSensorStatus) + "}";
+
+    publish(NULL, SENSORS_STATUS_TOPIC, strMsg.length(), strMsg.c_str());
 }
 
 bool MosquittoBroker::GetSetAlarmOn()

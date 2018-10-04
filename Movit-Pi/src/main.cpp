@@ -16,8 +16,8 @@ using std::chrono::milliseconds;
 
 void exit_program_handler(int s)
 {
-    DeviceManager *devicemgr = DeviceManager::GetInstance();
-    devicemgr->TurnOff();
+    DeviceManager *deviceManager = DeviceManager::GetInstance();
+    deviceManager->TurnOff();
     exit(1);
 }
 
@@ -34,10 +34,11 @@ int main(int argc, char *argv[])
     sigaction(SIGINT, &sigIntHandler, NULL);
 
     MosquittoBroker *mosquittoBroker = new MosquittoBroker("embedded");
-    DeviceManager *devicemgr = DeviceManager::GetInstance();
-    ChairManager chairmgr(mosquittoBroker, devicemgr);
+    DeviceManager *deviceManager = DeviceManager::GetInstance();
+    ChairManager chairmgr(mosquittoBroker, deviceManager);
 
-    devicemgr->InitializeDevices();
+    deviceManager->InitializeDevices();
+    chairmgr.SendSensorsStatus();
 
     auto start = std::chrono::system_clock::now();
     auto end = std::chrono::system_clock::now();
@@ -49,7 +50,7 @@ int main(int argc, char *argv[])
     {
         while (!done)
         {
-            done = devicemgr->TestDevices();
+            done = deviceManager->TestDevices();
         }
     }
     else

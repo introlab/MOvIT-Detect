@@ -15,10 +15,10 @@ using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 using std::chrono::seconds;
 
-ChairManager::ChairManager(MosquittoBroker *mosquittoBroker, DeviceManager *devicemgr)
-    : _mosquittoBroker(mosquittoBroker), _devicemgr(devicemgr)
+ChairManager::ChairManager(MosquittoBroker *mosquittoBroker, DeviceManager *deviceManager)
+    : _mosquittoBroker(mosquittoBroker), _deviceManager(deviceManager)
 {
-    _alarm = _devicemgr->GetAlarm();
+    _alarm = _deviceManager->GetAlarm();
     _copCoord.x = 0;
     _copCoord.y = 0;
 }
@@ -27,14 +27,26 @@ ChairManager::~ChairManager()
 {
 }
 
+void ChairManager::SendSensorsStatus()
+{
+    _currentDatetime = std::to_string(_deviceManager->GetTimeSinceEpoch());
+
+    const bool alarmStatus = _deviceManager->GetIsAlarmInitialized();
+    const bool fixedImuStatus = _deviceManager->GetIsFixedImuInitialized();
+    const bool mobileImuStatus = _deviceManager->GetIsMobileInitialized();
+    const bool motionSensorStatus = _deviceManager->GetIsMotionSensorInitialized();
+    const bool forcePlateStatus = _deviceManager->GetIsForcePlateInitialized();
+    _mosquittoBroker->SendSensorsStatus(alarmStatus, fixedImuStatus, mobileImuStatus, motionSensorStatus, forcePlateStatus, _currentDatetime); 
+}
+
 void ChairManager::UpdateDevices()
 {
-    _currentDatetime = std::to_string(_devicemgr->GetTimeSinceEpoch());
+    _currentDatetime = std::to_string(_deviceManager->GetTimeSinceEpoch());
 
     if (_mosquittoBroker->CalibPressureMatRequired())
     {
         printf("Debut de la calibration du tapis de pression\n");
-        _devicemgr->CalibratePressureMat();
+        _deviceManager->CalibratePressureMat();
         _mosquittoBroker->SendIsPressureMatCalib(true, _currentDatetime);
         printf("FIN de la calibration du tapis de pression\n");
     }
@@ -42,25 +54,25 @@ void ChairManager::UpdateDevices()
     if (_mosquittoBroker->CalibIMURequired())
     {
         printf("Debut de la calibration des IMU\n");
-        _devicemgr->CalibrateIMU();
+        _deviceManager->CalibrateIMU();
         _mosquittoBroker->SendIsIMUCalib(true, _currentDatetime);
         printf("FIN de la calibration des IMU\n");
     }
 
     _prevIsSomeoneThere = _isSomeoneThere;
 
-    _devicemgr->Update();
-    _isSomeoneThere = _devicemgr->IsSomeoneThere();
-    _copCoord = _devicemgr->GetCenterOfPressure();
-    _currentChairAngle = _devicemgr->GetBackSeatAngle();
+    _deviceManager->Update();
+    _isSomeoneThere = _deviceManager->IsSomeoneThere();
+    _copCoord = _deviceManager->GetCenterOfPressure();
+    _currentChairAngle = _deviceManager->GetBackSeatAngle();
     bool prevIsMoving = _isMoving;
-    _isMoving = _devicemgr->GetIsMoving();
-    _isChairInclined = _devicemgr->IsChairInclined();
+    _isMoving = _deviceManager->GetIsMoving();
+    _isChairInclined = _deviceManager->IsChairInclined();
 
 #ifdef DEBUG_PRINT
     //printf("getDateTime = %s\n", _currentDatetime.c_str());
     printf("\n");
-    printf("isSomeoneThere = %i\n", _devicemgr->IsSomeoneThere());
+    printf("isSomeoneThere = %i\n", _isSomeoneThere);
     printf("getCenterOfPressure x = %f, y = %f\n", _copCoord.x, _copCoord.y);
     printf("_currentChairAngle = %i\n", _currentChairAngle);
     printf("_isMoving = %i\n", _isMoving);
@@ -106,7 +118,7 @@ void ChairManager::ReadVibrations()
 {
     while (_isVibrationsActivated)
     {
-        double acceleration = _devicemgr->GetXAcceleration();
+        double acceleration = _deviceManager->GetXAcceleration();
         if (acceleration > VIBRATION_EMISSION_THRESOLD || acceleration < -VIBRATION_EMISSION_THRESOLD)
         {
             // printf("getXAcceleration (vibration) = %f\n", acceleration);
@@ -161,7 +173,7 @@ void ChairManager::ReadFromServer()
         printf("Something new for _requiredDuration = %i\n", _requiredDuration);
     }
 
-    _devicemgr->GetAlarm()->DeactivateVibration(_mosquittoBroker->IsVibrationDeactivated());
+    _deviceManager->GetAlarm()->DeactivateVibration(_mosquittoBroker->IsVibrationDeactivated());
 }
 
 void ChairManager::CheckNotification()

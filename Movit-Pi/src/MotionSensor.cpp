@@ -18,14 +18,18 @@ MotionSensor::MotionSensor() : _rangeAverage(MOVING_AVG_WINDOW_SIZE),
 {
 }
 
-void MotionSensor::Initialize()
+bool MotionSensor::Initialize()
 {
-    bool rangeSensorInit = InitializeRangeSensor();
-    bool flowSensorInit = InitializeOpticalFlowSensor();
-    if (rangeSensorInit && flowSensorInit && ValidDistanceToTheGround())
+    bool isRangeSensorInitialized = InitializeRangeSensor();
+    bool isFlowSensorInitialized = InitializeOpticalFlowSensor();
+    bool isInitialized = isRangeSensorInitialized && isFlowSensorInitialized && ValidDistanceToTheGround();
+
+    if (isInitialized)
     {
         GetDeltaXYThread().detach();
+        return true;
     }
+    return false;
 }
 
 bool MotionSensor::InitializeRangeSensor()

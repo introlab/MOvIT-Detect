@@ -22,7 +22,7 @@ class MotionSensor
       return &instance;
     }
 
-    void Initialize();
+    bool Initialize();
     bool GetIsMoving();
 
   private:

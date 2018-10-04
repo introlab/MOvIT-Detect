@@ -12,11 +12,12 @@
 class ChairManager
 {
   public:
-    ChairManager(MosquittoBroker *mosquittoBroker, DeviceManager *devicemgr);
+    ChairManager(MosquittoBroker *mosquittoBroker, DeviceManager *deviceManager);
     ~ChairManager();
 
-    inline bool TestPattern() { return _devicemgr->TestDevices(); }
+    inline bool TestPattern() { return _deviceManager->TestDevices(); }
 
+    void SendSensorsStatus();
     void UpdateDevices();
     void ReadFromServer();
     void CheckNotification();
@@ -30,7 +31,7 @@ class ChairManager
 
     Alarm *_alarm;
     MosquittoBroker *_mosquittoBroker;
-    DeviceManager *_devicemgr;
+    DeviceManager *_deviceManager;
 
     uint32_t _secondsCounter = 0;
     uint8_t _state = 0;

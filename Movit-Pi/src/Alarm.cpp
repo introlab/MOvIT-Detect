@@ -18,7 +18,7 @@ Alarm::Alarm(int blinkDuration, double blinkFrequency)
     _blinkFrequency = blinkFrequency;
 }
 
-void Alarm::Initialize()
+bool Alarm::Initialize()
 {
     printf("PC9536 (Alarm) initializing ... ");
     _pca9536.SetMode(DC_MOTOR, IO_OUTPUT);
@@ -31,14 +31,14 @@ void Alarm::Initialize()
     if (_pca9536.GetMode(DC_MOTOR) != IO_OUTPUT || _pca9536.GetMode(GREEN_LED) != IO_OUTPUT || _pca9536.GetMode(RED_LED) != IO_OUTPUT)
     {
         printf("FAIL\n");
+        return false;
     }
-    else
-    {
-        printf("SUCCESS\n");
-    }
+
+    printf("SUCCESS\n");
     TurnOffRedLed();
     TurnOffGreenLed();
     TurnOffDCMotor();
+    return true;
 }
 
 uint8_t Alarm::GetPinState(pin_t pin)

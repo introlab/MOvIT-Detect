@@ -29,7 +29,7 @@ class Alarm
     Alarm();
     Alarm(int blinkDuration, double blinkFrequency);
 
-    void Initialize();
+    bool Initialize();
     void SetBlinkDuration(int blinkDuraction);
     void SetBlinkFrequency(double blinkFrequency);
 

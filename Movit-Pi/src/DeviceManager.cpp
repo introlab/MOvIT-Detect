@@ -23,11 +23,11 @@ void DeviceManager::InitializeDevices()
     I2Cdev::Initialize();
     _datetimeRTC->SetCurrentDateTimeIfConnectedThread().detach();
 
-    _alarm.Initialize();
+    _isAlarmInitialized = _alarm.Initialize();
     _isMobileImuInitialized = _mobileImu->isInitialized();
     _isFixedImuInitialized = _fixedImu->isInitialized();
-    _motionSensor->Initialize();
-    _forcePlateValid = InitializeForcePlate();
+    _isMotionSensorInitialized = _motionSensor->Initialize();
+    _isForcePlateInitialized = InitializeForcePlate();
 
     printf("Setup Done\n");
 }
@@ -91,7 +91,7 @@ void DeviceManager::Update()
         _isChairInclined = _backSeatAngleTracker.IsInclined();
     }
 
-    if (_forcePlateValid)
+    if (_isForcePlateInitialized)
     {
         // Data: Capteur de force
         UpdateForcePlateData();
