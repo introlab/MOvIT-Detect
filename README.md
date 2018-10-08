@@ -16,7 +16,8 @@ The embedded system part of the MOvIT-Detect project.
     cd /usr/local
     sudo tar -xzvf /path/to/file/movit-cross-compiler.tar.gz
 ```
-- Cloner le repo git sur la machine Ubuntu:
+- Déplacez vous où vous voulez travailler (Ex: dossier partagé avec votre host OS)
+- Cloner le repo git sur la machine Ubuntu ou dans votre dossier partagé avec le host OS:
 ```shell
     git clone https://github.com/AustinDidierTran/MOvIT-Detect.git
 ```

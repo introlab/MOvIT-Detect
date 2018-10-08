@@ -7,7 +7,6 @@
 class MobileImu : public Imu
 {
   public:
-    bool isSetup();
     static MobileImu *GetInstance()
     {
         static MobileImu instance;

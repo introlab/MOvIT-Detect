@@ -6,7 +6,7 @@
 
 #define KEEP_ALIVE_PERIOD 300000
 #define VIBRATION_EMISSION_FREQUENCY 60 // Hz
-#define VIBRATION_EMISSION_THRESOLD 2 // m/s^2
+#define VIBRATION_EMISSION_THRESOLD 2   // m/s^2
 #define MINIMUM_BACK_REST_ANGLE 2
 
 #define IS_MOVING_DEBOUNCE_CONSTANT 10
@@ -15,8 +15,8 @@ using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 using std::chrono::seconds;
 
-ChairManager::ChairManager(MosquittoBroker *mosquittoBroker, DeviceManager *deviceManager)
-    : _mosquittoBroker(mosquittoBroker), _deviceManager(deviceManager)
+ChairManager::ChairManager(MosquittoBroker *mosquittoBroker, DeviceManager *deviceManager) : _mosquittoBroker(mosquittoBroker),
+                                                                                             _deviceManager(deviceManager)
 {
     _alarm = _deviceManager->GetAlarm();
     _copCoord.x = 0;
@@ -36,7 +36,7 @@ void ChairManager::SendSensorsStatus()
     const bool mobileImuStatus = _deviceManager->GetIsMobileInitialized();
     const bool motionSensorStatus = _deviceManager->GetIsMotionSensorInitialized();
     const bool forcePlateStatus = _deviceManager->GetIsForcePlateInitialized();
-    _mosquittoBroker->SendSensorsStatus(alarmStatus, fixedImuStatus, mobileImuStatus, motionSensorStatus, forcePlateStatus, _currentDatetime); 
+    _mosquittoBroker->SendSensorsStatus(alarmStatus, fixedImuStatus, mobileImuStatus, motionSensorStatus, forcePlateStatus, _currentDatetime);
 }
 
 void ChairManager::UpdateDevices()
@@ -45,18 +45,14 @@ void ChairManager::UpdateDevices()
 
     if (_mosquittoBroker->CalibPressureMatRequired())
     {
-        printf("Debut de la calibration du tapis de pression\n");
         _deviceManager->CalibratePressureMat();
         _mosquittoBroker->SendIsPressureMatCalib(true, _currentDatetime);
-        printf("FIN de la calibration du tapis de pression\n");
     }
 
     if (_mosquittoBroker->CalibIMURequired())
     {
-        printf("Debut de la calibration des IMU\n");
         _deviceManager->CalibrateIMU();
         _mosquittoBroker->SendIsIMUCalib(true, _currentDatetime);
-        printf("FIN de la calibration des IMU\n");
     }
 
     _prevIsSomeoneThere = _isSomeoneThere;
@@ -184,8 +180,7 @@ void ChairManager::CheckNotification()
         return;
     }
 
-    if (!_isSomeoneThere || _requiredDuration == 0 || _requiredPeriod == 0 
-        || _requiredBackRestAngle == 0)
+    if (!_isSomeoneThere || _requiredDuration == 0 || _requiredPeriod == 0 || _requiredBackRestAngle == 0)
     {
         _state = 1;
         _secondsCounter = 0;

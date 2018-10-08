@@ -2,6 +2,7 @@
 #define FORCE_SENSOR_H
 
 #include "MAX11611.h"
+#include "Utils.h"
 
 class ForceSensor
 {
@@ -25,24 +26,22 @@ class ForceSensor
 
     void SetAnalogData(uint16_t analogdata, uint8_t index) { _analogData[index] = analogdata; }
     void SetVoltageData(uint16_t voltageData, uint8_t index) { _voltageData[index] = voltageData; }
-    void SetAnalogOffset(uint16_t analogOffset, uint8_t index) { _analogOffset[index] = analogOffset; }
     void SetResistanceData(uint32_t resistanceData, uint8_t index) { _resistanceData[index] = resistanceData; }
     void SetConductanceData(uint32_t conductanceData, uint8_t index) { _conductanceData[index] = conductanceData; }
-    void SetTotalSensorMean(uint32_t totalSensorMean) { _totalSensorMean = totalSensorMean; }
     void SetForceData(float forceData, uint8_t index) { _forceData[index] = forceData; }
-    void SetDetectionThreshold(float detectionThreshold) { _detectionThreshold = detectionThreshold; }
 
-    //Constants - physical montage values
-    static const uint8_t _sensorCount = 9; //Total number of sensor in the matrix
+    pressure_mat_offset_t GetOffsets();
+    void SetOffsets(pressure_mat_offset_t offset);
 
   private:
-    uint16_t _analogData[_sensorCount];
-    uint16_t _voltageData[_sensorCount];
-    uint16_t _analogOffset[_sensorCount];
-    uint32_t _conductanceData[_sensorCount];
-    uint32_t _resistanceData[_sensorCount];
+    uint16_t _analogData[PRESSURE_SENSOR_COUNT];
+    uint16_t _voltageData[PRESSURE_SENSOR_COUNT];
+    uint32_t _conductanceData[PRESSURE_SENSOR_COUNT];
+    uint32_t _resistanceData[PRESSURE_SENSOR_COUNT];
+    float _forceData[PRESSURE_SENSOR_COUNT];
+
     uint32_t _totalSensorMean;
-    float _forceData[_sensorCount];
+    uint16_t _analogOffset[PRESSURE_SENSOR_COUNT];
     float _detectionThreshold;
 };
 

@@ -9,10 +9,34 @@ Imu::Imu()
 {
 }
 
-bool Imu::isInitialized()
+bool Imu::Initialize()
 {
-    _fileManager.ReadCalibrationOffsetsFromFile(_imuName);
-    return isSetup();
+    printf("MPU6050 %s initializing ... ", _imuName.c_str());
+    fflush(stdout);
+
+    if (!_imu.TestConnection())
+    {
+        printf("FAIL\n");
+        return false;
+    }
+
+    _imu.Initialize();
+
+    printf("SUCCESS\n");
+    return true;
+}
+
+bool Imu::IsImuOffsetValid(imu_offset_t offset)
+{
+    return offset.accelerometerOffsets[AXIS::x] != 0 && offset.accelerometerOffsets[AXIS::y] != 0 && offset.accelerometerOffsets[AXIS::z] != 0 &&
+           offset.gyroscopeOffsets[AXIS::x] != 0 && offset.gyroscopeOffsets[AXIS::y] != 0 && offset.gyroscopeOffsets[AXIS::z] != 0;
+}
+
+void Imu::SetOffset(imu_offset_t offsets)
+{
+    _offsets = offsets;
+    ResetIMUOffsets(_imu);
+    SetImuOffsets(_imu);
 }
 
 void Imu::CalibrateAndSetOffsets()
@@ -20,8 +44,12 @@ void Imu::CalibrateAndSetOffsets()
     ResetIMUOffsets(_imu);
     Calibrate(_imu, _imuName);
     SetImuOffsets(_imu);
+}
 
-    _fileManager.WriteCalibrationOffsetsToFile(_accelerometerOffsets, _gyroscopeOffsets, _imuName);
+void Imu::Calibrate(MPU6050 &mpu, std::string name)
+{
+    CalibrateAccelerometer(mpu);
+    CalibrateGyroscope(mpu);
 }
 
 void Imu::ResetIMUOffsets(MPU6050 &mpu)
@@ -52,16 +80,16 @@ void Imu::SetImuOffsets(MPU6050 &mpu)
 
 void Imu::SetImuAccelOffsets(MPU6050 &mpu)
 {
-    mpu.SetXAccelOffset(_accelerometerOffsets[AXIS::x]);
-    mpu.SetYAccelOffset(_accelerometerOffsets[AXIS::y]);
-    mpu.SetZAccelOffset(_accelerometerOffsets[AXIS::z]);
+    mpu.SetXAccelOffset(_offsets.accelerometerOffsets[AXIS::x]);
+    mpu.SetYAccelOffset(_offsets.accelerometerOffsets[AXIS::y]);
+    mpu.SetZAccelOffset(_offsets.accelerometerOffsets[AXIS::z]);
 }
 
 void Imu::SetImuGyroOffsets(MPU6050 &mpu)
 {
-    mpu.SetXGyroOffset(_gyroscopeOffsets[AXIS::x]);
-    mpu.SetYGyroOffset(_gyroscopeOffsets[AXIS::y]);
-    mpu.SetZGyroOffset(_gyroscopeOffsets[AXIS::z]);
+    mpu.SetXGyroOffset(_offsets.gyroscopeOffsets[AXIS::x]);
+    mpu.SetYGyroOffset(_offsets.gyroscopeOffsets[AXIS::y]);
+    mpu.SetZGyroOffset(_offsets.gyroscopeOffsets[AXIS::z]);
 }
 
 void Imu::GetGyroscopeMeans(MPU6050 &mpu, int gyroscopeMeans[])
@@ -124,9 +152,9 @@ void Imu::CalibrateAccelerometer(MPU6050 &mpu)
     int accelerometerMeans[NUMBER_OF_AXIS] = {0, 0, 0};
     GetAccelerometerMeans(mpu, accelerometerMeans);
 
-    _accelerometerOffsets[AXIS::x] = (_calibrationArray[AXIS::x] - accelerometerMeans[AXIS::x]) / 8;
-    _accelerometerOffsets[AXIS::y] = (_calibrationArray[AXIS::y] - accelerometerMeans[AXIS::y]) / 8;
-    _accelerometerOffsets[AXIS::z] = (_calibrationArray[AXIS::z] - accelerometerMeans[AXIS::z]) / 8;
+    _offsets.accelerometerOffsets[AXIS::x] = (_calibrationArray[AXIS::x] - accelerometerMeans[AXIS::x]) / 8;
+    _offsets.accelerometerOffsets[AXIS::y] = (_calibrationArray[AXIS::y] - accelerometerMeans[AXIS::y]) / 8;
+    _offsets.accelerometerOffsets[AXIS::z] = (_calibrationArray[AXIS::z] - accelerometerMeans[AXIS::z]) / 8;
 
     while (ready < NUMBER_OF_AXIS)
     {
@@ -144,7 +172,7 @@ void Imu::CalibrateAccelerometer(MPU6050 &mpu)
             }
             else
             {
-                _accelerometerOffsets[i] = _accelerometerOffsets[i] + (_calibrationArray[i] - accelerometerMeans[i]) / ACCELEROMETER_DEADZONE;
+                _offsets.accelerometerOffsets[i] = _offsets.accelerometerOffsets[i] + (_calibrationArray[i] - accelerometerMeans[i]) / ACCELEROMETER_DEADZONE;
             }
         }
     }
@@ -156,9 +184,9 @@ void Imu::CalibrateGyroscope(MPU6050 &mpu)
     int gyroscopeMeans[NUMBER_OF_AXIS] = {0, 0, 0};
     GetGyroscopeMeans(mpu, gyroscopeMeans);
 
-    _gyroscopeOffsets[AXIS::x] = -gyroscopeMeans[AXIS::x] / 4;
-    _gyroscopeOffsets[AXIS::y] = -gyroscopeMeans[AXIS::y] / 4;
-    _gyroscopeOffsets[AXIS::z] = -gyroscopeMeans[AXIS::z] / 4;
+    _offsets.gyroscopeOffsets[AXIS::x] = -gyroscopeMeans[AXIS::x] / 4;
+    _offsets.gyroscopeOffsets[AXIS::y] = -gyroscopeMeans[AXIS::y] / 4;
+    _offsets.gyroscopeOffsets[AXIS::z] = -gyroscopeMeans[AXIS::z] / 4;
 
     while (ready < NUMBER_OF_AXIS)
     {
@@ -174,24 +202,16 @@ void Imu::CalibrateGyroscope(MPU6050 &mpu)
             }
             else
             {
-                _gyroscopeOffsets[i] = _gyroscopeOffsets[i] - gyroscopeMeans[i] / (GYROSCOPE_DEADZONE + 1);
+                _offsets.gyroscopeOffsets[i] = _offsets.gyroscopeOffsets[i] - gyroscopeMeans[i] / (GYROSCOPE_DEADZONE + 1);
             }
         }
     }
 }
 
-void Imu::Calibrate(MPU6050 &mpu, std::string name)
-{
-    CalibrateAccelerometer(mpu);
-    CalibrateGyroscope(mpu);
-
-    _fileManager.WriteCalibrationOffsetsToFile(_accelerometerOffsets, _gyroscopeOffsets, name);
-}
-
 void Imu::GetAccelerations(double *accelerations)
 {
     int16_t ax, ay, az;
-    
+
     _imu.GetAcceleration(&ax, &ay, &az);
 
     // TODO: Add low-pass filter

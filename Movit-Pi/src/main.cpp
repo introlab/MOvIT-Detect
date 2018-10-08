@@ -9,22 +9,23 @@
 #include "DeviceManager.h"
 #include "ChairManager.h"
 #include "Utils.h"
+#include "FileManager.h"
 
 using std::string;
 using std::chrono::duration;
 using std::chrono::milliseconds;
 
+
 void exit_program_handler(int s)
 {
-    DeviceManager *deviceManager = DeviceManager::GetInstance();
+    FileManager *filemgr = FileManager::GetInstance();
+    DeviceManager *deviceManager = DeviceManager::GetInstance(filemgr);
     deviceManager->TurnOff();
     exit(1);
 }
 
 int main(int argc, char *argv[])
 {
-    I2Cdev::Initialize();
-
     struct sigaction sigIntHandler;
 
     sigIntHandler.sa_handler = exit_program_handler;
@@ -34,7 +35,8 @@ int main(int argc, char *argv[])
     sigaction(SIGINT, &sigIntHandler, NULL);
 
     MosquittoBroker *mosquittoBroker = new MosquittoBroker("embedded");
-    DeviceManager *deviceManager = DeviceManager::GetInstance();
+    FileManager *filemgr = FileManager::GetInstance();
+    DeviceManager *deviceManager = DeviceManager::GetInstance(filemgr);
     ChairManager chairmgr(mosquittoBroker, deviceManager);
 
     deviceManager->InitializeDevices();
@@ -67,6 +69,11 @@ int main(int argc, char *argv[])
 
             end = std::chrono::system_clock::now();
             auto elapse_time = std::chrono::duration_cast<milliseconds>(end - start);
+
+            if (elapse_time.count() >= period.count())
+            {
+                elapse_time = period;
+            }
 
             sleep_for_milliseconds(period.count() - elapse_time.count());
         }

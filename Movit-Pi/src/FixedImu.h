@@ -7,7 +7,6 @@
 class FixedImu : public Imu
 {
   public:
-    bool isSetup();
     double GetXAcceleration();
     static FixedImu *GetInstance()
     {

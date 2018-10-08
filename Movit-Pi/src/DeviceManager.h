@@ -1,6 +1,8 @@
 #ifndef DEVICE_MANAGER_H
 #define DEVICE_MANAGER_H
 
+#include <string>
+
 #include "Imu.h"
 #include "Alarm.h"
 #include "ForcePlate.h"
@@ -11,7 +13,7 @@
 #include "DateTimeRTC.h"
 #include "MotionSensor.h"
 #include "MAX11611.h"
-#include <string>
+#include "FileManager.h"
 
 //Center of pressure coordinate
 struct Coord_t
@@ -37,8 +39,11 @@ class DeviceManager
     int GetTimeSinceEpoch() { return _timeSinceEpoch; }
     bool GetIsMoving() { return _isMoving; }
     double GetXAcceleration();
-    void CalibratePressureMat();
+    
     void CalibrateIMU();
+    void CalibratePressureMat();
+    void CalibrateIMU(Imu *imu);
+    
     void TurnOff();
 
     bool TestDevices();
@@ -50,26 +55,34 @@ class DeviceManager
     bool GetIsForcePlateInitialized() { return _isForcePlateInitialized; }
 
     // Singleton
-    static DeviceManager *GetInstance()
+    static DeviceManager *GetInstance(FileManager *fileManager)
     {
-        static DeviceManager instance;
+        static DeviceManager instance(fileManager);
         return &instance;
     }
 
   private:
     //Singleton
-    DeviceManager();
+    DeviceManager(FileManager *fileManager);
     DeviceManager(DeviceManager const &);  // Don't Implement.
     void operator=(DeviceManager const &); // Don't implement.
 
+    const int32_t DEFAULT_BACK_SEAT_ANGLE = 0;
+    const float DEFAULT_CENTER_OF_PRESSURE = 0.0;
+
     void UpdateForcePlateData();
     bool InitializeForcePlate();
+
 
     bool _isAlarmInitialized = false;
     bool _isFixedImuInitialized = false;
     bool _isMobileImuInitialized = false;
     bool _isMotionSensorInitialized = false;
     bool _isForcePlateInitialized = false;
+
+    bool _isFixedImuCalibrated = false;
+    bool _isMobileImuCalibrated = false;
+    bool _isPressureMatCalibrated = false;
 
     bool _isMoving = false;
     bool _isSomeoneThere = false;
@@ -84,6 +97,8 @@ class DeviceManager
     FixedImu *_fixedImu;
     BackSeatAngleTracker _backSeatAngleTracker;
     int _backSeatAngle = 0;
+
+    FileManager *_fileManager;
 
     uint16_t _max11611Data[9];
     ForceSensor _sensorMatrix;

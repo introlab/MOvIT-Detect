@@ -8,7 +8,8 @@
 #include <unistd.h>
 #include <thread>
 
-DeviceManager::DeviceManager() : _alarm(700, 0.1)
+DeviceManager::DeviceManager(FileManager *fileManager) : _alarm(700, 0.1),
+                                                     _fileManager(fileManager)
 {
     _motionSensor = MotionSensor::GetInstance();
     _mobileImu = MobileImu::GetInstance();
@@ -21,13 +22,48 @@ DeviceManager::DeviceManager() : _alarm(700, 0.1)
 void DeviceManager::InitializeDevices()
 {
     I2Cdev::Initialize();
-    _datetimeRTC->SetCurrentDateTimeIfConnectedThread().detach();
 
+    _fileManager->Read();
+
+    _isMobileImuInitialized = _mobileImu->Initialize();
+    _isFixedImuInitialized = _fixedImu->Initialize();
+
+    _datetimeRTC->SetCurrentDateTimeIfConnectedThread().detach();
     _isAlarmInitialized = _alarm.Initialize();
-    _isMobileImuInitialized = _mobileImu->isInitialized();
-    _isFixedImuInitialized = _fixedImu->isInitialized();
     _isMotionSensorInitialized = _motionSensor->Initialize();
     _isForcePlateInitialized = InitializeForcePlate();
+
+    imu_offset_t mobileOffset = _fileManager->GetMobileImuOffsets();
+    imu_offset_t fixedOffset = _fileManager->GetFixedImuOffsets();
+    pressure_mat_offset_t pressureMatOffset = _fileManager->GetPressureMatoffset();
+
+    if (_isMobileImuInitialized && !Imu::IsImuOffsetValid(mobileOffset))
+    {
+        CalibrateIMU(_mobileImu);
+    }
+    else
+    {
+        _mobileImu->SetOffset(mobileOffset);
+        _isMobileImuCalibrated = true;
+    }
+
+    if (_isFixedImuInitialized && !Imu::IsImuOffsetValid(fixedOffset))
+    {
+        CalibrateIMU(_fixedImu);
+    }
+    else
+    {
+        _fixedImu->SetOffset(fixedOffset);
+        _isFixedImuCalibrated = true;
+    }
+
+    if (ForcePlate::IsPressureMatOffsetValid(pressureMatOffset))
+    {
+        _sensorMatrix.SetOffsets(pressureMatOffset);
+        _isPressureMatCalibrated = true;
+    }
+
+    _fileManager->Save();
 
     printf("Setup Done\n");
 }
@@ -39,17 +75,39 @@ void DeviceManager::TurnOff()
 
 void DeviceManager::CalibratePressureMat()
 {
+    printf("Calibrating pressure mat ... \n");
     UpdateForcePlateData();
     _sensorMatrix.CalibrateForceSensor(_max11611Data, _max11611);
+
+    _fileManager->SetPressureMatOffsets(_sensorMatrix.GetOffsets());
+    _fileManager->Save();
+
+    _isPressureMatCalibrated = true;
+
+    printf("DONE\n");
 }
 
 void DeviceManager::CalibrateIMU()
 {
-    MobileImu *mobileImu = MobileImu::GetInstance();
-    FixedImu *fixedImu = FixedImu::GetInstance();
+    CalibrateIMU(_fixedImu);
+    CalibrateIMU(_mobileImu);
+}
 
-    fixedImu->CalibrateAndSetOffsets();
-    mobileImu->CalibrateAndSetOffsets();
+void DeviceManager::CalibrateIMU(Imu *imu)
+{
+    printf("Calibrating %s ... \n", imu->GetName().c_str());
+    imu->CalibrateAndSetOffsets();
+    _fileManager->SetFixedImuOffsets(imu->GetOffset());
+    _fileManager->Save();
+    if (imu->GetName() == FIXED_IMU_NAME)
+    {
+        _isFixedImuCalibrated = true;
+    }
+    else if (imu->GetName() == MOBILE_IMU_NAME)
+    {
+        _isMobileImuCalibrated = true;
+    }
+    printf("DONE\n");
 }
 
 bool DeviceManager::InitializeForcePlate()
@@ -57,14 +115,11 @@ bool DeviceManager::InitializeForcePlate()
     printf("MAX11611 (ADC) initializing ... ");
     if (_max11611.Initialize())
     {
-        for (uint8_t i = 0; i < _sensorMatrix._sensorCount; i++)
+        for (uint8_t i = 0; i < PRESSURE_SENSOR_COUNT; i++)
         {
             _sensorMatrix.SetAnalogData(0, i);
         }
         _sensorMatrix.GetForceSensorData();
-
-        // TODO tester avec le tapis pour savoir si ce call devrait rester ici
-        CalibratePressureMat();
 
         printf("success\n");
         return true;
@@ -79,19 +134,28 @@ bool DeviceManager::InitializeForcePlate()
 void DeviceManager::Update()
 {
     _timeSinceEpoch = _datetimeRTC->GetTimeSinceEpoch();
-    _isMoving = _motionSensor->GetIsMoving();
 
-    if (_isFixedImuInitialized && _isMobileImuInitialized)
+    if (_isMotionSensorInitialized)
+    {
+        _isMoving = _motionSensor->GetIsMoving();
+    }
+
+    if (_isFixedImuInitialized && _isMobileImuInitialized && _isFixedImuCalibrated && _isMobileImuCalibrated)
     {
         // Data: Angle (centrales intertielles mobile/fixe)
         _backSeatAngle = _backSeatAngleTracker.GetBackSeatAngle();
     }
+    else
+    {
+        _backSeatAngle = DEFAULT_BACK_SEAT_ANGLE;
+    }
 
-    if (_isFixedImuInitialized) {
+    if (_isFixedImuInitialized && _isFixedImuCalibrated)
+    {
         _isChairInclined = _backSeatAngleTracker.IsInclined();
     }
 
-    if (_isForcePlateInitialized)
+    if (_isForcePlateInitialized && _isPressureMatCalibrated)
     {
         // Data: Capteur de force
         UpdateForcePlateData();
@@ -105,9 +169,15 @@ void DeviceManager::Update()
         }
         else
         {
-            _COPCoord.x = 0;
-            _COPCoord.y = 0;
+            _COPCoord.x = DEFAULT_CENTER_OF_PRESSURE;
+            _COPCoord.y = DEFAULT_CENTER_OF_PRESSURE;
         }
+    }
+    else
+    {
+        _COPCoord.x = DEFAULT_CENTER_OF_PRESSURE;
+        _COPCoord.y = DEFAULT_CENTER_OF_PRESSURE;
+        _isSomeoneThere = false;
     }
 }
 
@@ -122,8 +192,8 @@ double DeviceManager::GetXAcceleration()
 
 void DeviceManager::UpdateForcePlateData()
 {
-    _max11611.GetData(_sensorMatrix._sensorCount, _max11611Data);
-    for (uint8_t i = 0; i < _sensorMatrix._sensorCount; i++)
+    _max11611.GetData(PRESSURE_SENSOR_COUNT, _max11611Data);
+    for (uint8_t i = 0; i < PRESSURE_SENSOR_COUNT; i++)
     {
         _sensorMatrix.SetAnalogData(_max11611Data[i], i);
     }
@@ -203,18 +273,18 @@ bool DeviceManager::TestDevices()
         _sensorMatrix.CalibrateForceSensor(_max11611Data, _max11611);
         //Last sensed presence analog reading to compare with calibration
         uint16_t sensedPresence = 0;
-        for (uint8_t i = 0; i < _sensorMatrix._sensorCount; i++)
+        for (uint8_t i = 0; i < PRESSURE_SENSOR_COUNT; i++)
         {
             sensedPresence += _sensorMatrix.GetAnalogData(i);
         }
-        if (_sensorMatrix._sensorCount != 0)
+        if (PRESSURE_SENSOR_COUNT != 0)
         {
-            sensedPresence /= _sensorMatrix._sensorCount;
+            sensedPresence /= PRESSURE_SENSOR_COUNT;
         }
 
         printf("\n.-.--..---DERNIERE MESURE DES CAPTEURS EN TEMPS REEL.--.---.--.-\n");
         printf("Sensor Number \t Analog value \t Voltage (mV) \t Force (N) \n");
-        for (uint8_t i = 0; i < _sensorMatrix._sensorCount; i++)
+        for (uint8_t i = 0; i < PRESSURE_SENSOR_COUNT; i++)
         {
             printf("Sensor No: %i \t %i \t\t %u \t\t  %f \n", i + 1, _sensorMatrix.GetAnalogData(i), _sensorMatrix.GetVoltageData(i), _sensorMatrix.GetForceData(i));
         }
@@ -223,7 +293,7 @@ bool DeviceManager::TestDevices()
         printf("\n.-.--..---.-.OFFSET INITIAUX.--.---.--.-\n");
         printf("Sensor Number\t");
         printf("Analog value\n");
-        for (uint8_t i = 0; i < _sensorMatrix._sensorCount; i++)
+        for (uint8_t i = 0; i < PRESSURE_SENSOR_COUNT; i++)
         {
             printf("Sensor No: %i \t %u \n", i + 1, _sensorMatrix.GetAnalogOffset(i));
         }
@@ -251,13 +321,13 @@ bool DeviceManager::TestDevices()
     else if (inSerialChar == 'g')
     {
         uint16_t sensedPresence = 0;
-        for (uint8_t i = 0; i < _sensorMatrix._sensorCount; i++)
+        for (uint8_t i = 0; i < PRESSURE_SENSOR_COUNT; i++)
         {
             sensedPresence += _sensorMatrix.GetAnalogData(i);
         }
-        if (_sensorMatrix._sensorCount != 0)
+        if (PRESSURE_SENSOR_COUNT != 0)
         {
-            sensedPresence /= _sensorMatrix._sensorCount;
+            sensedPresence /= PRESSURE_SENSOR_COUNT;
         }
 
         printf("\nDEBUG CENTER OF PRESSURE FORCE SENSORS START");
@@ -271,7 +341,7 @@ bool DeviceManager::TestDevices()
 
         printf("\n.-.--..---MESURE DES CAPTEURS DE FORCE--.---.--.-\n");
         printf("Sensor Number \t Analog value \t Voltage (mV) \t Force (N) \n");
-        for (uint8_t i = 0; i < _sensorMatrix._sensorCount; i++)
+        for (uint8_t i = 0; i < PRESSURE_SENSOR_COUNT; i++)
         {
             printf("Sensor No: %i \t %i \t\t %u \t\t %f \n", i + 1, _sensorMatrix.GetAnalogData(i), _sensorMatrix.GetVoltageData(i), _sensorMatrix.GetForceData(i));
         }
