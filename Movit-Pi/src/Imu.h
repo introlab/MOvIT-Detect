@@ -27,8 +27,6 @@ class Imu
     void SetOffset(imu_offset_t offsets);
     imu_offset_t GetOffset() { return _offsets; }
 
-    std::string GetName() { return _imuName; }
-
   protected:
     std::string _imuName;
     MPU6050 _imu;

@@ -8,8 +8,8 @@
 #include <unistd.h>
 #include <thread>
 
-DeviceManager::DeviceManager(FileManager *fileManager) : _alarm(700, 0.1),
-                                                     _fileManager(fileManager)
+DeviceManager::DeviceManager(FileManager *fileManager) : _fileManager(fileManager),
+                                                         _alarm(700, 0.1)
 {
     _motionSensor = MotionSensor::GetInstance();
     _mobileImu = MobileImu::GetInstance();
@@ -39,7 +39,7 @@ void DeviceManager::InitializeDevices()
 
     if (_isMobileImuInitialized && !Imu::IsImuOffsetValid(mobileOffset))
     {
-        CalibrateIMU(_mobileImu);
+        CalibrateMobileIMU();
     }
     else
     {
@@ -49,7 +49,7 @@ void DeviceManager::InitializeDevices()
 
     if (_isFixedImuInitialized && !Imu::IsImuOffsetValid(fixedOffset))
     {
-        CalibrateIMU(_fixedImu);
+        CalibrateFixedIMU();
     }
     else
     {
@@ -62,8 +62,6 @@ void DeviceManager::InitializeDevices()
         _sensorMatrix.SetOffsets(pressureMatOffset);
         _isPressureMatCalibrated = true;
     }
-
-    _fileManager->Save();
 
     printf("Setup Done\n");
 }
@@ -89,24 +87,27 @@ void DeviceManager::CalibratePressureMat()
 
 void DeviceManager::CalibrateIMU()
 {
-    CalibrateIMU(_fixedImu);
-    CalibrateIMU(_mobileImu);
+    CalibrateFixedIMU();
+    CalibrateMobileIMU();
 }
 
-void DeviceManager::CalibrateIMU(Imu *imu)
+void DeviceManager::CalibrateFixedIMU()
 {
-    printf("Calibrating %s ... \n", imu->GetName().c_str());
-    imu->CalibrateAndSetOffsets();
-    _fileManager->SetFixedImuOffsets(imu->GetOffset());
+    printf("Calibrating FixedIMU ... \n");
+    _fixedImu->CalibrateAndSetOffsets();
+    _fileManager->SetFixedImuOffsets(_fixedImu->GetOffset());
     _fileManager->Save();
-    if (imu->GetName() == FIXED_IMU_NAME)
-    {
-        _isFixedImuCalibrated = true;
-    }
-    else if (imu->GetName() == MOBILE_IMU_NAME)
-    {
-        _isMobileImuCalibrated = true;
-    }
+    _isFixedImuCalibrated = true;
+    printf("DONE\n");
+}
+
+void DeviceManager::CalibrateMobileIMU()
+{
+    printf("Calibrating MobileIMU ... \n");
+    _mobileImu->CalibrateAndSetOffsets();
+    _fileManager->SetMobileImuOffsets(_mobileImu->GetOffset());
+    _fileManager->Save();
+    _isMobileImuCalibrated = true;
     printf("DONE\n");
 }
 

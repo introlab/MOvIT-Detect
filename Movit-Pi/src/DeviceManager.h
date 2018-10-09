@@ -39,11 +39,12 @@ class DeviceManager
     int GetTimeSinceEpoch() { return _timeSinceEpoch; }
     bool GetIsMoving() { return _isMoving; }
     double GetXAcceleration();
-    
+
     void CalibrateIMU();
+    void CalibrateFixedIMU();
+    void CalibrateMobileIMU();
     void CalibratePressureMat();
-    void CalibrateIMU(Imu *imu);
-    
+
     void TurnOff();
 
     bool TestDevices();
@@ -73,7 +74,6 @@ class DeviceManager
     void UpdateForcePlateData();
     bool InitializeForcePlate();
 
-
     bool _isAlarmInitialized = false;
     bool _isFixedImuInitialized = false;
     bool _isMobileImuInitialized = false;
@@ -90,17 +90,16 @@ class DeviceManager
 
     Coord_t _COPCoord;
     int _timeSinceEpoch = 0;
+    int _backSeatAngle = 0;
+    uint16_t _max11611Data[9];
+
+    FileManager *_fileManager;
 
     DateTimeRTC *_datetimeRTC;
     Alarm _alarm;
     MobileImu *_mobileImu;
     FixedImu *_fixedImu;
     BackSeatAngleTracker _backSeatAngleTracker;
-    int _backSeatAngle = 0;
-
-    FileManager *_fileManager;
-
-    uint16_t _max11611Data[9];
     ForceSensor _sensorMatrix;
     ForcePlate _globalForcePlate;
     MAX11611 _max11611;
