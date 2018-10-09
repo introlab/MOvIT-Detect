@@ -1,154 +1,212 @@
 #include "FileManager.h"
+#include "Utils.h"
+#include "rapidjson/document.h"
 #include <iostream>
 #include <fstream>
 
-const std::string VALUE_SEPARATOR = ",";
-const std::string SENSOR_SEPARATOR = "; ";
+using rapidjson::Document;
+using rapidjson::StringBuffer;
+using rapidjson::Value;
+using rapidjson::Writer;
+using std::string;
+
 const std::string OFFSETS_FILENAME = "offsets.txt";
-const std::string GYRO_FIELDNAME = "Gyro: ";
-const std::string ACCEL_FIELDNAME = "Accel: ";
-enum axis { x, y, z };
 
-int *FileManager::GetFixedImuAccelOffsets()
+const std::string PRESSURE_MAT_OBJECT = "pressure_mat_offset";
+const std::string FIXED_IMU_OBJECT = "fixed_imu_offset";
+const std::string MOBILE_IMU_OBJECT = "mobile_imu_offset";
+
+void FileManager::Read()
 {
-    if (_fixedImuAccelerationOffsets[axis::x] != 0 || _fixedImuAccelerationOffsets[axis::y] != 0 || _fixedImuAccelerationOffsets[axis::z] != 0)
-    {
-        return _fixedImuAccelerationOffsets;
-    }
-
-    return NULL;
-}
-
-int *FileManager::GetFixedImuGyroOffsets()
-{
-    if (_fixedImuGyroOffsets[axis::x] != 0 || _fixedImuGyroOffsets[axis::y] != 0 || _fixedImuGyroOffsets[axis::z] != 0)
-    {
-        return _fixedImuGyroOffsets;
-    }
-
-    return NULL;
-}
-
-int *FileManager::GetMobileImuAccelOffsets()
-{
-    if (_mobileImuAccelerationOffsets[axis::x] != 0 || _mobileImuAccelerationOffsets[axis::y] != 0 || _mobileImuAccelerationOffsets[axis::z] != 0)
-    {
-        return _mobileImuAccelerationOffsets;
-    }
-
-    return NULL;
-}
-
-int *FileManager::GetMobileImuGyroOffsets()
-{
-    if (_mobileImuGyroOffsets[axis::x] != 0 || _mobileImuGyroOffsets[axis::y] != 0 || _mobileImuGyroOffsets[axis::z] != 0)
-    {
-        return _mobileImuGyroOffsets;
-    }
-
-    return NULL;
-}
-
-void FileManager::WriteCalibrationOffsetsToFile(int *accelerationOffsets, int *gyroOffsets, std::string imuName)
-{
-    std::ofstream file;
-
-    file.open(OFFSETS_FILENAME, std::ofstream::out | std::ofstream::app);
+    std::fstream file;
+    file.open(OFFSETS_FILENAME, std::fstream::in | std::fstream::out);
 
     if (!file.is_open())
     {
+        printf("ReadFile: error opening %s...\n", OFFSETS_FILENAME.c_str());
         return;
     }
 
-    file << imuName << std::endl;
-    file << ACCEL_FIELDNAME << accelerationOffsets[axis::x] << VALUE_SEPARATOR << accelerationOffsets[axis::y] << VALUE_SEPARATOR << accelerationOffsets[axis::z] << SENSOR_SEPARATOR;
-    file << GYRO_FIELDNAME << gyroOffsets[axis::x] << VALUE_SEPARATOR << gyroOffsets[axis::y] << VALUE_SEPARATOR << gyroOffsets[axis::z] << std::endl;
+    std::string line;
+    while (getline(file, line))
+    {
+        Document doc;
+        doc.Parse(line.c_str());
+
+        if (doc.IsObject())
+        {
+            _pressureMatOffset = ParsePressureMatOffset(doc);
+            _fixedImuOffset = ParseIMUOffset(doc, FIXED_IMU_OBJECT);
+            _mobileImuOffset = ParseIMUOffset(doc, MOBILE_IMU_OBJECT);
+        }
+    }
     file.close();
 }
 
-void FileManager::ReadCalibrationOffsetsFromFile(std::string fixedImuName, std::string mobileImuName)
+void FileManager::Save()
 {
-    std::string imuName;
-    std::string fixedImuLine;
-    std::string mobileImuLine;
+    StringBuffer strBuff;
+    Writer<StringBuffer> writer(strBuff);
 
-    std::ifstream file(OFFSETS_FILENAME);
+    writer.StartObject();
+    FormatPressureMatOffset(writer, _pressureMatOffset, PRESSURE_MAT_OBJECT);
+    FormatImuOffset(writer, _fixedImuOffset, FIXED_IMU_OBJECT);
+    FormatImuOffset(writer, _mobileImuOffset, MOBILE_IMU_OBJECT);
+    writer.EndObject();
+
+    std::fstream file;
+    file.open(OFFSETS_FILENAME, std::fstream::out);
 
     if (!file.is_open())
     {
+        printf("Save: error opening %s...\n", OFFSETS_FILENAME.c_str());
         return;
     }
 
-    while (getline(file, imuName))
-    {
-        if (imuName == fixedImuName)
-        {
-            getline(file, fixedImuLine);
-        }
-        else if (imuName == mobileImuName)
-        {
-            getline(file, mobileImuLine);
-        }
-    }
+    file << strBuff.GetString();
 
     file.close();
-
-    SetFixedImuOffsets(fixedImuLine);
-    SetMobileImuOffsets(mobileImuLine);
 }
 
-void FileManager::SetOffsetsFromLine(std::string line, int *offsets, std::string offsetsLine)
+void FileManager::FormatPressureMatOffset(Writer<StringBuffer> &writer, pressure_mat_offset_t offset, string objectName)
 {
-    const int numberOfSeparators = 2;
-    uint8_t i = 0;
-    size_t pos = 0;
-
-    while ((pos = offsetsLine.find(VALUE_SEPARATOR)) != std::string::npos)
+    writer.Key(objectName.c_str());
+    writer.StartObject();
+    writer.Key("analogOffset");
+    writer.StartArray();
+    for (unsigned i = 0; i < PRESSURE_SENSOR_COUNT; i++)
     {
-        int value = atoi(offsetsLine.substr(0, pos).c_str());
+        writer.Int(offset.analogOffset[i]);
+    }
+    writer.EndArray();
+    writer.Key("totalSensorMean");
+    writer.Int(offset.totalSensorMean);
+    writer.Key("detectionThreshold");
+    writer.Double(offset.detectionThreshold);
+    writer.EndObject();
+}
 
-        if (value == 0)
+void FileManager::FormatImuOffset(Writer<StringBuffer> &writer, imu_offset_t offset, string objectName)
+{
+    writer.Key(objectName.c_str());
+    writer.StartObject();
+    writer.Key("accelerometerOffsets");
+    writer.StartArray();
+    for (unsigned i = 0; i < NUMBER_OF_AXIS; i++)
+    {
+        writer.Int(offset.accelerometerOffsets[i]);
+    }
+    writer.EndArray();
+    writer.Key("gyroscopeOffsets");
+    writer.StartArray();
+    for (unsigned i = 0; i < NUMBER_OF_AXIS; i++)
+    {
+        writer.Int(offset.gyroscopeOffsets[i]);
+    }
+    writer.EndArray();
+    writer.EndObject();
+}
+
+imu_offset_t FileManager::ParseIMUOffset(Document &document, string objectName)
+{
+    imu_offset_t ret;
+
+    if (document[objectName.c_str()].IsObject())
+    {
+        Value &object = document[objectName.c_str()];
+        Value &jsonArray = object["accelerometerOffsets"];
+        if (jsonArray.IsArray())
         {
-            break;
+            for (size_t i = 0; i < jsonArray.Size(); i++)
+            {
+                // printf("accelerometerOffsets[%d] = %d\n", i, a[i].GetInt());
+                ret.accelerometerOffsets[i] = jsonArray[i].GetInt();
+            }
+        }
+        jsonArray = object["gyroscopeOffsets"];
+        if (jsonArray.IsArray())
+        {
+            for (size_t i = 0; i < jsonArray.Size(); i++)
+            {
+                // printf("gyroscopeOffsets[%d] = %d\n", i, a[i].GetInt());
+                ret.gyroscopeOffsets[i] = jsonArray[i].GetInt();
+            }
+        }
+    }
+
+    return ret;
+}
+
+pressure_mat_offset_t FileManager::ParsePressureMatOffset(Document &document)
+{
+    pressure_mat_offset_t ret;
+
+    if (document["pressure_mat_offset"].IsObject())
+    {
+        Value &object = document["pressure_mat_offset"];
+
+        Value &jsonArray = object["analogOffset"];
+        if (jsonArray.IsArray())
+        {
+            for (size_t i = 0; i < jsonArray.Size(); i++)
+            {
+                // printf("analogOffset[%d] = %d\n", i, a[i].GetInt());
+                ret.analogOffset[i] = jsonArray[i].GetInt();
+            }
         }
 
-        offsets[i++] = value;
-        offsetsLine.erase(0, pos + VALUE_SEPARATOR.length());
+        // printf("%i \n", object["totalSensorMean"].GetInt());
+        // printf("%f \n", object["detectionThreshold"].GetFloat());
+
+        ret.totalSensorMean = object["totalSensorMean"].GetInt();
+        ret.detectionThreshold = object["detectionThreshold"].GetFloat();
     }
 
-    int value = atoi(offsetsLine.c_str());
+    return ret;
+}
 
-    if (i != numberOfSeparators || value == 0)
+imu_offset_t FileManager::GetMobileImuOffsets()
+{
+    imu_offset_t ret;
+
+    if (_mobileImuOffset.gyroscopeOffsets[AXIS::x] != 0 && _mobileImuOffset.gyroscopeOffsets[AXIS::y] != 0 && _mobileImuOffset.gyroscopeOffsets[AXIS::z] != 0)
     {
-        offsets[axis::x] = 0;
-        offsets[axis::y] = 0;
-        offsets[axis::z] = 0;
-        return;
+        for (int i = 0; i < NUMBER_OF_AXIS; i++)
+        {
+            ret.gyroscopeOffsets[i] = _mobileImuOffset.gyroscopeOffsets[i];
+        }
     }
 
-    offsets[i] = value;
+    if (_mobileImuOffset.accelerometerOffsets[AXIS::x] != 0 && _mobileImuOffset.accelerometerOffsets[AXIS::y] != 0 && _mobileImuOffset.accelerometerOffsets[AXIS::z] != 0)
+    {
+        for (int i = 0; i < NUMBER_OF_AXIS; i++)
+        {
+            ret.accelerometerOffsets[i] = _mobileImuOffset.accelerometerOffsets[i];
+        }
+    }
+
+    return ret;
 }
 
-void FileManager::SetFixedImuOffsets(std::string line)
+imu_offset_t FileManager::GetFixedImuOffsets()
 {
-    std::string accelOffsetsLine = line.substr(0, line.find(SENSOR_SEPARATOR));
-    accelOffsetsLine = accelOffsetsLine.substr(accelOffsetsLine.find(ACCEL_FIELDNAME) + ACCEL_FIELDNAME.length());
+    imu_offset_t ret;
 
-    std::string gyroOffsetsLine = line.substr(line.find(SENSOR_SEPARATOR) + SENSOR_SEPARATOR.length());
-    gyroOffsetsLine = gyroOffsetsLine.substr(gyroOffsetsLine.find(GYRO_FIELDNAME) + GYRO_FIELDNAME.length());
+    if (_fixedImuOffset.gyroscopeOffsets[AXIS::x] != 0 && _fixedImuOffset.gyroscopeOffsets[AXIS::y] != 0 && _fixedImuOffset.gyroscopeOffsets[AXIS::z] != 0)
+    {
+        for (int i = 0; i < NUMBER_OF_AXIS; i++)
+        {
+            ret.gyroscopeOffsets[i] = _fixedImuOffset.gyroscopeOffsets[i];
+        }
+    }
 
-    SetOffsetsFromLine(line, _fixedImuAccelerationOffsets, accelOffsetsLine);
-    SetOffsetsFromLine(line, _fixedImuGyroOffsets, gyroOffsetsLine);
-}
+    if (_fixedImuOffset.accelerometerOffsets[AXIS::x] != 0 && _fixedImuOffset.accelerometerOffsets[AXIS::y] != 0 && _fixedImuOffset.accelerometerOffsets[AXIS::z] != 0)
+    {
+        for (int i = 0; i < NUMBER_OF_AXIS; i++)
+        {
+            ret.accelerometerOffsets[i] = _fixedImuOffset.accelerometerOffsets[i];
+        }
+    }
 
-void FileManager::SetMobileImuOffsets(std::string line)
-{
-    std::string accelOffsetsLine = line.substr(0, line.find(SENSOR_SEPARATOR));
-    accelOffsetsLine = accelOffsetsLine.substr(accelOffsetsLine.find(ACCEL_FIELDNAME) + ACCEL_FIELDNAME.length());
-
-    std::string gyroOffsetsLine = line.substr(line.find(SENSOR_SEPARATOR) + SENSOR_SEPARATOR.length());
-    gyroOffsetsLine = gyroOffsetsLine.substr(gyroOffsetsLine.find(GYRO_FIELDNAME) + GYRO_FIELDNAME.length());
-
-    SetOffsetsFromLine(line, _mobileImuAccelerationOffsets, accelOffsetsLine);
-    SetOffsetsFromLine(line, _mobileImuGyroOffsets, gyroOffsetsLine);
+    return ret;
 }

@@ -59,7 +59,7 @@ void PMW3901::ReadMotionCount(int16_t *deltaX, int16_t *deltaY)
 
   if (*deltaX == SHORT_MIN || *deltaX == SHORT_MAX || *deltaY == SHORT_MIN || *deltaY == SHORT_MAX)
   {
-    printf("Optical motion tracking chip max value reach\n");
+    printf("ERROR: Optical motion tracking chip max value reach\n");
   }
 }
 

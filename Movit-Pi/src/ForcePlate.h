@@ -9,6 +9,8 @@ class ForcePlate
     ForcePlate();
     ~ForcePlate();
 
+    static bool IsPressureMatOffsetValid(pressure_mat_offset_t offset);
+
     void DetectCenterOfPressure(ForcePlate &globalForcePlate, ForceSensor &sensors);
     void CreateForcePlate(ForcePlate &newForcePlate, ForceSensor &sensors, int sensorNo1, int sensorNo2, int sensorNo3, int sensorNo4);
     void AnalyzeForcePlates(ForcePlate &globalForcePlate, ForceSensor &sensors, ForcePlate &forcePlate1, ForcePlate &forcePlate2, ForcePlate &forcePlate3, ForcePlate &forcePlate4);

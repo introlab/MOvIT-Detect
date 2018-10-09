@@ -18,7 +18,7 @@ Alarm::Alarm(int blinkDuration, double blinkFrequency)
     _blinkFrequency = blinkFrequency;
 }
 
-void Alarm::Initialize()
+bool Alarm::Initialize()
 {
     printf("PC9536 (Alarm) initializing ... ");
     _pca9536.SetMode(DC_MOTOR, IO_OUTPUT);
@@ -31,14 +31,14 @@ void Alarm::Initialize()
     if (_pca9536.GetMode(DC_MOTOR) != IO_OUTPUT || _pca9536.GetMode(GREEN_LED) != IO_OUTPUT || _pca9536.GetMode(RED_LED) != IO_OUTPUT)
     {
         printf("FAIL\n");
+        return false;
     }
-    else
-    {
-        printf("SUCCESS\n");
-    }
+
+    printf("SUCCESS\n");
     TurnOffRedLed();
     TurnOffGreenLed();
     TurnOffDCMotor();
+    return true;
 }
 
 uint8_t Alarm::GetPinState(pin_t pin)
@@ -88,18 +88,19 @@ void Alarm::TurnOffGreenLed()
 
 void Alarm::TurnOffAlarm()
 {
+    StopBlinkGreenAlarm();
     TurnOffRedLed();
     TurnOffGreenLed();
     TurnOffDCMotor();
 }
 
+void Alarm::StopBlinkGreenAlarm()
+{
+    _isBlinkGreenAlarmRequired = false;
+}
+
 void Alarm::TurnOnBlinkLedsAlarm()
 {
-    if (_isBlinkLedsAlarmOn)
-    {
-        return;
-    }
-
     _isBlinkLedsAlarmOn = true;
 
     std::lock_guard<std::mutex> lock(alarmMutex);
@@ -113,7 +114,7 @@ void Alarm::TurnOnBlinkLedsAlarm()
     {
         _pca9536.ToggleState(RED_LED);
         _pca9536.ToggleState(GREEN_LED);
-        sleep_for_microseconds(_blinkFrequency * secondsToMicroseconds);
+        sleep_for_microseconds(_blinkFrequency * SECONDS_TO_MICROSECONDS);
     }
 
     TurnOffRedLed();
@@ -123,24 +124,24 @@ void Alarm::TurnOnBlinkLedsAlarm()
 
 void Alarm::TurnOnRedAlarm()
 {
-    if (_isRedAlarmOn)
-    {
-        return;
-    }
-
     _isRedAlarmOn = true;
 
     std::lock_guard<std::mutex> lock(alarmMutex);
 
     int count = 0;
-    TurnOnDCMotor();
+
+    if (!_deactivateVibration)
+    {
+        TurnOnDCMotor();
+    }
+
     TurnOnRedLed();
     TurnOffGreenLed();
 
     while (GetPinState(PUSH_BUTTON) && (count++ <= (int)(_blinkFrequency * _blinkDuration)))
     {
         _pca9536.ToggleState(RED_LED);
-        sleep_for_microseconds(_blinkFrequency * secondsToMicroseconds);
+        sleep_for_microseconds(_blinkFrequency * SECONDS_TO_MICROSECONDS);
     }
 
     TurnOnRedLed();
@@ -157,6 +158,28 @@ void Alarm::TurnOnGreenAlarm()
     TurnOffDCMotor();
 }
 
+void Alarm::TurnOnBlinkGreenAlarm()
+{
+    _isBlinkGreenAlarmOn = true;
+    _isBlinkGreenAlarmRequired = true;
+
+    std::lock_guard<std::mutex> lock(alarmMutex);
+
+    TurnOffDCMotor();
+    TurnOffRedLed();
+    TurnOnGreenLed();
+
+    while (_isBlinkGreenAlarmRequired)
+    {
+        _pca9536.ToggleState(GREEN_LED);
+        sleep_for_microseconds(_blinkFrequency * SECONDS_TO_MICROSECONDS);
+    }
+
+    TurnOffGreenLed();
+
+    _isBlinkGreenAlarmOn = false;
+}
+
 std::thread Alarm::TurnOnRedAlarmThread()
 {
     return std::thread([=] {
@@ -168,5 +191,12 @@ std::thread Alarm::TurnOnBlinkLedsAlarmThread()
 {
     return std::thread([=] {
         TurnOnBlinkLedsAlarm();
+    });
+}
+
+std::thread Alarm::TurnOnBlinkGreenAlarmThread()
+{
+    return std::thread([=] {
+        TurnOnBlinkGreenAlarm();
     });
 }

@@ -2,18 +2,14 @@
 #define BACK_SEAT_ANGLE_TRACKER_H
 
 #define NUMBER_OF_AXIS 3
-
-#include "Imu.h"
+#define ALLOWED_INCLINATION_ANGLE 10
 
 class BackSeatAngleTracker
 {
   public:
     BackSeatAngleTracker();
+    bool IsInclined();
     int GetBackSeatAngle();
-
-  private:
-    Imu _imu;
-    double GetPitch(double acceleration[]);
 };
 
 #endif // BACK_SEAT_ANGLE_TRACKER_H

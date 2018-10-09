@@ -1,15 +1,19 @@
 #ifndef DEVICE_MANAGER_H
 #define DEVICE_MANAGER_H
 
+#include <string>
+
 #include "Imu.h"
 #include "Alarm.h"
 #include "ForcePlate.h"
 #include "ForceSensor.h"
+#include "FixedImu.h"
+#include "MobileImu.h"
 #include "BackSeatAngleTracker.h"
 #include "DateTimeRTC.h"
 #include "MotionSensor.h"
 #include "MAX11611.h"
-#include <string>
+#include "FileManager.h"
 
 //Center of pressure coordinate
 struct Coord_t
@@ -29,51 +33,77 @@ class DeviceManager
     Alarm *GetAlarm() { return &_alarm; }
 
     bool IsSomeoneThere() { return _isSomeoneThere; }
+    bool IsChairInclined() { return _isChairInclined; }
     Coord_t GetCenterOfPressure() { return _COPCoord; }
     int GetBackSeatAngle() { return _backSeatAngle; }
     int GetTimeSinceEpoch() { return _timeSinceEpoch; }
     bool GetIsMoving() { return _isMoving; }
-    void CalibratePressureMat();
+    double GetXAcceleration();
+
     void CalibrateIMU();
+    void CalibrateFixedIMU();
+    void CalibrateMobileIMU();
+    void CalibratePressureMat();
+
     void TurnOff();
 
     bool TestDevices();
 
+    bool GetIsAlarmInitialized() { return _isAlarmInitialized; }
+    bool GetIsFixedImuInitialized() { return _isFixedImuInitialized; }
+    bool GetIsMobileInitialized() { return _isMobileImuInitialized; }
+    bool GetIsMotionSensorInitialized() { return _isMotionSensorInitialized; }
+    bool GetIsForcePlateInitialized() { return _isForcePlateInitialized; }
+
     // Singleton
-    static DeviceManager *GetInstance()
+    static DeviceManager *GetInstance(FileManager *fileManager)
     {
-        static DeviceManager instance;
+        static DeviceManager instance(fileManager);
         return &instance;
     }
 
   private:
     //Singleton
-    DeviceManager();
+    DeviceManager(FileManager *fileManager);
     DeviceManager(DeviceManager const &);  // Don't Implement.
     void operator=(DeviceManager const &); // Don't implement.
+
+    const int32_t DEFAULT_BACK_SEAT_ANGLE = 0;
+    const float DEFAULT_CENTER_OF_PRESSURE = 0.0;
 
     void UpdateForcePlateData();
     bool InitializeForcePlate();
 
-    bool _imuValid = false;
-    bool _forcePlateValid = false;
+    bool _isAlarmInitialized = false;
+    bool _isFixedImuInitialized = false;
+    bool _isMobileImuInitialized = false;
+    bool _isMotionSensorInitialized = false;
+    bool _isForcePlateInitialized = false;
+
+    bool _isFixedImuCalibrated = false;
+    bool _isMobileImuCalibrated = false;
+    bool _isPressureMatCalibrated = false;
+
     bool _isMoving = false;
     bool _isSomeoneThere = false;
+    bool _isChairInclined = false;
 
     Coord_t _COPCoord;
     int _timeSinceEpoch = 0;
+    int _backSeatAngle = 0;
+    uint16_t _max11611Data[9];
+
+    FileManager *_fileManager;
 
     DateTimeRTC *_datetimeRTC;
     Alarm _alarm;
+    MobileImu *_mobileImu;
+    FixedImu *_fixedImu;
     BackSeatAngleTracker _backSeatAngleTracker;
-    Imu _imu;
-    int _backSeatAngle = 0;
-
-    uint16_t _max11611Data[9];
     ForceSensor _sensorMatrix;
     ForcePlate _globalForcePlate;
-    MotionSensor _motionSensor;
     MAX11611 _max11611;
+    MotionSensor *_motionSensor;
 };
 
 #endif // DEVICE_MANAGER_H

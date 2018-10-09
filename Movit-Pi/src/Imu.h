@@ -1,37 +1,39 @@
 #ifndef IMU_H
 #define IMU_H
 
+#include <string>
+
 #include "MPU6050.h"
-#include "FileManager.h"
+#include "Utils.h"
 
 #define ACCELEROMETER_DEADZONE 8 // Accelerometer error allowed, make it lower to get more precision, but sketch may not converge (default: 8)
 #define BUFFER_SIZE 1000         // Amount of readings used to average, make it higher to get more precision but sketch will be slower (default: 1000)
 #define GYROSCOPE_DEADZONE 1     // Gyroscope error allowed, make it lower to get more precision, but sketch may not converge (default: 1)
 #define GRAVITY 9.80665
 #define LSB_SENSITIVITY -16384
-#define NUMBER_OF_AXIS 3
 
 class Imu
 {
   public:
     Imu();
     bool Initialize();
-    void Calibrate();
-    void GetAcceleration(double *accelerations, std::string imuName);
+    void CalibrateAndSetOffsets();
+    void GetAccelerations(double *accelerations);
+    double GetPitch();
+    double GetRoll();
 
-  private:
-    FileManager _fileManager;
+    static bool IsImuOffsetValid(imu_offset_t offset);
 
-    MPU6050 _mobileImu = {0x68};
-    MPU6050 _fixedImu = {0x69};
+    void SetOffset(imu_offset_t offsets);
+    imu_offset_t GetOffset() { return _offsets; }
+
+  protected:
+    std::string _imuName;
+    MPU6050 _imu;
 
     int _calibrationArray[NUMBER_OF_AXIS] = {LSB_SENSITIVITY, 0, 0};
-    int _accelerometerOffsets[NUMBER_OF_AXIS] = {0, 0, 0};
-    int _gyroscopeOffsets[NUMBER_OF_AXIS] = {0, 0, 0};
 
-    bool InitializeImu(MPU6050 &mpu, std::string name, int *accelerometerOffsets, int *gyroscopeOffsets);
-    bool InitializeFixedImu();
-    bool InitializeMobileImu();
+    imu_offset_t _offsets;
 
     void Calibrate(MPU6050 &mpu, std::string name);
     void CalibrateAccelerometer(MPU6050 &mpu);
@@ -45,7 +47,7 @@ class Imu
     void ResetIMUGyroOffsets(MPU6050 &mpu);
 
     void GetAccelerometerMeans(MPU6050 &mpu, int accbuff[]);
-    void GetGyroscopeMeans(MPU6050 &mpu, int gyrbuff[]);
+    void GetGyroscopeMeans(MPU6050 &mpu, int gyrobuff[]);
 };
 
 #endif // IMU_H

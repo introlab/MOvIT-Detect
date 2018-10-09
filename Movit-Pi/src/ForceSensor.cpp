@@ -11,7 +11,7 @@
 
 ForceSensor::ForceSensor()
 {
-    for (uint8_t i = 0; i < _sensorCount; i++)
+    for (uint8_t i = 0; i < PRESSURE_SENSOR_COUNT; i++)
     {
         _analogData[i] = 0;
         _voltageData[i] = 0;
@@ -25,6 +25,30 @@ ForceSensor::ForceSensor()
 }
 
 ForceSensor::~ForceSensor() {}
+
+pressure_mat_offset_t ForceSensor::GetOffsets()
+{
+    pressure_mat_offset_t ret;
+
+    for (int i = 0; i < PRESSURE_SENSOR_COUNT; i++)
+    {
+        ret.analogOffset[i] = _analogOffset[i];
+    }
+    ret.detectionThreshold = _detectionThreshold;
+    ret.totalSensorMean = _totalSensorMean;
+
+    return ret;
+}
+
+void ForceSensor::SetOffsets(pressure_mat_offset_t offset)
+{
+    for (int i = 0; i < PRESSURE_SENSOR_COUNT; i++)
+    {
+        _analogOffset[i] = offset.analogOffset[i];
+    }
+    _detectionThreshold = offset.detectionThreshold;
+    _totalSensorMean = offset.totalSensorMean;
+}
 
 //---------------------------------------------------------------------------------------
 //Function: ForceSensor::CalibrateForceSensor
@@ -41,12 +65,12 @@ void ForceSensor::CalibrateForceSensor(uint16_t *max11611Data, MAX11611 &max1161
     /*******************************************************************/
 
     const float calibrationRatio = 0.75;
-    const uint8_t maxIterations = 10;  //Calibration preceision adjustement - Number of measures (1s) in final mean
-    uint16_t sensorMean[_sensorCount]; //Individual iterations sensors mean
-    uint32_t totalSensorMean = 0;      //Final sensors analog data reading mean
+    const uint8_t maxIterations = 10;           //Calibration preceision adjustement - Number of measures (1s) in final mean
+    uint16_t sensorMean[PRESSURE_SENSOR_COUNT]; //Individual iterations sensors mean
+    uint32_t totalSensorMean = 0;               //Final sensors analog data reading mean
 
     //Sensor mean table initialization
-    for (uint8_t i = 0; i < _sensorCount; i++)
+    for (uint8_t i = 0; i < PRESSURE_SENSOR_COUNT; i++)
     {
         sensorMean[i] = 0;
     }
@@ -56,10 +80,10 @@ void ForceSensor::CalibrateForceSensor(uint16_t *max11611Data, MAX11611 &max1161
     {
         //Update sensor analog data readings
         printf("\n%i ", (maxIterations - i));
-        max11611.GetData(_sensorCount, max11611Data);
+        max11611.GetData(PRESSURE_SENSOR_COUNT, max11611Data);
 
         //Force analog data readings mean
-        for (uint8_t j = 0; j < _sensorCount; j++)
+        for (uint8_t j = 0; j < PRESSURE_SENSOR_COUNT; j++)
         {
             SetAnalogData(max11611Data[j], j);
             sensorMean[j] += GetAnalogData(j);
@@ -74,17 +98,17 @@ void ForceSensor::CalibrateForceSensor(uint16_t *max11611Data, MAX11611 &max1161
     printf("\nDONE\n\n");
 
     //Total sensors analog data readings mean
-    for (uint8_t i = 0; i < _sensorCount; i++)
+    for (uint8_t i = 0; i < PRESSURE_SENSOR_COUNT; i++)
     {
-        SetAnalogOffset(sensorMean[i], i);
+        _analogOffset[i] = sensorMean[i];
         totalSensorMean += sensorMean[i];
     }
     if (maxIterations != 0)
     {
         totalSensorMean /= maxIterations;
     }
-    SetTotalSensorMean(totalSensorMean);
-    SetDetectionThreshold(calibrationRatio * GetTotalSensorMean());
+    _totalSensorMean = totalSensorMean;
+    _detectionThreshold = calibrationRatio * GetTotalSensorMean();
 }
 
 //---------------------------------------------------------------------------------------
@@ -102,7 +126,7 @@ void ForceSensor::GetForceSensorData()
     /* max11611Data[9]         max11611Data[6]         max11611Data[3] */
     /*******************************************************************/
 
-    for (uint8_t i = 0; i < _sensorCount; i++)
+    for (uint8_t i = 0; i < PRESSURE_SENSOR_COUNT; i++)
     {
         //Sensor data - Voltage (mV)
         uint32_t voltValue = GetAnalogData(i) * 5000 / 1023;
@@ -162,13 +186,13 @@ bool ForceSensor::IsUserDetected()
 
     //Total of all sensors reading analog data
     float sensedPresence = 0;
-    for (uint8_t i = 0; i < _sensorCount; i++)
+    for (uint8_t i = 0; i < PRESSURE_SENSOR_COUNT; i++)
     {
         sensedPresence += float(GetAnalogData(i));
     }
-    if (_sensorCount != 0)
+    if (PRESSURE_SENSOR_COUNT != 0)
     {
-        sensedPresence /= _sensorCount;
+        sensedPresence /= PRESSURE_SENSOR_COUNT;
     }
     return sensedPresence > GetDetectionThreshold();
 }

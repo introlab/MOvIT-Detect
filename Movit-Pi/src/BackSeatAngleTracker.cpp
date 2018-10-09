@@ -1,30 +1,30 @@
 #include "BackSeatAngleTracker.h"
+#include "FixedImu.h"
+#include "MobileImu.h"
 #include "Utils.h"
 #include <math.h>
-
-enum _axis { x, y, z };
-const std::string fixedImuName = "fixedImu";
-const std::string mobileImuName = "mobileImu";
 
 BackSeatAngleTracker::BackSeatAngleTracker()
 {
 }
 
-double BackSeatAngleTracker::GetPitch(double acceleration[])
+bool BackSeatAngleTracker::IsInclined()
 {
-    return atan2(acceleration[_axis::x], sqrt(acceleration[_axis::y] * acceleration[_axis::y] + acceleration[_axis::z] * acceleration[_axis::z])) * radiansToDegrees;
+    FixedImu *fixedImu = FixedImu::GetInstance();
+    double pitch = fixedImu->GetPitch();
+    double roll = fixedImu->GetRoll();
+
+    return pitch > ALLOWED_INCLINATION_ANGLE || pitch < ALLOWED_INCLINATION_ANGLE * -1
+        || roll > ALLOWED_INCLINATION_ANGLE || roll < ALLOWED_INCLINATION_ANGLE * -1;
 }
 
 int BackSeatAngleTracker::GetBackSeatAngle()
 {
-    double fixedImuAccelerations[NUMBER_OF_AXIS] = {0, 0, 0};
-    double mobileImuAccelerations[NUMBER_OF_AXIS] = {0, 0, 0};
+    MobileImu *mobileImu = MobileImu::GetInstance();
+    FixedImu *fixedImu = FixedImu::GetInstance();
 
-    _imu.GetAcceleration(fixedImuAccelerations, fixedImuName);
-    _imu.GetAcceleration(mobileImuAccelerations, mobileImuName);
+    double fixedPitch = mobileImu->GetPitch();
+    double mobilePitch = fixedImu->GetPitch();
 
-    double fixedPitch = GetPitch(fixedImuAccelerations);
-    double mobilePitch = GetPitch(mobileImuAccelerations);
-
-    return abs(int(fixedPitch - mobilePitch));
+    return int(fixedPitch - mobilePitch);
 }

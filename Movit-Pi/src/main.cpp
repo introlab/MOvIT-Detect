@@ -4,26 +4,28 @@
 #include <string>
 #include <unistd.h>
 #include <ctime>
+#include <chrono>
 #include "MosquittoBroker.h"
 #include "DeviceManager.h"
 #include "ChairManager.h"
 #include "Utils.h"
+#include "FileManager.h"
 
 using std::string;
+using std::chrono::duration;
+using std::chrono::milliseconds;
 
-#define EXECUTION_PERIOD 1000000
 
 void exit_program_handler(int s)
 {
-    DeviceManager *devicemgr = DeviceManager::GetInstance();
-    devicemgr->TurnOff();
+    FileManager *filemgr = FileManager::GetInstance();
+    DeviceManager *deviceManager = DeviceManager::GetInstance(filemgr);
+    deviceManager->TurnOff();
     exit(1);
 }
 
 int main(int argc, char *argv[])
 {
-    I2Cdev::Initialize();
-
     struct sigaction sigIntHandler;
 
     sigIntHandler.sa_handler = exit_program_handler;
@@ -33,13 +35,16 @@ int main(int argc, char *argv[])
     sigaction(SIGINT, &sigIntHandler, NULL);
 
     MosquittoBroker *mosquittoBroker = new MosquittoBroker("embedded");
-    DeviceManager *devicemgr = DeviceManager::GetInstance();
-    ChairManager chairmgr(mosquittoBroker, devicemgr);
+    FileManager *filemgr = FileManager::GetInstance();
+    DeviceManager *deviceManager = DeviceManager::GetInstance(filemgr);
+    ChairManager chairmgr(mosquittoBroker, deviceManager);
 
-    devicemgr->InitializeDevices();
-    // Pour usage �ventuel (un jour, ce code sera d�comment�, pray for it)
-    // std::clock_t start;
-    // double duration;
+    deviceManager->InitializeDevices();
+    chairmgr.SendSensorsStatus();
+
+    auto start = std::chrono::system_clock::now();
+    auto end = std::chrono::system_clock::now();
+    auto period = milliseconds(1000);
 
     bool done = false;
 
@@ -47,22 +52,34 @@ int main(int argc, char *argv[])
     {
         while (!done)
         {
-            done = devicemgr->TestDevices();
+            done = deviceManager->TestDevices();
         }
     }
     else
     {
+        chairmgr.ReadVibrationsThread().detach();
+
         while (!done)
         {
+            start = std::chrono::system_clock::now();
+
             chairmgr.UpdateDevices();
             chairmgr.ReadFromServer();
             chairmgr.CheckNotification();
 
-            // TODO: trouver une facon d'attendre vraiment EXACTEMENT 1 sec
-            sleep_for_microseconds(EXECUTION_PERIOD);
+            end = std::chrono::system_clock::now();
+            auto elapse_time = std::chrono::duration_cast<milliseconds>(end - start);
+
+            if (elapse_time.count() >= period.count())
+            {
+                elapse_time = period;
+            }
+
+            sleep_for_milliseconds(period.count() - elapse_time.count());
         }
     }
 
+    chairmgr.SetVibrationsActivated(false);
     delete mosquittoBroker;
     return 0;
 }

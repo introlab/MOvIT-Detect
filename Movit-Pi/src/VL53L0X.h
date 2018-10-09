@@ -155,13 +155,13 @@ class VL53L0X
     void GetSequenceStepEnables(SequenceStepEnables * enables);
     void GetSequenceStepTimeouts(SequenceStepEnables const * enables, SequenceStepTimeouts * timeouts);
 
-    void WriteReg(uint8_t reg, uint8_t value);
-    void WriteReg16Bit(uint8_t reg, uint16_t value);
+    bool WriteReg(uint8_t reg, uint8_t value);
+    bool WriteReg16Bit(uint8_t reg, uint16_t value);
     uint8_t ReadReg(uint8_t reg);
     uint16_t ReadReg16Bit(uint8_t reg);
 
-    void WriteMulti(uint8_t reg, uint8_t * src, uint8_t count);
-    void ReadMulti(uint8_t reg, uint8_t * dst, uint8_t count);
+    bool WriteMulti(uint8_t reg, uint8_t * src, uint8_t count);
+    bool ReadMulti(uint8_t reg, uint8_t * dst, uint8_t count);
     
     static uint16_t DecodeTimeout(uint16_t value);
     static uint16_t EncodeTimeout(uint16_t timeout_mclks);

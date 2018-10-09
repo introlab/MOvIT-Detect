@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <thread>
 
+#include "MovingAverage.h"
 #include "PMW3901.h"
 #include "VL53L0X.h"
 #include "Utils.h"
@@ -14,29 +15,43 @@
 class MotionSensor
 {
   public:
-    void Initialize();
-    float GetLastTravel();
+    // Singleton
+    static MotionSensor *GetInstance()
+    {
+      static MotionSensor instance;
+      return &instance;
+    }
+
+    bool Initialize();
     bool GetIsMoving();
 
   private:
+
+    //Singleton
+    MotionSensor();
+    MotionSensor(MotionSensor const &);   // Don't Implement.
+    void operator=(MotionSensor const &); // Don't implement.
+
     std::thread GetDeltaXYThread();
     bool InitializeOpticalFlowSensor();
     bool InitializeRangeSensor();
     bool ValidDistanceToTheGround();
 
-    float GetRangeInMeters();
+    uint16_t PixelsToMillimeter(double pixels);
+    double GetAverageRange();
+
+    void ReadRangeSensor();
+    void ReadFlowSensor();
+    void UpdateTravel();
     void GetDeltaXY();
-
-    void UpdateTravel(int16_t *deltaX, int16_t *deltaY);
-    float PixelsToMeters(float pixels);
-
-    float _lastTravel = 0.0f;
-    float _isMovingTravel = 0.0f;
 
     std::chrono::high_resolution_clock::time_point _timeoutStartMs;
     PMW3901 _opticalFLowSensor; // Optical Flow Sensor
     VL53L0X _rangeSensor;       // Range Sensor
-
+    uint16_t _isMovingTravel;
+    MovingAverage<uint16_t> _rangeAverage;
+    MovingAverage<int16_t> _deltaXAverage;
+    MovingAverage<int16_t> _deltaYAverage;
     Timer _timer;
 };
 

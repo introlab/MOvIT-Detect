@@ -174,3 +174,17 @@ void ForcePlate::AnalyzeForcePlates(ForcePlate &globalForcePlate, ForceSensor &s
         globalForcePlate.SetCOPy(globalForcePlate.GetMx1() / globalForcePlate.GetFz());  //Y-Coordinate of the global application point
     }
 }
+
+
+bool ForcePlate::IsPressureMatOffsetValid(pressure_mat_offset_t offset)
+{
+    for (int i = 0; i < PRESSURE_SENSOR_COUNT; i++)
+    {
+        if (offset.analogOffset[i] != 0)
+        {
+            return true;
+        }
+    }
+
+    return offset.detectionThreshold != 0 || offset.totalSensorMean != 0;
+}

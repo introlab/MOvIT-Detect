@@ -23,14 +23,23 @@ const char *REQUIRED_PERIOD_TOPIC = "data/required_period";
 const char *REQUIRED_DURATION_TOPIC = "data/required_duration";
 const char *CALIB_PRESSURE_MAT_TOPIC = "config/calib_pressure_mat";
 const char *CALIB_IMU_TOPIC = "config/calib_imu";
+const char *DEACTIVATE_VIBRATION = "config/deactivate_vibration";
+const char *SELECT_WIFI_TOPIC = "config/wifi";
 
 const char *CURRENT_BACK_REST_ANGLE_TOPIC = "data/current_back_rest_angle";
 const char *CURRENT_CENTER_OF_PRESSURE_TOPIC = "data/current_center_of_pressure";
 const char *CURRENT_IS_SOMEONE_THERE_TOPIC = "data/current_is_someone_there";
+const char *CURRENT_IS_WIFI_CONNECTED_TOPIC = "data/current_is_wifi_connected";
+
 const char *CURRENT_CHAIR_SPEED_TOPIC = "data/current_chair_speed";
 const char *KEEP_ALIVE = "data/keep_alive";
+const char *VIBRATION_TOPIC = "data/vibration";
+const char *IS_MOVING_TOPIC = "data/is_moving";
+
+const char *SENSORS_STATUS_TOPIC = "status/sensors";
 
 const char *EXCEPTION_MESSAGE = "Exception thrown by %s()\n";
+
 MosquittoBroker::MosquittoBroker(const char *id) : mosquittopp(id)
 {
     mosqpp::lib_init();
@@ -80,6 +89,8 @@ void MosquittoBroker::on_connect(int rc)
         subscribe(NULL, REQUIRED_DURATION_TOPIC);
         subscribe(NULL, CALIB_PRESSURE_MAT_TOPIC);
         subscribe(NULL, CALIB_IMU_TOPIC);
+        subscribe(NULL, DEACTIVATE_VIBRATION);
+        subscribe(NULL, SELECT_WIFI_TOPIC);
     }
 }
 
@@ -113,6 +124,11 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
             _setAlarmOn = false;
             _setAlarmOnNew = false;
         }
+    }    
+    if (topic == SELECT_WIFI_TOPIC)
+    {
+        _wifiChanged = true;
+        _wifiInformation = message;
     }
     if (topic == REQUIRED_ANGLE_TOPIC)
     {
@@ -185,6 +201,20 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
             _calibIMURequired = false;
         }
     }
+    if (topic == DEACTIVATE_VIBRATION)
+    {
+        try
+        {
+            printf("Something new for _isVibrationDeactivated = %s\n", message.c_str());
+            _isVibrationDeactivated = std::stoi(message);
+        }
+        catch (const std::exception &e)
+        {
+            printf(EXCEPTION_MESSAGE, e.what());
+            printf("Setting _deactivate_vibration to 0\n");
+            _isVibrationDeactivated = false;
+        }
+    }
 }
 
 void MosquittoBroker::SendBackRestAngle(const int angle, const std::string datetime)
@@ -209,6 +239,30 @@ void MosquittoBroker::SendIsSomeoneThere(const bool state, const std::string dat
     publish(NULL, CURRENT_IS_SOMEONE_THERE_TOPIC, strMsg.length(), strMsg.c_str());
 }
 
+void MosquittoBroker::SendIsWifiConnected(const bool state, const std::string datetime)
+{
+    std::string strState = std::to_string(state);
+    std::string strMsg = "{\"datetime\":" + datetime + ",\"IsWifiConnected\":" + strState + "}";
+
+    publish(NULL, CURRENT_IS_WIFI_CONNECTED_TOPIC, strMsg.length(), strMsg.c_str());
+}
+
+void MosquittoBroker::SendIsPressureMatCalib(const bool state, const std::string datetime)
+{
+    std::string strState = std::to_string(state);
+    std::string strMsg = "{\"datetime\":" + datetime + ",\"IsPressureMatCalib\":" + strState + "}";
+
+    publish(NULL, CALIB_PRESSURE_MAT_TOPIC, strMsg.length(), strMsg.c_str());
+}
+
+void MosquittoBroker::SendIsIMUCalib(const bool state, const std::string datetime)
+{
+    std::string strState = std::to_string(state);
+    std::string strMsg = "{\"datetime\":" + datetime + ",\"IsIMUCalib\":" + strState + "}";
+
+    publish(NULL, CALIB_IMU_TOPIC, strMsg.length(), strMsg.c_str());
+}
+
 void MosquittoBroker::SendSpeed(const float speed, const std::string datetime)
 {
     std::string strSpeed = std::to_string(speed);
@@ -222,6 +276,37 @@ void MosquittoBroker::SendKeepAlive(const std::string datetime)
     std::string strMsg = "{\"datetime\":" + datetime + "}";
 
     publish(NULL, KEEP_ALIVE, strMsg.length(), strMsg.c_str());
+}
+
+void MosquittoBroker::SendVibration(double acceleration, const std::string datetime)
+{
+    std::string strAcceleration = std::to_string(acceleration);
+    std::string strMsg = "{\"datetime\":" + datetime + ",\"vibration\":" + strAcceleration + "}";
+
+    publish(NULL, VIBRATION_TOPIC, strMsg.length(), strMsg.c_str());
+}
+
+void MosquittoBroker::SendIsMoving(const bool state, const std::string datetime)
+{
+    std::string strState = std::to_string(state);
+    std::string strMsg = "{\"datetime\":" + datetime + ",\"isMoving\":" + strState + "}";
+
+    publish(NULL, IS_MOVING_TOPIC, strMsg.length(), strMsg.c_str());
+}
+
+void MosquittoBroker::SendSensorsStatus(const bool alarmStatus, const bool mobileImuStatus,
+    const bool fixedImuStatus, const bool motionSensorStatus, const bool plateSensorStatus, 
+    const std::string datetime)
+{
+    std::string strMsg = "{"
+        "\"datetime\":" +  datetime + ","
+        "\"alarm\":" + std::to_string(alarmStatus) + ","
+        "\"mobileImu\":" + std::to_string(mobileImuStatus) + ","
+        "\"fixedImu\":" + std::to_string(fixedImuStatus) + ","
+        "\"motionSensor\":" + std::to_string(motionSensorStatus) + ","
+        "\"forcePlate\":" + std::to_string(plateSensorStatus) + "}";
+
+    publish(NULL, SENSORS_STATUS_TOPIC, strMsg.length(), strMsg.c_str());
 }
 
 bool MosquittoBroker::GetSetAlarmOn()
@@ -246,6 +331,12 @@ uint32_t MosquittoBroker::GetRequiredDuration()
 {
     _requiredDurationNew = false;
     return _requiredDuration;
+}
+
+std::string MosquittoBroker::GetWifiInformation()
+{
+    _wifiChanged = false;
+    return _wifiInformation;
 }
 
 bool MosquittoBroker::CalibPressureMatRequired()
