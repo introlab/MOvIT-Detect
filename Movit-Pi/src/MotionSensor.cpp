@@ -24,7 +24,7 @@ bool MotionSensor::Initialize()
     bool isFlowSensorInitialized = InitializeOpticalFlowSensor();
     bool isInitialized = isRangeSensorInitialized && isFlowSensorInitialized && ValidDistanceToTheGround();
 
-    if (!isInitialized)
+    if (isInitialized)
     {
         GetDeltaXYThread().detach();
         return true;
