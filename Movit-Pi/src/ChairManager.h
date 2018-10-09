@@ -29,6 +29,8 @@ class ChairManager
 
     static constexpr auto CENTER_OF_PRESSURE_EMISSION_PERIOD = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::minutes(5));
     static constexpr auto CHAIR_ANGLE_EMISSION_PERIOD = std::chrono::seconds(1);
+    static constexpr auto WIFI_VALIDATION_PERIOD = std::chrono::seconds(10);
+
 
     Alarm *_alarm;
     MosquittoBroker *_mosquittoBroker;
@@ -46,7 +48,7 @@ class ChairManager
     bool _prevIsSomeoneThere = false;
     bool _isMoving = false;
     bool _isChairInclined = false;
-
+    bool _isWifiChanged = false;
     bool _overrideNotificationPattern = false;
     bool _setAlarmOn = false;
     bool _isVibrationsActivated = true;
@@ -56,6 +58,7 @@ class ChairManager
     uint32_t _requiredDuration = 0;
 
     Timer _centerOfPressureTimer;
+    Timer _wifiChangedTimer;
     Timer _chairAngleTimer;
     Timer _keepAliveTimer;
 

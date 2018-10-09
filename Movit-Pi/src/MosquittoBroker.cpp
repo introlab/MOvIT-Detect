@@ -24,10 +24,13 @@ const char *REQUIRED_DURATION_TOPIC = "data/required_duration";
 const char *CALIB_PRESSURE_MAT_TOPIC = "config/calib_pressure_mat";
 const char *CALIB_IMU_TOPIC = "config/calib_imu";
 const char *DEACTIVATE_VIBRATION = "config/deactivate_vibration";
+const char *SELECT_WIFI_TOPIC = "config/wifi";
 
 const char *CURRENT_BACK_REST_ANGLE_TOPIC = "data/current_back_rest_angle";
 const char *CURRENT_CENTER_OF_PRESSURE_TOPIC = "data/current_center_of_pressure";
 const char *CURRENT_IS_SOMEONE_THERE_TOPIC = "data/current_is_someone_there";
+const char *CURRENT_IS_WIFI_CONNECTED_TOPIC = "data/current_is_wifi_connected";
+
 const char *CURRENT_CHAIR_SPEED_TOPIC = "data/current_chair_speed";
 const char *KEEP_ALIVE = "data/keep_alive";
 const char *VIBRATION_TOPIC = "data/vibration";
@@ -87,6 +90,7 @@ void MosquittoBroker::on_connect(int rc)
         subscribe(NULL, CALIB_PRESSURE_MAT_TOPIC);
         subscribe(NULL, CALIB_IMU_TOPIC);
         subscribe(NULL, DEACTIVATE_VIBRATION);
+        subscribe(NULL, SELECT_WIFI_TOPIC);
     }
 }
 
@@ -120,6 +124,11 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
             _setAlarmOn = false;
             _setAlarmOnNew = false;
         }
+    }    
+    if (topic == SELECT_WIFI_TOPIC)
+    {
+        _wifiChanged = true;
+        _wifiInformation = message;
     }
     if (topic == REQUIRED_ANGLE_TOPIC)
     {
@@ -230,6 +239,14 @@ void MosquittoBroker::SendIsSomeoneThere(const bool state, const std::string dat
     publish(NULL, CURRENT_IS_SOMEONE_THERE_TOPIC, strMsg.length(), strMsg.c_str());
 }
 
+void MosquittoBroker::SendIsWifiConnected(const bool state, const std::string datetime)
+{
+    std::string strState = std::to_string(state);
+    std::string strMsg = "{\"datetime\":" + datetime + ",\"IsWifiConnected\":" + strState + "}";
+
+    publish(NULL, CURRENT_IS_WIFI_CONNECTED_TOPIC, strMsg.length(), strMsg.c_str());
+}
+
 void MosquittoBroker::SendIsPressureMatCalib(const bool state, const std::string datetime)
 {
     std::string strState = std::to_string(state);
@@ -314,6 +331,12 @@ uint32_t MosquittoBroker::GetRequiredDuration()
 {
     _requiredDurationNew = false;
     return _requiredDuration;
+}
+
+std::string MosquittoBroker::GetWifiInformation()
+{
+    _wifiChanged = false;
+    return _wifiInformation;
 }
 
 bool MosquittoBroker::CalibPressureMatRequired()

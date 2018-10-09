@@ -1,5 +1,6 @@
 #include "ChairManager.h"
 #include <chrono>
+#include "NetworkManager.h"
 
 #define REQUIRED_SITTING_TIME 5
 #define DELTA_ANGLE_THRESHOLD 5
@@ -92,6 +93,12 @@ void ChairManager::UpdateDevices()
             _mosquittoBroker->SendBackRestAngle(_currentChairAngle, _currentDatetime);
         }
     }
+    
+    if (_wifiChangedTimer.Elapsed() >= WIFI_VALIDATION_PERIOD.count() && _isWifiChanged)
+    {
+        _isWifiChanged = false;
+        _mosquittoBroker->SendIsWifiConnected(NetworkManager::IsConnected(), _currentDatetime);
+    }
 
     if (_keepAliveTimer.Elapsed() >= KEEP_ALIVE_PERIOD)
     {
@@ -168,7 +175,12 @@ void ChairManager::ReadFromServer()
         _state = 1;
         printf("Something new for _requiredDuration = %i\n", _requiredDuration);
     }
-
+    if (_mosquittoBroker->IsWifiChanged())
+    {
+        NetworkManager::ChangeNetwork(_mosquittoBroker->GetWifiInformation());
+        _isWifiChanged = true;
+        _wifiChangedTimer.Reset();
+    }
     _deviceManager->GetAlarm()->DeactivateVibration(_mosquittoBroker->IsVibrationDeactivated());
 }
 
