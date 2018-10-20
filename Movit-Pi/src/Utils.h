@@ -9,11 +9,11 @@
 
 #define ONES_MASK 0x0F
 #define TENS_MASK 0xF0
-
-#define PRESSURE_SENSOR_COUNT 9 //Total number of sensor in the pressure matrix
+#define NUMBER_OF_AXIS 3
+#define PRESSURE_SENSOR_COUNT 9
 
 enum AXIS { x, y, z };
-#define NUMBER_OF_AXIS 3
+enum DEVICES { alarmSensor, fixedImu, mobileImu, motionSensor, plateSensor };
 const std::string FIXED_IMU_NAME = "fixedImu";
 const std::string MOBILE_IMU_NAME = "mobileImu";
 const double RADIANS_TO_DEGREES = 180.0 / M_PI;

@@ -18,7 +18,8 @@ class ChairManager
 
     inline bool TestPattern() { return _deviceManager->TestDevices(); }
 
-    void SendSensorsStatus();
+    void SendSensorsState();
+    void UpdateSensor(int device, bool isConnected);
     void UpdateDevices();
     void ReadFromServer();
     void CheckNotification();

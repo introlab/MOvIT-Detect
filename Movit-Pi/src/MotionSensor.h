@@ -11,8 +11,9 @@
 #include "VL53L0X.h"
 #include "Utils.h"
 #include "Timer.h"
+#include "Sensor.h"
 
-class MotionSensor
+class MotionSensor: public Sensor
 {
   public:
     // Singleton
@@ -23,6 +24,7 @@ class MotionSensor
     }
 
     bool Initialize();
+    bool IsConnected();
     bool GetIsMoving();
 
   private:

@@ -28,7 +28,7 @@ bool Alarm::Initialize()
     _pca9536.SetMode(PUSH_BUTTON, IO_INPUT);
     _pca9536.SetPolarity(PUSH_BUTTON, IO_INVERTED);
 
-    if (_pca9536.GetMode(DC_MOTOR) != IO_OUTPUT || _pca9536.GetMode(GREEN_LED) != IO_OUTPUT || _pca9536.GetMode(RED_LED) != IO_OUTPUT)
+    if (!IsConnected())
     {
         printf("FAIL\n");
         return false;
@@ -39,6 +39,13 @@ bool Alarm::Initialize()
     TurnOffGreenLed();
     TurnOffDCMotor();
     return true;
+}
+
+bool Alarm::IsConnected()
+{
+    return (_pca9536.GetMode(DC_MOTOR) == IO_OUTPUT
+        && _pca9536.GetMode(GREEN_LED) == IO_OUTPUT
+        && _pca9536.GetMode(RED_LED) == IO_OUTPUT);
 }
 
 uint8_t Alarm::GetPinState(pin_t pin)

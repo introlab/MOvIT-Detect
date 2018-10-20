@@ -28,21 +28,36 @@ ChairManager::~ChairManager()
 {
 }
 
-void ChairManager::SendSensorsStatus()
+void ChairManager::SendSensorsState()
 {
     _currentDatetime = std::to_string(_deviceManager->GetTimeSinceEpoch());
 
-    const bool alarmStatus = _deviceManager->GetIsAlarmInitialized();
-    const bool fixedImuStatus = _deviceManager->GetIsFixedImuInitialized();
-    const bool mobileImuStatus = _deviceManager->GetIsMobileInitialized();
-    const bool motionSensorStatus = _deviceManager->GetIsMotionSensorInitialized();
-    const bool forcePlateStatus = _deviceManager->GetIsForcePlateInitialized();
-    _mosquittoBroker->SendSensorsStatus(alarmStatus, fixedImuStatus, mobileImuStatus, motionSensorStatus, forcePlateStatus, _currentDatetime);
+    const bool isAlarmConnected = _deviceManager->IsAlarmConnected();
+    const bool isFixedImuConnected = _deviceManager->IsFixedImuConnected();
+    const bool isMobileImuConnected = _deviceManager->IsMobileImuConnected();
+    const bool isMotionSensorConnected = _deviceManager->IsMotionSensorConnected();
+    const bool isForcePlateConnected = _deviceManager->IsForcePlateConnected();
+
+    _mosquittoBroker->SendSensorsState(isAlarmConnected, isFixedImuConnected, isMobileImuConnected, isMotionSensorConnected, isForcePlateConnected, _currentDatetime); 
+}
+
+void ChairManager::UpdateSensor(int device, bool isConnected)
+{
+    if (_deviceManager->IsSensorStateChanged(device))
+    {
+        _mosquittoBroker->SendSensorState(device, isConnected, _currentDatetime);
+    }
+    _deviceManager->ReconnectSensor(device);
 }
 
 void ChairManager::UpdateDevices()
 {
     _currentDatetime = std::to_string(_deviceManager->GetTimeSinceEpoch());
+
+    UpdateSensor(DEVICES::alarmSensor, _deviceManager->IsAlarmConnected());
+    UpdateSensor(DEVICES::fixedImu, _deviceManager->IsFixedImuConnected());
+    UpdateSensor(DEVICES::mobileImu, _deviceManager->IsMobileImuConnected());
+    UpdateSensor(DEVICES::motionSensor, _deviceManager->IsMotionSensorConnected());
 
     if (_mosquittoBroker->CalibPressureMatRequired())
     {

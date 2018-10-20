@@ -37,10 +37,10 @@ int main(int argc, char *argv[])
     MosquittoBroker *mosquittoBroker = new MosquittoBroker("embedded");
     FileManager *filemgr = FileManager::GetInstance();
     DeviceManager *deviceManager = DeviceManager::GetInstance(filemgr);
-    ChairManager chairmgr(mosquittoBroker, deviceManager);
+    ChairManager chairManager(mosquittoBroker, deviceManager);
 
     deviceManager->InitializeDevices();
-    chairmgr.SendSensorsStatus();
+    chairManager.SendSensorsState();
 
     auto start = std::chrono::system_clock::now();
     auto end = std::chrono::system_clock::now();
@@ -57,15 +57,15 @@ int main(int argc, char *argv[])
     }
     else
     {
-        chairmgr.ReadVibrationsThread().detach();
+        chairManager.ReadVibrationsThread().detach();
 
         while (!done)
         {
             start = std::chrono::system_clock::now();
 
-            chairmgr.UpdateDevices();
-            chairmgr.ReadFromServer();
-            chairmgr.CheckNotification();
+            chairManager.UpdateDevices();
+            chairManager.ReadFromServer();
+            chairManager.CheckNotification();
 
             end = std::chrono::system_clock::now();
             auto elapse_time = std::chrono::duration_cast<milliseconds>(end - start);
@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    chairmgr.SetVibrationsActivated(false);
+    chairManager.SetVibrationsActivated(false);
     delete mosquittoBroker;
     return 0;
 }

@@ -25,19 +25,50 @@ void DeviceManager::InitializeDevices()
 
     _fileManager->Read();
 
-    _isMobileImuInitialized = _mobileImu->Initialize();
-    _isFixedImuInitialized = _fixedImu->Initialize();
+    InitializeForcePlateSensors();
+    InitializeMobileImu();
+    InitializeFixedImu();
 
     _datetimeRTC->SetCurrentDateTimeIfConnectedThread().detach();
     _isAlarmInitialized = _alarm.Initialize();
     _isMotionSensorInitialized = _motionSensor->Initialize();
+
+    _fileManager->Save();
+
+    printf("Setup Done\n");
+}
+
+void DeviceManager::InitializeForcePlateSensors()
+{
     _isForcePlateInitialized = InitializeForcePlate();
 
-    imu_offset_t mobileOffset = _fileManager->GetMobileImuOffsets();
-    imu_offset_t fixedOffset = _fileManager->GetFixedImuOffsets();
+    if (!_isForcePlateInitialized)
+    {
+        return;
+    }
+
     pressure_mat_offset_t pressureMatOffset = _fileManager->GetPressureMatoffset();
 
-    if (_isMobileImuInitialized && !Imu::IsImuOffsetValid(mobileOffset))
+    if (ForcePlate::IsPressureMatOffsetValid(pressureMatOffset))
+    {
+        _sensorMatrix.SetOffsets(pressureMatOffset);
+        _isPressureMatCalibrated = true;
+    }
+}
+
+void DeviceManager::InitializeMobileImu()
+{
+    _isMobileImuInitialized = _mobileImu->Initialize();
+    _isMobileImuCalibrated = false;
+
+    if (!_isMobileImuInitialized)
+    {
+        return;
+    }
+
+    imu_offset_t mobileOffset = _fileManager->GetMobileImuOffsets();
+
+    if (!Imu::IsImuOffsetValid(mobileOffset))
     {
         CalibrateMobileIMU();
     }
@@ -46,8 +77,21 @@ void DeviceManager::InitializeDevices()
         _mobileImu->SetOffset(mobileOffset);
         _isMobileImuCalibrated = true;
     }
+}
 
-    if (_isFixedImuInitialized && !Imu::IsImuOffsetValid(fixedOffset))
+void DeviceManager::InitializeFixedImu()
+{
+    _isFixedImuInitialized = _fixedImu->Initialize();
+    _isFixedImuCalibrated = false;
+
+    if (!_isFixedImuInitialized)
+    {
+        return;
+    }
+
+    imu_offset_t fixedOffset = _fileManager->GetFixedImuOffsets();
+
+    if (!Imu::IsImuOffsetValid(fixedOffset))
     {
         CalibrateFixedIMU();
     }
@@ -56,14 +100,79 @@ void DeviceManager::InitializeDevices()
         _fixedImu->SetOffset(fixedOffset);
         _isFixedImuCalibrated = true;
     }
+}
 
-    if (ForcePlate::IsPressureMatOffsetValid(pressureMatOffset))
+Sensor *DeviceManager::GetSensor(const int device)
+{
+    switch (device)
     {
-        _sensorMatrix.SetOffsets(pressureMatOffset);
-        _isPressureMatCalibrated = true;
+        case alarmSensor :
+            return &_alarm;
+        case mobileImu:
+            return _mobileImu;
+        case fixedImu:
+            return _fixedImu;
+        case motionSensor:
+            return _motionSensor;
+        default:
+            throw "Error: Invalid device";
+            break;
+    }
+}
+
+void DeviceManager::ReconnectSensor(const int device)
+{
+    Sensor *sensor;
+    try
+    {
+        sensor = GetSensor(device);
+    }
+    catch (const std::exception& e)
+    {
+        printf("Error: Invalid device");
+        return;
     }
 
-    printf("Setup Done\n");
+    if (!sensor->IsConnected())
+    {
+        if (typeid(sensor) == typeid(FixedImu))
+        {
+            InitializeFixedImu();
+        }
+        else if (typeid(sensor) == typeid(MobileImu))
+        {
+            InitializeMobileImu();
+        }
+        else if (typeid(sensor) == typeid(ForcePlate))
+        {
+            InitializeForcePlate();
+        }
+        else
+        {
+            sensor->Initialize();
+        }
+    }
+}
+
+bool DeviceManager::IsSensorStateChanged(const int device)
+{
+    Sensor *sensor;
+    try
+    {
+        sensor = GetSensor(device);
+    }
+    catch (const std::exception& e)
+    {
+        printf("Error: Invalid device");
+        return false;
+    }
+
+    if (sensor->IsStateChanged())
+    {
+        return true;
+    }
+
+    return false;
 }
 
 void DeviceManager::TurnOff()
@@ -114,7 +223,7 @@ void DeviceManager::CalibrateMobileIMU()
 bool DeviceManager::InitializeForcePlate()
 {
     printf("MAX11611 (ADC) initializing ... ");
-    if (_max11611.Initialize())
+    if (IsForcePlateConnected())
     {
         for (uint8_t i = 0; i < PRESSURE_SENSOR_COUNT; i++)
         {
@@ -130,6 +239,11 @@ bool DeviceManager::InitializeForcePlate()
         printf("FAIL\n");
         return false;
     }
+}
+
+bool DeviceManager::IsForcePlateConnected()
+{
+    return _max11611.Initialize();
 }
 
 void DeviceManager::Update()

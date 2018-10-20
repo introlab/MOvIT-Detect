@@ -14,7 +14,7 @@ bool Imu::Initialize()
     printf("MPU6050 %s initializing ... ", _imuName.c_str());
     fflush(stdout);
 
-    if (!_imu.TestConnection())
+    if (!IsConnected())
     {
         printf("FAIL\n");
         return false;
@@ -24,6 +24,11 @@ bool Imu::Initialize()
 
     printf("SUCCESS\n");
     return true;
+}
+
+bool Imu::IsConnected()
+{
+    return _imu.TestConnection();
 }
 
 bool Imu::IsImuOffsetValid(imu_offset_t offset)
