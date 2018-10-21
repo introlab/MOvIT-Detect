@@ -26,22 +26,31 @@ The embedded system part of the MOvIT-Detect project.
     cd MOvIT-Detect/Movit-Pi/
 ```
 - Finalement compiler le code:
-```shell
-    make
-```
-- Note: Si vous buildé sur une VM à partir d'un dossier partagé et que vous voyez `Clock skew detected.  Your build may be incomplete.` dans le build, vous pouvez utiliser la commande suivante pour régler ce problème:
-``` shell
-find . -exec touch {} \;
-```
+    - Si vous voulez compiler seulement `movit-pi`
+    ```shell
+    make pi
+    ```
+    - Si vous voulez compiler seulement `movit-control`
+    ```shell
+    make control
+    ```
+    - Si vous voulez compiler tout
+    ```shell
+    make all
+    ```
+    - Si vous avez des problèmes weird, c'est toujours recommandé de cleaner et rebuilder
+    ```shell
+    make clean && make all
+    ```
 
 ## Exécuter le code sur le RaspberryPi
 
-- Copier le fichier `output/movit-pi` sur le RaspberryPi
-- Excécuter le fichier en faisant:
+- Copier transferer les fichiers contenu dans `output` sur le RaspberryPi
+- À MODIFIER Excécuter le fichier en faisant:
 ```shell
     sudo ./movit-pi
 ```
-Note: Si le fichier est présent, mais qu'en essayant de l'exécuter ça ne trouve pas le fichier, c'est surement parce que le fichier n'a pas les permissions pour être exécuté. Pour régler ce problème, il suffit de faire:
+À MODIFIER  Note: Si le fichier est présent, mais qu'en essayant de l'exécuter ça ne trouve pas le fichier, c'est surement parce que le fichier n'a pas les permissions pour être exécuté. Pour régler ce problème, il suffit de faire:
 ```shell
     sudo chmod +x movit-pi
 ```
@@ -74,7 +83,7 @@ sudo reboot
 ```
 
 ### Si vous n'avez pas accès au système de fichier du RaspberryPi
-- Brancher la carte microSD de votre RaspberryPi dans votre ordinateur. Vous allez voir le drive `boot` apparaitre. Ouvrez-le. 
+- Brancher la carte microSD de votre RaspberryPi dans votre ordinateur. Vous allez voir le drive `boot` apparaitre. Ouvrez-le.
 - Ajouter le fichier `wpa_supplicant.conf` sur ce drive avec le contenu suivant:
 ```
 ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
@@ -112,7 +121,7 @@ Sous Windows cela équivaut à rajouter par exemple le dossier "C:\SonarScanner\
 
 ### Utilisation
 
-- Une fois que la configuration est faite, pour utiliser le scanneur on doit ouvrir une invite de commande à la racine du projet et y taper la commande 
+- Une fois que la configuration est faite, pour utiliser le scanneur on doit ouvrir une invite de commande à la racine du projet et y taper la commande
 
 ```shell
 sonar-scanner
