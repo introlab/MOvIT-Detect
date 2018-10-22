@@ -39,7 +39,11 @@ class DeviceManager
     bool IsForcePlateConnected();
     void ReconnectSensor(const int device);
     bool IsSensorStateChanged(const int device);
-    bool IsSomeoneThere() { return _isSomeoneThere; }
+
+    // TODO: CECI EST TEMPORAIRE CAR ON A PU DE TAPIS DE PRESSION
+    //bool IsSomeoneThere() { return _isSomeoneThere; }
+    bool IsSomeoneThere() { return true; }
+
     bool IsChairInclined() { return _isChairInclined; }
     Coord_t GetCenterOfPressure() { return _COPCoord; }
     int GetBackSeatAngle() { return _backSeatAngle; }

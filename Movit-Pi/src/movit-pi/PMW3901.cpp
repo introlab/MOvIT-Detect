@@ -22,12 +22,6 @@ bool PMW3901::Initialize()
   bcm2835_gpio_fsel(PIN, BCM2835_GPIO_FSEL_OUTP);
   SetChipSelect(HIGH);
 
-  // Setup SPI
-  if (!bcm2835_init())
-  {
-    return false;
-  }
-
   // Power on reset
   RegisterWrite(0x3A, 0x5A);
 

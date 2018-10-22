@@ -38,7 +38,7 @@ void ChairManager::SendSensorsState()
     const bool isMotionSensorConnected = _deviceManager->IsMotionSensorConnected();
     const bool isForcePlateConnected = _deviceManager->IsForcePlateConnected();
 
-    _mosquittoBroker->SendSensorsState(isAlarmConnected, isFixedImuConnected, isMobileImuConnected, isMotionSensorConnected, isForcePlateConnected, _currentDatetime); 
+    _mosquittoBroker->SendSensorsState(isAlarmConnected, isFixedImuConnected, isMobileImuConnected, isMotionSensorConnected, isForcePlateConnected, _currentDatetime);
 }
 
 void ChairManager::UpdateSensor(int device, bool isConnected)
@@ -108,7 +108,7 @@ void ChairManager::UpdateDevices()
             _mosquittoBroker->SendBackRestAngle(_currentChairAngle, _currentDatetime);
         }
     }
-    
+
     if (_wifiChangedTimer.Elapsed() >= WIFI_VALIDATION_PERIOD.count() && _isWifiChanged)
     {
         _isWifiChanged = false;

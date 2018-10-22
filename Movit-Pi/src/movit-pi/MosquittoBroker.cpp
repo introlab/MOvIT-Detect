@@ -126,7 +126,7 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
             _setAlarmOn = false;
             _setAlarmOnNew = false;
         }
-    }    
+    }
     if (topic == SELECT_WIFI_TOPIC)
     {
         _wifiChanged = true;
@@ -297,7 +297,7 @@ void MosquittoBroker::SendIsMoving(const bool state, const std::string datetime)
 }
 
 void MosquittoBroker::SendSensorsState(const bool alarmStatus, const bool mobileImuStatus,
-    const bool fixedImuStatus, const bool motionSensorStatus, const bool plateSensorStatus, 
+    const bool fixedImuStatus, const bool motionSensorStatus, const bool plateSensorStatus,
     const std::string datetime)
 {
     std::string strMsg = "{"
