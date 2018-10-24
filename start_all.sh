@@ -1,24 +1,26 @@
 # update embedded
-sudo pkill -f movit
+# sudo pkill -f movit
+# cd ~/embedded
+# git checkout -f
+# git pull origin master
+
+# # update front-end
+# cd ~/frontend
+# git checkout -f
+# git pull origin master
+
+# # update back-end
+# node-red-stop
+# sudo pkill -f node-red
+# cd ~/backend
+# git checkout -f
+# git pull origin master
+
 cd ~/embedded
-git checkout -f
-git pull origin master
 
-# update front-end
-sudo kill $(lsof -t -i:3000)
-cd ~/frontend
-git checkout -f
-git pull origin master
-
-# update back-end
-node-red-stop
-sudo pkill -f node-red
-cd ~/backend
-git checkout -f
-git pull origin master
+./kill_all.sh
 
 # start all
-cd ~/embedded
-./start_backend.sh & 
-./start_frontend.sh & 
-./start_embedded.sh & 
+./start_backend.sh &
+./start_frontend.sh &
+./start_embedded.sh &
