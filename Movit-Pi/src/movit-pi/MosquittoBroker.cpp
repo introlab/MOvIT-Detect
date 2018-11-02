@@ -3,7 +3,6 @@
 #include <string>
 
 #include "MosquittoBroker.h"
-#include "mosquittopp.h"
 #include "Utils.h"
 
 // Embarqué à back-end
@@ -31,11 +30,11 @@ const char *CURRENT_BACK_REST_ANGLE_TOPIC = "data/current_back_rest_angle";
 const char *CURRENT_CENTER_OF_PRESSURE_TOPIC = "data/current_center_of_pressure";
 const char *CURRENT_IS_SOMEONE_THERE_TOPIC = "data/current_is_someone_there";
 const char *CURRENT_IS_WIFI_CONNECTED_TOPIC = "data/current_is_wifi_connected";
-
 const char *CURRENT_CHAIR_SPEED_TOPIC = "data/current_chair_speed";
 const char *KEEP_ALIVE = "data/keep_alive";
 const char *VIBRATION_TOPIC = "data/vibration";
 const char *IS_MOVING_TOPIC = "data/is_moving";
+const char *TILT_INFO_TOPIC = "data/tilt_info";
 
 const char *SENSOR_STATUS_TOPIC = "status/sensor";
 const char *SENSORS_STATUS_TOPIC = "status/sensors";
@@ -294,6 +293,14 @@ void MosquittoBroker::SendIsMoving(const bool state, const std::string datetime)
     std::string strMsg = "{\"datetime\":" + datetime + ",\"isMoving\":" + strState + "}";
 
     publish(NULL, IS_MOVING_TOPIC, strMsg.length(), strMsg.c_str());
+}
+
+void MosquittoBroker::SendTiltInfo(const int info, const std::string datetime)
+{
+    std::string strInfo = std::to_string(info);
+    std::string strMsg = "{\"datetime\":" + datetime + ",\"info\":" + strInfo + "}";
+
+    publish(NULL, TILT_INFO_TOPIC, strMsg.length(), strMsg.c_str());
 }
 
 void MosquittoBroker::SendSensorsState(const bool alarmStatus, const bool mobileImuStatus,
