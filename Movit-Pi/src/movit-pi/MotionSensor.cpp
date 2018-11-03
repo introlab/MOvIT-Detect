@@ -32,6 +32,11 @@ bool MotionSensor::Initialize()
     return false;
 }
 
+bool MotionSensor::IsConnected()
+{
+    return _rangeSensor.Initialize(false) && _opticalFLowSensor.Initialize();
+}
+
 bool MotionSensor::InitializeRangeSensor()
 {
     uint16_t const timeout = 500;         // In milliseconde

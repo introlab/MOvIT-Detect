@@ -1,13 +1,14 @@
 #ifndef ALARM_H
 #define ALARM_H
 
+#include "Sensor.h"
 #include "PCA9536.h"
 #include <thread>
 
 #define DEFAULT_BLINK_DURATION 600
 #define DEFAULT_BLINK_FREQUENCY 0.1
 
-class Alarm
+class Alarm : public Sensor
 {
   private:
     PCA9536 _pca9536;
@@ -25,13 +26,14 @@ class Alarm
 
     uint8_t GetPinState(pin_t pin);
 
+    void SetBlinkDuration(int blinkDuraction);
+    void SetBlinkFrequency(double blinkFrequency);
+
   public:
     Alarm();
     Alarm(int blinkDuration, double blinkFrequency);
-
     bool Initialize();
-    void SetBlinkDuration(int blinkDuraction);
-    void SetBlinkFrequency(double blinkFrequency);
+    bool IsConnected();
 
     void DeactivateVibration(bool state) { _deactivateVibration = state; }
 

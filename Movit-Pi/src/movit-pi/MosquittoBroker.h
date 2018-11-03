@@ -25,7 +25,10 @@ class MosquittoBroker : public mosqpp::mosquittopp
     void SendKeepAlive(const std::string datetime);
     void SendVibration(double acceleration, const std::string datetime);
     void SendIsMoving(const bool state, const std::string datetime);
-    void SendSensorsStatus(const bool alarmStatus, const bool mobileImuStatus, const bool fixedImuStatus, const bool motionSensorStatus, const bool plateSensorStatus, const std::string datetime);
+    void SendTiltInfo(const int info, const std::string datetime);
+
+    void SendSensorState(const int device, const bool alarmStatus, const std::string datetime);
+    void SendSensorsState(const bool alarmStatus, const bool mobileImuStatus, const bool fixedImuStatus, const bool motionSensorStatus, const bool plateSensorStatus, const std::string datetime);
     void SendIsWifiConnected(const bool state, const std::string datetime);
 
     bool GetSetAlarmOn();

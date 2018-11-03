@@ -18,7 +18,8 @@ class ChairManager
 
     inline bool TestPattern() { return _deviceManager->TestDevices(); }
 
-    void SendSensorsStatus();
+    void SendSensorsState();
+    void UpdateSensor(int device, bool isConnected);
     void UpdateDevices();
     void ReadFromServer();
     void CheckNotification();
@@ -28,9 +29,11 @@ class ChairManager
   private:
 
     static constexpr auto CENTER_OF_PRESSURE_EMISSION_PERIOD = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::minutes(5));
+    static constexpr auto FAILED_TILT_TIME = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::minutes(2));
     static constexpr auto CHAIR_ANGLE_EMISSION_PERIOD = std::chrono::seconds(1);
     static constexpr auto WIFI_VALIDATION_PERIOD = std::chrono::seconds(10);
 
+    static constexpr int MINIMUM_ANGLE = 10; // degrees
 
     Alarm *_alarm;
     MosquittoBroker *_mosquittoBroker;
@@ -61,6 +64,7 @@ class ChairManager
     Timer _wifiChangedTimer;
     Timer _chairAngleTimer;
     Timer _keepAliveTimer;
+    Timer _failedTiltTimer;
 
     void CheckIfUserHasBeenSittingForRequiredTime();
     void CheckIfBackRestIsRequired();

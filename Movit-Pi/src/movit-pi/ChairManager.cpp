@@ -16,6 +16,26 @@ using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 using std::chrono::seconds;
 
+enum State
+{
+    INITIAL = 1,
+    WAIT,
+    CLIMB,
+    STAY,
+    DESCEND,
+    INVALID
+};
+
+enum TiltInfo
+{
+    SUCCESS = 0,
+    TOO_SHORT,
+    FAIL,
+    SNOOZED,
+    TOO_LOW,
+    COUNT
+};
+
 ChairManager::ChairManager(MosquittoBroker *mosquittoBroker, DeviceManager *deviceManager) : _mosquittoBroker(mosquittoBroker),
                                                                                              _deviceManager(deviceManager)
 {
@@ -28,21 +48,37 @@ ChairManager::~ChairManager()
 {
 }
 
-void ChairManager::SendSensorsStatus()
+void ChairManager::SendSensorsState()
 {
     _currentDatetime = std::to_string(_deviceManager->GetTimeSinceEpoch());
 
-    const bool alarmStatus = _deviceManager->GetIsAlarmInitialized();
-    const bool fixedImuStatus = _deviceManager->GetIsFixedImuInitialized();
-    const bool mobileImuStatus = _deviceManager->GetIsMobileInitialized();
-    const bool motionSensorStatus = _deviceManager->GetIsMotionSensorInitialized();
-    const bool forcePlateStatus = _deviceManager->GetIsForcePlateInitialized();
-    _mosquittoBroker->SendSensorsStatus(alarmStatus, fixedImuStatus, mobileImuStatus, motionSensorStatus, forcePlateStatus, _currentDatetime);
+    const bool isAlarmConnected = _deviceManager->IsAlarmConnected();
+    const bool isFixedImuConnected = _deviceManager->IsFixedImuConnected();
+    const bool isMobileImuConnected = _deviceManager->IsMobileImuConnected();
+    const bool isMotionSensorConnected = _deviceManager->IsMotionSensorConnected();
+    const bool isForcePlateConnected = _deviceManager->IsForcePlateConnected();
+
+    _mosquittoBroker->SendSensorsState(isAlarmConnected, isFixedImuConnected, isMobileImuConnected, isMotionSensorConnected, isForcePlateConnected, _currentDatetime);
+}
+
+void ChairManager::UpdateSensor(int device, bool isConnected)
+{
+    if (_deviceManager->IsSensorStateChanged(device))
+    {
+        _mosquittoBroker->SendSensorState(device, isConnected, _currentDatetime);
+    }
+    _deviceManager->ReconnectSensor(device);
 }
 
 void ChairManager::UpdateDevices()
 {
     _currentDatetime = std::to_string(_deviceManager->GetTimeSinceEpoch());
+
+    // Ces calls prennent beaucoup trop de CPU quand les capteurs ne sont pas connecté
+    // UpdateSensor(DEVICES::alarmSensor, _deviceManager->IsAlarmConnected());
+    // UpdateSensor(DEVICES::fixedImu, _deviceManager->IsFixedImuConnected());
+    // UpdateSensor(DEVICES::mobileImu, _deviceManager->IsMobileImuConnected());
+    // UpdateSensor(DEVICES::motionSensor, _deviceManager->IsMotionSensorConnected());
 
     if (_mosquittoBroker->CalibPressureMatRequired())
     {
@@ -93,7 +129,7 @@ void ChairManager::UpdateDevices()
             _mosquittoBroker->SendBackRestAngle(_currentChairAngle, _currentDatetime);
         }
     }
-    
+
     if (_wifiChangedTimer.Elapsed() >= WIFI_VALIDATION_PERIOD.count() && _isWifiChanged)
     {
         _isWifiChanged = false;
@@ -156,7 +192,7 @@ void ChairManager::ReadFromServer()
         _requiredBackRestAngle = _mosquittoBroker->GetRequiredBackRestAngle();
         _secondsCounter = 0;
         // TODO valider que c'est le bon _state
-        _state = 1;
+        _state = State::INITIAL;
         printf("Something new for _requiredBackRestAngle = %i\n", _requiredBackRestAngle);
     }
     if (_mosquittoBroker->IsRequiredPeriodNew())
@@ -164,7 +200,7 @@ void ChairManager::ReadFromServer()
         _requiredPeriod = _mosquittoBroker->GetRequiredPeriod();
         _secondsCounter = 0;
         // TODO valider que c'est le bon _state
-        _state = 1;
+        _state = State::INITIAL;
         printf("Something new for _requiredPeriod = %i\n", _requiredPeriod);
     }
     if (_mosquittoBroker->IsRequiredDurationNew())
@@ -172,7 +208,7 @@ void ChairManager::ReadFromServer()
         _requiredDuration = _mosquittoBroker->GetRequiredDuration();
         _secondsCounter = 0;
         // TODO valider que c'est le bon _state
-        _state = 1;
+        _state = State::INITIAL;
         printf("Something new for _requiredDuration = %i\n", _requiredDuration);
     }
     if (_mosquittoBroker->IsWifiChanged())
@@ -192,9 +228,9 @@ void ChairManager::CheckNotification()
         return;
     }
 
-    if (!_isSomeoneThere || _requiredDuration == 0 || _requiredPeriod == 0 || _requiredBackRestAngle == 0)
+    if (!_isSomeoneThere || _requiredDuration == 0 || _requiredPeriod == 0 || _requiredBackRestAngle == 0 || _isMoving)
     {
-        _state = 1;
+        _state = State::INITIAL;
         _secondsCounter = 0;
         _alarm->TurnOffAlarm();
         return;
@@ -224,18 +260,18 @@ void ChairManager::CheckNotification()
 
 void ChairManager::CheckIfUserHasBeenSittingForRequiredTime()
 {
-    printf("State 1\t_secondsCounter: %i\n", _secondsCounter);
+    printf("State INIT\t_secondsCounter: %i\n", _secondsCounter);
 
     if (++_secondsCounter >= REQUIRED_SITTING_TIME)
     {
-        _state = 2;
+        _state = State::WAIT;
         _secondsCounter = 0;
     }
 }
 
 void ChairManager::CheckIfBackRestIsRequired()
 {
-    printf("State 2\t_secondsCounter: %i\n", _secondsCounter);
+    printf("State WAIT\t_secondsCounter: %i\n", _secondsCounter);
 
     if (++_secondsCounter >= _requiredPeriod)
     {
@@ -246,8 +282,10 @@ void ChairManager::CheckIfBackRestIsRequired()
             {
                 _alarm->TurnOnRedAlarmThread().detach();
             }
-            _state = 3;
+            _state = State::CLIMB;
             _secondsCounter = 0;
+
+            _failedTiltTimer.Reset();
         }
         else if (!_alarm->IsBlinkGreenAlarmOn())
         {
@@ -258,52 +296,63 @@ void ChairManager::CheckIfBackRestIsRequired()
 
 void ChairManager::CheckIfRequiredBackSeatAngleIsReached()
 {
-    printf("State 3\t abs(requiredBackRestAngle - _currentChairAngle): %i\n", abs(int(_requiredBackRestAngle) - int(_currentChairAngle)));
+    printf("State CLIMB\t abs(requiredBackRestAngle - _currentChairAngle): %i\n", abs(int(_requiredBackRestAngle) - int(_currentChairAngle)));
+
+    if (_failedTiltTimer.Elapsed() > FAILED_TILT_TIME.count()) // || check si le dismiss à été pesé ici)
+    {
+        _state = State::WAIT;
+        printf("Failed bascule\n");
+        _mosquittoBroker->SendTiltInfo(TiltInfo::FAIL, _currentDatetime);
+    }
 
     if (_currentChairAngle > (_requiredBackRestAngle - DELTA_ANGLE_THRESHOLD))
     {
         _alarm->TurnOnGreenAlarm();
-        _state = 4;
+        _state = State::STAY;
     }
 }
 
 void ChairManager::CheckIfRequiredBackSeatAngleIsMaintained()
 {
-    printf("State 4\n");
+    printf("State STAY\n");
 
     if (_currentChairAngle > (_requiredBackRestAngle - DELTA_ANGLE_THRESHOLD))
     {
-        printf("State 4\t_secondsCounter: %i\n", _secondsCounter);
+        _secondsCounter++;
 
-        if (++_secondsCounter >= _requiredDuration)
+        printf("State STAY\t_secondsCounter: %i\n", _secondsCounter);
+
+        if (_secondsCounter >= _requiredDuration)
         {
             if (!_alarm->IsBlinkGreenAlarmOn())
             {
                 _alarm->TurnOnBlinkLedsAlarmThread().detach();
             }
-            _state = 5;
+            _state = State::DESCEND;
         }
     }
-    else
+    else if (_currentChairAngle < MINIMUM_ANGLE)
     {
-        printf("State 4 il faut remonter\n");
-        if (!_alarm->IsRedAlarmOn())
-        {
-            _alarm->TurnOnRedAlarmThread().detach();
-        }
-        _state = 3;
-        _secondsCounter = 0;
+        _state = State::WAIT;
+        printf("Bascule pas assez longue\n");
+        _mosquittoBroker->SendTiltInfo(TiltInfo::TOO_SHORT, _currentDatetime);
     }
 }
 
 void ChairManager::CheckIfBackSeatIsBackToInitialPosition()
 {
-    printf("State 5\t_secondsCounter: %i\n", ++_secondsCounter);
+    _secondsCounter++;
+
+    printf("State DESCEND\t_secondsCounter: %i\n", _secondsCounter);
 
     if (_currentChairAngle < (_requiredBackRestAngle - DELTA_ANGLE_THRESHOLD))
     {
-        _state = 2;
+        _state = State::WAIT;
         _secondsCounter = 0;
+
+        printf("Successsssss\n");
+
+        _mosquittoBroker->SendTiltInfo(TiltInfo::SUCCESS, _currentDatetime);
     }
 }
 

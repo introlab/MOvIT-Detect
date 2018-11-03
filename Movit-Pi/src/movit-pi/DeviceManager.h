@@ -14,6 +14,7 @@
 #include "MotionSensor.h"
 #include "MAX11611.h"
 #include "FileManager.h"
+#include "Sensor.h"
 
 //Center of pressure coordinate
 struct Coord_t
@@ -31,8 +32,18 @@ class DeviceManager
     void Update();
 
     Alarm *GetAlarm() { return &_alarm; }
+    MobileImu *GetMobileImu() { return _mobileImu; }
+    FixedImu *GetFixedImu() { return _fixedImu; }
+    MotionSensor *GetMotionSensor() { return _motionSensor; }
 
-    bool IsSomeoneThere() { return _isSomeoneThere; }
+    bool IsForcePlateConnected();
+    void ReconnectSensor(const int device);
+    bool IsSensorStateChanged(const int device);
+
+    // TODO: CECI EST TEMPORAIRE CAR ON A PU DE TAPIS DE PRESSION
+    //bool IsSomeoneThere() { return _isSomeoneThere; }
+    bool IsSomeoneThere() { return true; }
+
     bool IsChairInclined() { return _isChairInclined; }
     Coord_t GetCenterOfPressure() { return _COPCoord; }
     int GetBackSeatAngle() { return _backSeatAngle; }
@@ -48,6 +59,11 @@ class DeviceManager
     void TurnOff();
 
     bool TestDevices();
+
+    bool IsAlarmConnected() { return _alarm.IsConnected(); }
+    bool IsMobileImuConnected() { return _mobileImu->IsConnected(); }
+    bool IsFixedImuConnected() { return _fixedImu->IsConnected(); }
+    bool IsMotionSensorConnected() { return _motionSensor->IsConnected(); }
 
     bool GetIsAlarmInitialized() { return _isAlarmInitialized; }
     bool GetIsFixedImuInitialized() { return _isFixedImuInitialized; }
@@ -71,7 +87,11 @@ class DeviceManager
     const int32_t DEFAULT_BACK_SEAT_ANGLE = 0;
     const float DEFAULT_CENTER_OF_PRESSURE = 0.0;
 
+    Sensor *GetSensor(const int device);
     void UpdateForcePlateData();
+    void InitializeForcePlateSensors();
+    void InitializeFixedImu();
+    void InitializeMobileImu();
     bool InitializeForcePlate();
 
     bool _isAlarmInitialized = false;

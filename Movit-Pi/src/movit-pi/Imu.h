@@ -5,6 +5,7 @@
 
 #include "MPU6050.h"
 #include "Utils.h"
+#include "Sensor.h"
 
 #define ACCELEROMETER_DEADZONE 8 // Accelerometer error allowed, make it lower to get more precision, but sketch may not converge (default: 8)
 #define BUFFER_SIZE 1000         // Amount of readings used to average, make it higher to get more precision but sketch will be slower (default: 1000)
@@ -12,11 +13,12 @@
 #define GRAVITY 9.80665
 #define LSB_SENSITIVITY -16384
 
-class Imu
+class Imu : public Sensor
 {
   public:
     Imu();
     bool Initialize();
+    bool IsConnected();
     void CalibrateAndSetOffsets();
     void GetAccelerations(double *accelerations);
     double GetPitch();

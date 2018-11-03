@@ -3,7 +3,7 @@
 #include <string>
 
 #include "MosquittoBroker.h"
-#include "mosquittopp.h"
+#include "Utils.h"
 
 // Embarqué à back-end
 // data/current_back_rest_angle: entier (angle en degrés) ce qui est envoyé est l'angle de début et l'angle de fin de la bascule
@@ -30,12 +30,13 @@ const char *CURRENT_BACK_REST_ANGLE_TOPIC = "data/current_back_rest_angle";
 const char *CURRENT_CENTER_OF_PRESSURE_TOPIC = "data/current_center_of_pressure";
 const char *CURRENT_IS_SOMEONE_THERE_TOPIC = "data/current_is_someone_there";
 const char *CURRENT_IS_WIFI_CONNECTED_TOPIC = "data/current_is_wifi_connected";
-
 const char *CURRENT_CHAIR_SPEED_TOPIC = "data/current_chair_speed";
 const char *KEEP_ALIVE = "data/keep_alive";
 const char *VIBRATION_TOPIC = "data/vibration";
 const char *IS_MOVING_TOPIC = "data/is_moving";
+const char *TILT_INFO_TOPIC = "data/tilt_info";
 
+const char *SENSOR_STATUS_TOPIC = "status/sensor";
 const char *SENSORS_STATUS_TOPIC = "status/sensors";
 
 const char *EXCEPTION_MESSAGE = "Exception thrown by %s()\n";
@@ -124,7 +125,7 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
             _setAlarmOn = false;
             _setAlarmOnNew = false;
         }
-    }    
+    }
     if (topic == SELECT_WIFI_TOPIC)
     {
         _wifiChanged = true;
@@ -294,8 +295,16 @@ void MosquittoBroker::SendIsMoving(const bool state, const std::string datetime)
     publish(NULL, IS_MOVING_TOPIC, strMsg.length(), strMsg.c_str());
 }
 
-void MosquittoBroker::SendSensorsStatus(const bool alarmStatus, const bool mobileImuStatus,
-    const bool fixedImuStatus, const bool motionSensorStatus, const bool plateSensorStatus, 
+void MosquittoBroker::SendTiltInfo(const int info, const std::string datetime)
+{
+    std::string strInfo = std::to_string(info);
+    std::string strMsg = "{\"datetime\":" + datetime + ",\"info\":" + strInfo + "}";
+
+    publish(NULL, TILT_INFO_TOPIC, strMsg.length(), strMsg.c_str());
+}
+
+void MosquittoBroker::SendSensorsState(const bool alarmStatus, const bool mobileImuStatus,
+    const bool fixedImuStatus, const bool motionSensorStatus, const bool plateSensorStatus,
     const std::string datetime)
 {
     std::string strMsg = "{"
@@ -307,6 +316,36 @@ void MosquittoBroker::SendSensorsStatus(const bool alarmStatus, const bool mobil
         "\"forcePlate\":" + std::to_string(plateSensorStatus) + "}";
 
     publish(NULL, SENSORS_STATUS_TOPIC, strMsg.length(), strMsg.c_str());
+}
+
+void MosquittoBroker::SendSensorState(const int device, const bool status, const std::string datetime)
+{
+    std::string sensorName;
+
+    switch (device) {
+        case alarmSensor :
+            sensorName = "alarm";
+            break;
+        case mobileImu:
+            sensorName = "mobileImu";
+            break;
+        case fixedImu:
+            sensorName = "fixedImu";
+            break;
+        case motionSensor:
+            sensorName = "motionSensor";
+            break;
+        case plateSensor:
+            sensorName = "plateSensor";
+            break;
+        default:
+            throw "Error: Invalid device";
+            break;
+    }
+
+    const std::string strState = std::to_string(status);
+    const std::string strMsg = "{\"datetime\":" + datetime + ",\"" + sensorName +"\":" + strState + "}";
+    publish(NULL, SENSOR_STATUS_TOPIC, strMsg.length(), strMsg.c_str());
 }
 
 bool MosquittoBroker::GetSetAlarmOn()
