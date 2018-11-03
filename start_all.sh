@@ -16,11 +16,11 @@
 # git checkout -f
 # git pull origin master
 
-cd ~/embedded
+cd /home/pi/embedded
+sudo chmod +x *.sh
 
 ./kill_all.sh
 
 # start all
-./start_backend.sh &
 ./start_frontend.sh &
-./start_embedded.sh &
+./start_control.sh &

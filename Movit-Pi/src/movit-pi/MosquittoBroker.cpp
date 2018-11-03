@@ -31,7 +31,7 @@ const char *CURRENT_CENTER_OF_PRESSURE_TOPIC = "data/current_center_of_pressure"
 const char *CURRENT_IS_SOMEONE_THERE_TOPIC = "data/current_is_someone_there";
 const char *CURRENT_IS_WIFI_CONNECTED_TOPIC = "data/current_is_wifi_connected";
 const char *CURRENT_CHAIR_SPEED_TOPIC = "data/current_chair_speed";
-const char *KEEP_ALIVE = "data/keep_alive";
+const char *HEARTBEAT_TOPIC = "heartbeat/embedded";
 const char *VIBRATION_TOPIC = "data/vibration";
 const char *IS_MOVING_TOPIC = "data/is_moving";
 const char *TILT_INFO_TOPIC = "data/tilt_info";
@@ -272,11 +272,11 @@ void MosquittoBroker::SendSpeed(const float speed, const std::string datetime)
     publish(NULL, CURRENT_CHAIR_SPEED_TOPIC, strMsg.length(), strMsg.c_str());
 }
 
-void MosquittoBroker::SendKeepAlive(const std::string datetime)
+void MosquittoBroker::SendHeartbeat(const std::string datetime)
 {
     std::string strMsg = "{\"datetime\":" + datetime + "}";
 
-    publish(NULL, KEEP_ALIVE, strMsg.length(), strMsg.c_str());
+    publish(NULL, HEARTBEAT_TOPIC, strMsg.length(), strMsg.c_str());
 }
 
 void MosquittoBroker::SendVibration(double acceleration, const std::string datetime)
