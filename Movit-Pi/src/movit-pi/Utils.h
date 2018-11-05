@@ -27,6 +27,7 @@ uint8_t BCDSubstract(const uint8_t &BCDlvalue, const uint8_t &DECrvalue);
 
 void sleep_for_microseconds(uint32_t microseconds);
 void sleep_for_milliseconds(uint32_t milliseconds);
+void sleep_for_seconds(uint32_t seconds);
 
 struct imu_offset_t
 {

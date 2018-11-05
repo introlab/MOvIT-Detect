@@ -252,7 +252,6 @@ bool DeviceManager::IsForcePlateConnected()
 void DeviceManager::Update()
 {
     _timeSinceEpoch = _datetimeRTC->GetTimeSinceEpoch();
-
     if (_isMotionSensorInitialized)
     {
         _isMoving = _motionSensor->GetIsMoving();
