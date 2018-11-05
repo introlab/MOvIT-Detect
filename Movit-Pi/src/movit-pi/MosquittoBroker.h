@@ -49,6 +49,8 @@ class MosquittoBroker : public mosqpp::mosquittopp
     bool IsVibrationDeactivated() { return _isVibrationDeactivated; }
 
   private:
+    void PublishMessage(const char *topic, const std::string message);
+
     bool _setAlarmOn = false;
     uint32_t _requiredBackRestAngle = 0;
     uint32_t _requiredPeriod = 0;
