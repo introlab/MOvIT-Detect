@@ -34,10 +34,10 @@ int main(int argc, char *argv[])
 
     sigaction(SIGINT, &sigIntHandler, NULL);
 
-    MosquittoBroker *mosquittoBroker = new MosquittoBroker("embedded");
+    MosquittoBroker mosquittoBroker("embedded");
     FileManager *filemgr = FileManager::GetInstance();
     DeviceManager *deviceManager = DeviceManager::GetInstance(filemgr);
-    ChairManager chairManager(mosquittoBroker, deviceManager);
+    ChairManager chairManager(&mosquittoBroker, deviceManager);
 
     deviceManager->InitializeDevices();
     chairManager.SendSensorsState();
@@ -80,6 +80,5 @@ int main(int argc, char *argv[])
     }
 
     chairManager.SetVibrationsActivated(false);
-    delete mosquittoBroker;
     return 0;
 }

@@ -106,17 +106,17 @@ Sensor *DeviceManager::GetSensor(const int device)
 {
     switch (device)
     {
-        case alarmSensor :
-            return &_alarm;
-        case mobileImu:
-            return _mobileImu;
-        case fixedImu:
-            return _fixedImu;
-        case motionSensor:
-            return _motionSensor;
-        default:
-            throw "Error: Invalid device";
-            break;
+    case alarmSensor:
+        return &_alarm;
+    case mobileImu:
+        return _mobileImu;
+    case fixedImu:
+        return _fixedImu;
+    case motionSensor:
+        return _motionSensor;
+    default:
+        throw "Error: Invalid device";
+        break;
     }
 }
 
@@ -127,7 +127,7 @@ void DeviceManager::ReconnectSensor(const int device)
     {
         sensor = GetSensor(device);
     }
-    catch (const std::exception& e)
+    catch (const std::exception &e)
     {
         printf("Error: Invalid device");
         return;
@@ -161,7 +161,7 @@ bool DeviceManager::IsSensorStateChanged(const int device)
     {
         sensor = GetSensor(device);
     }
-    catch (const std::exception& e)
+    catch (const std::exception &e)
     {
         printf("Error: Invalid device");
         return false;
@@ -177,7 +177,10 @@ bool DeviceManager::IsSensorStateChanged(const int device)
 
 void DeviceManager::TurnOff()
 {
-    GetAlarm()->TurnOffAlarm();
+    if (_isAlarmInitialized)
+    {
+        GetAlarm()->TurnOffAlarm();
+    }
 }
 
 void DeviceManager::CalibratePressureMat()
@@ -249,7 +252,6 @@ bool DeviceManager::IsForcePlateConnected()
 void DeviceManager::Update()
 {
     _timeSinceEpoch = _datetimeRTC->GetTimeSinceEpoch();
-
     if (_isMotionSensorInitialized)
     {
         _isMoving = _motionSensor->GetIsMoving();

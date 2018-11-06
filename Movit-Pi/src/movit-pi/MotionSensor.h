@@ -54,6 +54,8 @@ class MotionSensor: public Sensor
     MovingAverage<uint16_t> _rangeAverage;
     MovingAverage<int16_t> _deltaXAverage;
     MovingAverage<int16_t> _deltaYAverage;
+
+    static constexpr auto WHEELCHAIR_MOVING_TIMEOUT = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::seconds(4));
     Timer _timer;
 };
 

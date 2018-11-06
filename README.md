@@ -45,14 +45,19 @@ The embedded system part of the MOvIT-Detect project.
 
 ## Exécuter le code sur le RaspberryPi
 
-- Copier transferer les fichiers contenu dans `output` sur le RaspberryPi
-- À MODIFIER Excécuter le fichier en faisant:
+- Copier transferer les fichiers contenu dans `output` de votre hôte Linux sur le Raspberry Pi dans le dossier `/home/pi/embedded/Movit-Pi/release`
+
+- Se déplacer à `/home/pi/embedded`
+### Pour exécuter seulement l'embarqué
+- Excécuter le fichier en faisant:
 ```shell
-    sudo ./movit-pi
+    ./start_embedded.sh
 ```
-À MODIFIER  Note: Si le fichier est présent, mais qu'en essayant de l'exécuter ça ne trouve pas le fichier, c'est surement parce que le fichier n'a pas les permissions pour être exécuté. Pour régler ce problème, il suffit de faire:
+### Pour exécuter l'embarqué et le backend
+Ceci permet de profiter des avantages du process de control
+- Excécuter le fichier en faisant:
 ```shell
-    sudo chmod +x movit-pi
+    ./start_control.sh
 ```
 
 ## Configurer la connexion à internet sur le RaspberryPi

@@ -31,11 +31,11 @@ class MovingAverage
     {
         if (_windowFilled)
         {
-            return (double)std::accumulate(_values, _values + _windowSize, 0) / _windowSize;
+            return static_cast<double>(std::accumulate(_values, _values + _windowSize, 0) / _windowSize);
         }
         else
         {
-            return (double)std::accumulate(_values, _values + _pos, 0) / _pos;
+            return static_cast<double>(std::accumulate(_values, _values + _pos, 0) / _pos);
         }
     }
 

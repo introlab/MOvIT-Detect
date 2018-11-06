@@ -22,7 +22,7 @@ class MosquittoBroker : public mosqpp::mosquittopp
     void SendIsPressureMatCalib(const bool state, const std::string datetime);
     void SendIsIMUCalib(const bool state, const std::string datetime);
     void SendSpeed(const float speed, const std::string datetime);
-    void SendKeepAlive(const std::string datetime);
+    void SendHeartbeat(const std::string datetime);
     void SendVibration(double acceleration, const std::string datetime);
     void SendIsMoving(const bool state, const std::string datetime);
     void SendTiltInfo(const int info, const std::string datetime);
@@ -49,6 +49,8 @@ class MosquittoBroker : public mosqpp::mosquittopp
     bool IsVibrationDeactivated() { return _isVibrationDeactivated; }
 
   private:
+    void PublishMessage(const char *topic, const std::string message);
+
     bool _setAlarmOn = false;
     uint32_t _requiredBackRestAngle = 0;
     uint32_t _requiredPeriod = 0;

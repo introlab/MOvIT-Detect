@@ -3,4 +3,4 @@ sudo chmod +x movit-pi
 sudo chmod +x movit-control
 
 # execute embedded
-sudo ./movit-pi
+sudo ./movit-control

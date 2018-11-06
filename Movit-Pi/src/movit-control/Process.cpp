@@ -2,12 +2,14 @@
 #include <unistd.h>
 #include <cstdlib>
 #include <signal.h>
+#include <cerrno>
+#include <cstring>
 
-using std::vector;
 using std::string;
+using std::vector;
 
-Process::Process(std::string executable, std::string path) : _executable(executable),
-                                                             _path(path)
+Process::Process(string executable, std::string path) : _executable(executable),
+                                                        _path(path)
 {
 }
 
@@ -16,7 +18,17 @@ Process::~Process()
     Kill();
 }
 
-void Process::AddArgument(std::string arg)
+Process &Process::operator=(const Process &other_proc)
+{
+    _arguments = other_proc._arguments;
+    _executable = other_proc._executable;
+    _path = other_proc._path;
+    _pid = other_proc._pid;
+
+    return *this;
+}
+
+void Process::AddArgument(string arg)
 {
     if (_arguments.size() < (MAX_ARG_COUNT - 1))
     {
@@ -34,9 +46,20 @@ bool Process::Run()
     _pid = fork();
 
     char *argv[MAX_ARG_COUNT];
-
     int count = 0;
-    argv[count++] = const_cast<char *>(_executable.c_str());
+
+    string fullPath;
+
+    if (!_path.size())
+    {
+        fullPath = _executable;
+    }
+    else
+    {
+        fullPath = _path + "/" + _executable;
+    }
+
+    argv[count++] = const_cast<char *>(fullPath.c_str());
     for (vector<string>::iterator it = _arguments.begin(); it != _arguments.end(); it++)
     {
         argv[count++] = const_cast<char *>(it->c_str());
@@ -46,7 +69,11 @@ bool Process::Run()
 
     if (_pid == 0)
     {
-        execv(argv[0], argv);
+        int ret = execv(argv[0], argv);
+        if (ret == -1)
+        {
+            printf("ERROR: Cannot create process: %s. %s\n", _executable.c_str(), std::strerror(errno));
+        }
         exit(0);
         return false;
     }

@@ -5,7 +5,6 @@
 #define REQUIRED_SITTING_TIME 5
 #define DELTA_ANGLE_THRESHOLD 5
 
-#define KEEP_ALIVE_PERIOD 300000
 #define VIBRATION_EMISSION_FREQUENCY 60 // Hz
 #define VIBRATION_EMISSION_THRESOLD 2   // m/s^2
 #define MINIMUM_BACK_REST_ANGLE 2
@@ -136,10 +135,10 @@ void ChairManager::UpdateDevices()
         _mosquittoBroker->SendIsWifiConnected(NetworkManager::IsConnected(), _currentDatetime);
     }
 
-    if (_keepAliveTimer.Elapsed() >= KEEP_ALIVE_PERIOD)
+    if (_heartbeatTimer.Elapsed() >= HEARTBEAT_PERIOD.count())
     {
-        _keepAliveTimer.Reset();
-        _mosquittoBroker->SendKeepAlive(_currentDatetime);
+        _heartbeatTimer.Reset();
+        _mosquittoBroker->SendHeartbeat(_currentDatetime);
     }
 
     if (_prevIsSomeoneThere != _isSomeoneThere)

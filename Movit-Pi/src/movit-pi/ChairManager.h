@@ -30,8 +30,9 @@ class ChairManager
 
     static constexpr auto CENTER_OF_PRESSURE_EMISSION_PERIOD = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::minutes(5));
     static constexpr auto FAILED_TILT_TIME = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::minutes(2));
-    static constexpr auto CHAIR_ANGLE_EMISSION_PERIOD = std::chrono::seconds(1);
+    static constexpr auto CHAIR_ANGLE_EMISSION_PERIOD = std::chrono::milliseconds(1000);
     static constexpr auto WIFI_VALIDATION_PERIOD = std::chrono::seconds(10);
+    static constexpr auto HEARTBEAT_PERIOD = std::chrono::milliseconds(1000);
 
     static constexpr int MINIMUM_ANGLE = 10; // degrees
 
@@ -63,7 +64,7 @@ class ChairManager
     Timer _centerOfPressureTimer;
     Timer _wifiChangedTimer;
     Timer _chairAngleTimer;
-    Timer _keepAliveTimer;
+    Timer _heartbeatTimer;
     Timer _failedTiltTimer;
 
     void CheckIfUserHasBeenSittingForRequiredTime();

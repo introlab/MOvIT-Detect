@@ -31,7 +31,7 @@ const char *CURRENT_CENTER_OF_PRESSURE_TOPIC = "data/current_center_of_pressure"
 const char *CURRENT_IS_SOMEONE_THERE_TOPIC = "data/current_is_someone_there";
 const char *CURRENT_IS_WIFI_CONNECTED_TOPIC = "data/current_is_wifi_connected";
 const char *CURRENT_CHAIR_SPEED_TOPIC = "data/current_chair_speed";
-const char *KEEP_ALIVE = "data/keep_alive";
+const char *HEARTBEAT_TOPIC = "heartbeat/embedded";
 const char *VIBRATION_TOPIC = "data/vibration";
 const char *IS_MOVING_TOPIC = "data/is_moving";
 const char *TILT_INFO_TOPIC = "data/tilt_info";
@@ -108,8 +108,18 @@ void MosquittoBroker::on_subcribe(int mid, int qos_count, const int *granted_qos
 
 void MosquittoBroker::on_message(const mosquitto_message *msg)
 {
-    std::string message(reinterpret_cast<char *>(msg->payload));
-    std::string topic(msg->topic);
+    std::string message;
+    std::string topic;
+
+    if (msg->payload != NULL)
+    {
+        message = reinterpret_cast<char *>(msg->payload);
+    }
+    else
+    {
+        message = "";
+    }
+    topic = msg->topic;
 
     if (topic == ALARM_TOPIC)
     {
@@ -121,7 +131,7 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
         catch (const std::exception &e)
         {
             printf(EXCEPTION_MESSAGE, e.what());
-            printf("Setting _setAlarmOn to false\n");
+            printf("Setting _setAlarmOn and _setAlarmOnNew to false\n");
             _setAlarmOn = false;
             _setAlarmOnNew = false;
         }
@@ -141,7 +151,7 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
         catch (const std::exception &e)
         {
             printf(EXCEPTION_MESSAGE, e.what());
-            printf("Setting _requiredBackRestAngle to 0\n");
+            printf("Setting _requiredBackRestAngle to 0 and _requiredBackRestAngleNew to false\n");
             _requiredBackRestAngle = 0;
             _requiredBackRestAngleNew = false;
         }
@@ -156,7 +166,7 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
         catch (const std::exception &e)
         {
             printf(EXCEPTION_MESSAGE, e.what());
-            printf("Setting _requiredPeriod to 0\n");
+            printf("Setting _requiredPeriod to 0 and _requiredPeriodNew to false\n");
             _requiredPeriod = 0;
             _requiredPeriodNew = false;
         }
@@ -171,7 +181,7 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
         catch (const std::exception &e)
         {
             printf(EXCEPTION_MESSAGE, e.what());
-            printf("Setting _requiredDuration to 0\n");
+            printf("Setting _requiredDuration to 0 and _requiredDurationNew to false\n");
             _requiredDuration = 0;
             _requiredDurationNew = false;
         }
@@ -185,7 +195,7 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
         catch (const std::exception &e)
         {
             printf(EXCEPTION_MESSAGE, e.what());
-            printf("Setting _requiredDuration to 0\n");
+            printf("Setting _calibPressureMatRequired to false\n");
             _calibPressureMatRequired = false;
         }
     }
@@ -222,14 +232,15 @@ void MosquittoBroker::SendBackRestAngle(const int angle, const std::string datet
 {
     std::string strAngle = std::to_string(angle);
     std::string strMsg = "{\"datetime\":" + datetime + ",\"angle\":" + strAngle + "}";
-    publish(NULL, CURRENT_BACK_REST_ANGLE_TOPIC, strMsg.length(), strMsg.c_str());
+
+    PublishMessage(CURRENT_BACK_REST_ANGLE_TOPIC, strMsg);
 }
 
 void MosquittoBroker::SendCenterOfPressure(const float x, const float y, const std::string datetime)
 {
     std::string strMsg = "{\"datetime\":" + datetime + ",\"pos_x\":" + std::to_string(x) + ",\"pos_y\":" + std::to_string(y) + "}";
 
-    publish(NULL, CURRENT_CENTER_OF_PRESSURE_TOPIC, strMsg.length(), strMsg.c_str());
+    PublishMessage(CURRENT_CENTER_OF_PRESSURE_TOPIC, strMsg);
 }
 
 void MosquittoBroker::SendIsSomeoneThere(const bool state, const std::string datetime)
@@ -237,7 +248,7 @@ void MosquittoBroker::SendIsSomeoneThere(const bool state, const std::string dat
     std::string strState = std::to_string(state);
     std::string strMsg = "{\"datetime\":" + datetime + ",\"IsSomeoneThere\":" + strState + "}";
 
-    publish(NULL, CURRENT_IS_SOMEONE_THERE_TOPIC, strMsg.length(), strMsg.c_str());
+    PublishMessage(CURRENT_IS_SOMEONE_THERE_TOPIC, strMsg);
 }
 
 void MosquittoBroker::SendIsWifiConnected(const bool state, const std::string datetime)
@@ -245,7 +256,7 @@ void MosquittoBroker::SendIsWifiConnected(const bool state, const std::string da
     std::string strState = std::to_string(state);
     std::string strMsg = "{\"datetime\":" + datetime + ",\"IsWifiConnected\":" + strState + "}";
 
-    publish(NULL, CURRENT_IS_WIFI_CONNECTED_TOPIC, strMsg.length(), strMsg.c_str());
+    PublishMessage(CURRENT_IS_WIFI_CONNECTED_TOPIC, strMsg);
 }
 
 void MosquittoBroker::SendIsPressureMatCalib(const bool state, const std::string datetime)
@@ -253,7 +264,7 @@ void MosquittoBroker::SendIsPressureMatCalib(const bool state, const std::string
     std::string strState = std::to_string(state);
     std::string strMsg = "{\"datetime\":" + datetime + ",\"IsPressureMatCalib\":" + strState + "}";
 
-    publish(NULL, CALIB_PRESSURE_MAT_TOPIC, strMsg.length(), strMsg.c_str());
+    PublishMessage(CALIB_PRESSURE_MAT_TOPIC, strMsg);
 }
 
 void MosquittoBroker::SendIsIMUCalib(const bool state, const std::string datetime)
@@ -261,7 +272,7 @@ void MosquittoBroker::SendIsIMUCalib(const bool state, const std::string datetim
     std::string strState = std::to_string(state);
     std::string strMsg = "{\"datetime\":" + datetime + ",\"IsIMUCalib\":" + strState + "}";
 
-    publish(NULL, CALIB_IMU_TOPIC, strMsg.length(), strMsg.c_str());
+    PublishMessage(CALIB_IMU_TOPIC, strMsg);
 }
 
 void MosquittoBroker::SendSpeed(const float speed, const std::string datetime)
@@ -269,14 +280,7 @@ void MosquittoBroker::SendSpeed(const float speed, const std::string datetime)
     std::string strSpeed = std::to_string(speed);
     std::string strMsg = "{\"datetime\":" + datetime + ",\"vitesse\":" + strSpeed + "}";
 
-    publish(NULL, CURRENT_CHAIR_SPEED_TOPIC, strMsg.length(), strMsg.c_str());
-}
-
-void MosquittoBroker::SendKeepAlive(const std::string datetime)
-{
-    std::string strMsg = "{\"datetime\":" + datetime + "}";
-
-    publish(NULL, KEEP_ALIVE, strMsg.length(), strMsg.c_str());
+    PublishMessage(CURRENT_CHAIR_SPEED_TOPIC, strMsg);
 }
 
 void MosquittoBroker::SendVibration(double acceleration, const std::string datetime)
@@ -284,7 +288,7 @@ void MosquittoBroker::SendVibration(double acceleration, const std::string datet
     std::string strAcceleration = std::to_string(acceleration);
     std::string strMsg = "{\"datetime\":" + datetime + ",\"vibration\":" + strAcceleration + "}";
 
-    publish(NULL, VIBRATION_TOPIC, strMsg.length(), strMsg.c_str());
+    PublishMessage(VIBRATION_TOPIC, strMsg);
 }
 
 void MosquittoBroker::SendIsMoving(const bool state, const std::string datetime)
@@ -292,7 +296,7 @@ void MosquittoBroker::SendIsMoving(const bool state, const std::string datetime)
     std::string strState = std::to_string(state);
     std::string strMsg = "{\"datetime\":" + datetime + ",\"isMoving\":" + strState + "}";
 
-    publish(NULL, IS_MOVING_TOPIC, strMsg.length(), strMsg.c_str());
+    PublishMessage(IS_MOVING_TOPIC, strMsg);
 }
 
 void MosquittoBroker::SendTiltInfo(const int info, const std::string datetime)
@@ -300,12 +304,19 @@ void MosquittoBroker::SendTiltInfo(const int info, const std::string datetime)
     std::string strInfo = std::to_string(info);
     std::string strMsg = "{\"datetime\":" + datetime + ",\"info\":" + strInfo + "}";
 
-    publish(NULL, TILT_INFO_TOPIC, strMsg.length(), strMsg.c_str());
+    PublishMessage(TILT_INFO_TOPIC, strMsg);
+}
+
+void MosquittoBroker::SendHeartbeat(const std::string datetime)
+{
+    std::string strMsg = "{\"datetime\":" + datetime + "}";
+
+    PublishMessage(HEARTBEAT_TOPIC, strMsg);
 }
 
 void MosquittoBroker::SendSensorsState(const bool alarmStatus, const bool mobileImuStatus,
-    const bool fixedImuStatus, const bool motionSensorStatus, const bool plateSensorStatus,
-    const std::string datetime)
+                                       const bool fixedImuStatus, const bool motionSensorStatus, const bool plateSensorStatus,
+                                       const std::string datetime)
 {
     std::string strMsg = "{"
         "\"datetime\":" +  datetime + ","
@@ -314,16 +325,17 @@ void MosquittoBroker::SendSensorsState(const bool alarmStatus, const bool mobile
         "\"fixedImu\":" + std::to_string(fixedImuStatus) + ","
         "\"motionSensor\":" + std::to_string(motionSensorStatus) + ","
         "\"forcePlate\":" + std::to_string(plateSensorStatus) + "}";
-
-    publish(NULL, SENSORS_STATUS_TOPIC, strMsg.length(), strMsg.c_str());
+        
+    PublishMessage(SENSORS_STATUS_TOPIC, strMsg);
 }
 
 void MosquittoBroker::SendSensorState(const int device, const bool status, const std::string datetime)
 {
     std::string sensorName;
 
-    switch (device) {
-        case alarmSensor :
+    switch (device)
+    {
+        case alarmSensor:
             sensorName = "alarm";
             break;
         case mobileImu:
@@ -344,8 +356,9 @@ void MosquittoBroker::SendSensorState(const int device, const bool status, const
     }
 
     const std::string strState = std::to_string(status);
-    const std::string strMsg = "{\"datetime\":" + datetime + ",\"" + sensorName +"\":" + strState + "}";
-    publish(NULL, SENSOR_STATUS_TOPIC, strMsg.length(), strMsg.c_str());
+    const std::string strMsg = "{\"datetime\":" + datetime + ",\"" + sensorName + "\":" + strState + "}";
+
+    PublishMessage(SENSORS_STATUS_TOPIC, strMsg);
 }
 
 bool MosquittoBroker::GetSetAlarmOn()
@@ -402,4 +415,14 @@ bool MosquittoBroker::CalibIMURequired()
     {
         return false;
     }
+}
+
+void MosquittoBroker::PublishMessage(const char *topic, const std::string message)
+{
+    if (message.empty())
+    {
+        printf("Error: Empty mosquitto message\n");
+        return;
+    }
+    publish(NULL, topic, message.length(), message.c_str());
 }
