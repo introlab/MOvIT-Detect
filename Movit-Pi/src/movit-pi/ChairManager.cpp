@@ -279,7 +279,7 @@ void ChairManager::CheckIfBackRestIsRequired()
             _alarm->StopBlinkGreenAlarm();
             if (!_alarm->IsRedAlarmOn())
             {
-                _alarm->TurnOnRedAlarmThread().detach();
+                _alarm->TurnOnBlinkRedAlarmThread().detach();
             }
             _state = State::CLIMB;
             _secondsCounter = 0;
@@ -306,6 +306,7 @@ void ChairManager::CheckIfRequiredBackSeatAngleIsReached()
 
     if (_currentChairAngle > (_requiredBackRestAngle - DELTA_ANGLE_THRESHOLD))
     {
+        _alarm->StopBlinkRedAlarm();
         _alarm->TurnOnGreenAlarm();
         _state = State::STAY;
     }
@@ -346,6 +347,7 @@ void ChairManager::CheckIfBackSeatIsBackToInitialPosition()
 
     if (_currentChairAngle < (_requiredBackRestAngle - DELTA_ANGLE_THRESHOLD))
     {
+        _alarm->StopBlinkLedsAlarm();
         _state = State::WAIT;
         _secondsCounter = 0;
 

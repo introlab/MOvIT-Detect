@@ -5,60 +5,57 @@
 #include "PCA9536.h"
 #include <thread>
 
-#define DEFAULT_BLINK_DURATION 600
-#define DEFAULT_BLINK_FREQUENCY 0.1
+#define DEFAULT_BLINK_FREQUENCY 10
 
 class Alarm : public Sensor
 {
-  private:
-    PCA9536 _pca9536;
+public:
+  Alarm();
+  Alarm(double blinkFrequency);
+  ~Alarm() = default;
 
-    bool _isRedAlarmOn = false;
-    bool _isBlinkLedsAlarmOn = false;
-    bool _isBlinkGreenAlarmOn = false;
+  bool Initialize();
+  bool IsConnected();
 
-    bool _isBlinkGreenAlarmRequired = false;
+  void DeactivateVibration(bool state) { _deactivateVibration = state; }
 
-    bool _deactivateVibration = false;
+  void TurnOnDCMotor();
+  void TurnOffDCMotor();
+  void TurnOnRedLed();
+  void TurnOffRedLed();
+  void TurnOnGreenLed();
+  void TurnOffGreenLed();
+  void TurnOffAlarm();
 
-    double _blinkFrequency;
-    int _blinkDuration;
+  void TurnOnBlinkLedsAlarm();
+  void TurnOnBlinkRedAlarm();
+  void TurnOnGreenAlarm();
+  void TurnOnBlinkGreenAlarm();
 
-    uint8_t GetPinState(pin_t pin);
+  void StopBlinkGreenAlarm();
+  void StopBlinkRedAlarm();
+  void StopBlinkLedsAlarm();
 
-    void SetBlinkDuration(int blinkDuraction);
-    void SetBlinkFrequency(double blinkFrequency);
+  bool IsRedAlarmOn() { return _isBlinkRedAlarmOn; }
+  bool IsBlinkLedsAlarmOn() { return _isBlinkLedsAlarmOn; }
+  bool IsBlinkGreenAlarmOn() { return _isBlinkGreenAlarmOn; }
 
-  public:
-    Alarm();
-    Alarm(int blinkDuration, double blinkFrequency);
-    bool Initialize();
-    bool IsConnected();
+  std::thread TurnOnBlinkRedAlarmThread();
+  std::thread TurnOnBlinkLedsAlarmThread();
+  std::thread TurnOnBlinkGreenAlarmThread();
 
-    void DeactivateVibration(bool state) { _deactivateVibration = state; }
+private:
+  PCA9536 _pca9536;
 
-    void TurnOnDCMotor();
-    void TurnOffDCMotor();
-    void TurnOnRedLed();
-    void TurnOffRedLed();
-    void TurnOnGreenLed();
-    void TurnOffGreenLed();
-    void TurnOffAlarm();
+  bool _isBlinkRedAlarmOn = false;
+  bool _isBlinkLedsAlarmOn = false;
+  bool _isBlinkGreenAlarmOn = false;
 
-    void TurnOnBlinkLedsAlarm();
-    void TurnOnRedAlarm();
-    void TurnOnGreenAlarm();
-    void TurnOnBlinkGreenAlarm();
+  bool _deactivateVibration = false;
 
-    void StopBlinkGreenAlarm();
+  double _blinkFrequency;
 
-    bool IsRedAlarmOn() { return _isRedAlarmOn; }
-    bool IsBlinkLedsAlarmOn() { return _isBlinkLedsAlarmOn; }
-    bool IsBlinkGreenAlarmOn() { return _isBlinkGreenAlarmOn; }
-
-    std::thread TurnOnRedAlarmThread();
-    std::thread TurnOnBlinkLedsAlarmThread();
-    std::thread TurnOnBlinkGreenAlarmThread();
+  uint8_t GetPinState(pin_t pin);
 };
 
 #endif // ALARM_H

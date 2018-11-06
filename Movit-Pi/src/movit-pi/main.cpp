@@ -15,7 +15,6 @@ using std::string;
 using std::chrono::duration;
 using std::chrono::milliseconds;
 
-
 void exit_program_handler(int s)
 {
     FileManager *filemgr = FileManager::GetInstance();

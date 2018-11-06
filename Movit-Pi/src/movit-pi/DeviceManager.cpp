@@ -9,7 +9,7 @@
 #include <thread>
 
 DeviceManager::DeviceManager(FileManager *fileManager) : _fileManager(fileManager),
-                                                         _alarm(700, 0.1)
+                                                         _alarm(10)
 {
     _motionSensor = MotionSensor::GetInstance();
     _mobileImu = MobileImu::GetInstance();
@@ -376,7 +376,7 @@ bool DeviceManager::TestDevices()
     else if (inSerialChar == 'e')
     {
         printf("Activer une alarme <rouge/moteur>.\n");
-        _alarm.TurnOnRedAlarm();
+        // _alarm.TurnOnRedAlarm();
     }
     else if (inSerialChar == 'f')
     {
