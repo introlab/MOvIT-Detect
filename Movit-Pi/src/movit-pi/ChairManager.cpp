@@ -5,6 +5,7 @@
 #define REQUIRED_SITTING_TIME 5
 #define DELTA_ANGLE_THRESHOLD 5
 
+#define CHECK_SENSORS_STATE_PERIOD 20
 #define VIBRATION_EMISSION_FREQUENCY 60 // Hz
 #define VIBRATION_EMISSION_THRESOLD 2   // m/s^2
 #define MINIMUM_BACK_REST_ANGLE 2
@@ -75,11 +76,13 @@ void ChairManager::UpdateDevices()
 
     _currentDatetime = std::to_string(_deviceManager->GetTimeSinceEpoch());
 
-    // Ces calls prennent beaucoup trop de CPU quand les capteurs ne sont pas connecté
-    // UpdateSensor(DEVICES::alarmSensor, _deviceManager->IsAlarmConnected());
-    // UpdateSensor(DEVICES::fixedImu, _deviceManager->IsFixedImuConnected());
-    // UpdateSensor(DEVICES::mobileImu, _deviceManager->IsMobileImuConnected());
-    // UpdateSensor(DEVICES::motionSensor, _deviceManager->IsMotionSensorConnected());
+    if (++_updateDevicesCounter > CHECK_SENSORS_STATE_PERIOD) {
+        UpdateSensor(DEVICES::alarmSensor, _deviceManager->IsAlarmConnected());
+        UpdateSensor(DEVICES::fixedImu, _deviceManager->IsFixedImuConnected());
+        UpdateSensor(DEVICES::mobileImu, _deviceManager->IsMobileImuConnected());
+        UpdateSensor(DEVICES::motionSensor, _deviceManager->IsMotionSensorConnected());
+        _updateDevicesCounter = 0;
+    }
 
     if (_mosquittoBroker->CalibPressureMatRequired())
     {

@@ -40,6 +40,7 @@ class ChairManager
     MosquittoBroker *_mosquittoBroker;
     DeviceManager *_deviceManager;
 
+    int _updateDevicesCounter = 0;
     uint32_t _secondsCounter = 0;
     uint8_t _state = 0;
 

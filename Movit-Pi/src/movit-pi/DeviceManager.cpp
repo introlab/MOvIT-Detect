@@ -129,7 +129,7 @@ void DeviceManager::ReconnectSensor(const int device)
     }
     catch (const std::exception &e)
     {
-        printf("Error: Invalid device");
+        printf("Error: Invalid device\n");
         return;
     }
 
@@ -163,7 +163,7 @@ bool DeviceManager::IsSensorStateChanged(const int device)
     }
     catch (const std::exception &e)
     {
-        printf("Error: Invalid device");
+        printf("Error: Invalid device\n");
         return false;
     }
 
