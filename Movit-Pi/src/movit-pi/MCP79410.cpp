@@ -40,7 +40,7 @@ void MCP79410::SetDateTime(unsigned char dt[])
     I2Cdev::WriteByte(_devAddr, ADDR_SEC, DISABLE_OSCILLATOR);        //STOP MCP79410
     I2Cdev::WriteByte(_devAddr, ADDR_MIN, dt[1]);                     //MINUTE=20
     I2Cdev::WriteByte(_devAddr, ADDR_HOUR, dt[2] & 0x3f);             //HOUR=dt[2], forcing 24h format
-    I2Cdev::WriteByte(_devAddr, ADDR_DAY, dt[3] & 0x0F);              //DAY=dt[3] AND VBAT=1
+    I2Cdev::WriteByte(_devAddr, ADDR_DAY, dt[3] | 0x0F);              //DAY=dt[3] AND VBAT=1
     I2Cdev::WriteByte(_devAddr, ADDR_DATE, dt[4]);                    //DATE=dt[4]
     I2Cdev::WriteByte(_devAddr, ADDR_MNTH, dt[5] & 0x1F);             //MONTH=dt[5] bloquing LPYR
     I2Cdev::WriteByte(_devAddr, ADDR_YEAR, dt[6]);                    //YEAR=dt[6]

@@ -71,6 +71,8 @@ void ChairManager::UpdateSensor(int device, bool isConnected)
 
 void ChairManager::UpdateDevices()
 {
+    _deviceManager->Update();
+
     _currentDatetime = std::to_string(_deviceManager->GetTimeSinceEpoch());
 
     // Ces calls prennent beaucoup trop de CPU quand les capteurs ne sont pas connecté
@@ -92,8 +94,6 @@ void ChairManager::UpdateDevices()
     }
 
     _prevIsSomeoneThere = _isSomeoneThere;
-
-    _deviceManager->Update();
     _isSomeoneThere = _deviceManager->IsSomeoneThere();
     _copCoord = _deviceManager->GetCenterOfPressure();
     _currentChairAngle = _deviceManager->GetBackSeatAngle();

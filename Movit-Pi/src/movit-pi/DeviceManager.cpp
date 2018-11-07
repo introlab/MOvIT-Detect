@@ -29,7 +29,7 @@ void DeviceManager::InitializeDevices()
     InitializeMobileImu();
     InitializeFixedImu();
 
-    _datetimeRTC->SetCurrentDateTimeIfConnectedThread().detach();
+    _datetimeRTC->SetCurrentDateTimeThread().detach();
     _isAlarmInitialized = _alarm.Initialize();
     _isMotionSensorInitialized = _motionSensor->Initialize();
 

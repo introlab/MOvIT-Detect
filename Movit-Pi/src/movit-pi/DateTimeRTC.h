@@ -7,19 +7,28 @@
 class DateTimeRTC
 {
   public:
-    std::thread SetCurrentDateTimeIfConnectedThread();
+    std::thread SetCurrentDateTimeThread();
     void SetCurrentDateTime();
     void SetDefaultDateTime();
     int GetTimeSinceEpoch();
 
     static DateTimeRTC *GetInstance()
     {
-        static DateTimeRTC instance;
-        return &instance;
+      static DateTimeRTC instance;
+      return &instance;
     }
 
   private:
+    //Singleton
     DateTimeRTC();
+    DateTimeRTC(DateTimeRTC const &);    // Don't Implement.
+    void operator=(DateTimeRTC const &); // Don't implement.
+
+    int BCDDateTimeToEpoch(uint8_t *dateTime);
+    void EpochToBCDDateTime(int epoch, uint8_t *bcdDateTime);
+
+    int GetSystemCurrentTime();
+    int GetRTCCurrentTime();
     void SetCurrentDateTimeIfConnected();
 
     bool _isDatetimeSet = false;
