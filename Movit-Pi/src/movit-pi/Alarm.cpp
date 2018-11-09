@@ -12,7 +12,7 @@ Alarm::Alarm()
     Alarm(DEFAULT_BLINK_FREQUENCY);
 }
 
-Alarm::Alarm(double blinkFrequency): _blinkFrequency(blinkFrequency)
+Alarm::Alarm(double blinkFrequency) : _blinkFrequency(blinkFrequency)
 {
 }
 
@@ -83,6 +83,8 @@ void Alarm::TurnOffGreenLed()
 
 void Alarm::TurnOffAlarm()
 {
+    StopBlinkRedAlarm();
+    StopBlinkLedsAlarm();
     StopBlinkGreenAlarm();
     TurnOffRedLed();
     TurnOffGreenLed();
@@ -94,8 +96,6 @@ void Alarm::TurnOnGreenAlarm()
     std::lock_guard<std::mutex> lock(alarmMutex);
 
     TurnOnGreenLed();
-    TurnOffRedLed();
-    TurnOffDCMotor();
 }
 
 void Alarm::TurnOnBlinkLedsAlarm()
@@ -103,10 +103,6 @@ void Alarm::TurnOnBlinkLedsAlarm()
     _isBlinkLedsAlarmOn = true;
 
     std::lock_guard<std::mutex> lock(alarmMutex);
-
-    TurnOffDCMotor();
-    TurnOffRedLed();
-    TurnOnGreenLed();
 
     while (_isBlinkLedsAlarmOn)
     {
@@ -130,16 +126,13 @@ void Alarm::TurnOnBlinkRedAlarm()
         TurnOnDCMotor();
     }
 
-    TurnOnRedLed();
-    TurnOffGreenLed();
-
     while (_isBlinkRedAlarmOn)
     {
         _pca9536.ToggleState(RED_LED);
         sleep_for_milliseconds((1 / _blinkFrequency) * SECONDS_TO_MILLISECONDS);
     }
 
-    TurnOnRedLed();
+    TurnOffRedLed();
     TurnOffDCMotor();
 }
 
@@ -148,10 +141,6 @@ void Alarm::TurnOnBlinkGreenAlarm()
     _isBlinkGreenAlarmOn = true;
 
     std::lock_guard<std::mutex> lock(alarmMutex);
-
-    TurnOffDCMotor();
-    TurnOffRedLed();
-    TurnOnGreenLed();
 
     while (_isBlinkGreenAlarmOn)
     {
@@ -179,9 +168,6 @@ void Alarm::StopBlinkGreenAlarm()
 
 std::thread Alarm::TurnOnBlinkRedAlarmThread()
 {
-    StopBlinkGreenAlarm();
-    StopBlinkLedsAlarm();
-
     return std::thread([=] {
         TurnOnBlinkRedAlarm();
     });
@@ -189,9 +175,6 @@ std::thread Alarm::TurnOnBlinkRedAlarmThread()
 
 std::thread Alarm::TurnOnBlinkLedsAlarmThread()
 {
-    StopBlinkGreenAlarm();
-    StopBlinkRedAlarm();
-
     return std::thread([=] {
         TurnOnBlinkLedsAlarm();
     });
@@ -199,9 +182,6 @@ std::thread Alarm::TurnOnBlinkLedsAlarmThread()
 
 std::thread Alarm::TurnOnBlinkGreenAlarmThread()
 {
-    StopBlinkRedAlarm();
-    StopBlinkLedsAlarm();
-
     return std::thread([=] {
         TurnOnBlinkGreenAlarm();
     });

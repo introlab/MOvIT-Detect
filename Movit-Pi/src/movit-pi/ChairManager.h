@@ -34,7 +34,7 @@ class ChairManager
     static constexpr auto WIFI_VALIDATION_PERIOD = std::chrono::seconds(10);
     static constexpr auto HEARTBEAT_PERIOD = std::chrono::milliseconds(1000);
 
-    static constexpr int MINIMUM_ANGLE = 10; // degrees
+    static constexpr int MINIMUM_ANGLE = 15; // degrees
 
     Alarm *_alarm;
     MosquittoBroker *_mosquittoBroker;
