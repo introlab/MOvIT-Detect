@@ -32,7 +32,6 @@ class Imu : public Sensor
   protected:
     std::string _imuName;
     MPU6050 _imu;
-
     int _calibrationArray[NUMBER_OF_AXIS] = {LSB_SENSITIVITY, 0, 0};
 
     imu_offset_t _offsets;

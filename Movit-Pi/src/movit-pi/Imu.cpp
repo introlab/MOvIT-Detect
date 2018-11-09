@@ -221,9 +221,9 @@ void Imu::GetAccelerations(double *accelerations)
 
     // TODO: Add low-pass filter
 
-    accelerations[AXIS::x] = double(ax) * 2 / 32768.0f;
-    accelerations[AXIS::y] = double(ay) * 2 / 32768.0f;
-    accelerations[AXIS::z] = double(az) * 2 / 32768.0f;
+    accelerations[AXIS::x] = static_cast<double>(ax) * 2 / 32768.0f;
+    accelerations[AXIS::y] = static_cast<double>(ay) * 2 / 32768.0f;
+    accelerations[AXIS::z] = static_cast<double>(az) * 2 / 32768.0f;
 }
 
 double Imu::GetPitch()

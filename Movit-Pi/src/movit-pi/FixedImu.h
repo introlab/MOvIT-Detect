@@ -15,7 +15,10 @@ class FixedImu : public Imu
     }
 
   private:
+    //Singleton
     FixedImu();
+    FixedImu(FixedImu const &);       // Don't Implement.
+    void operator=(FixedImu const &); // Don't implement.
 };
 
 #endif // FIXED_H

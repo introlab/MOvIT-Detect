@@ -42,13 +42,13 @@ class DeviceManager
 
     // TODO: CECI EST TEMPORAIRE CAR ON A PU DE TAPIS DE PRESSION
     //bool IsSomeoneThere() { return _isSomeoneThere; }
+    bool IsMoving() { return _isMoving; }
     bool IsSomeoneThere() { return true; }
-
     bool IsChairInclined() { return _isChairInclined; }
+
     Coord_t GetCenterOfPressure() { return _COPCoord; }
     int GetBackSeatAngle() { return _backSeatAngle; }
     int GetTimeSinceEpoch() { return _timeSinceEpoch; }
-    bool GetIsMoving() { return _isMoving; }
     double GetXAcceleration();
 
     void CalibrateIMU();
@@ -65,11 +65,15 @@ class DeviceManager
     bool IsFixedImuConnected() { return _fixedImu->IsConnected(); }
     bool IsMotionSensorConnected() { return _motionSensor->IsConnected(); }
 
-    bool GetIsAlarmInitialized() { return _isAlarmInitialized; }
-    bool GetIsFixedImuInitialized() { return _isFixedImuInitialized; }
-    bool GetIsMobileInitialized() { return _isMobileImuInitialized; }
-    bool GetIsMotionSensorInitialized() { return _isMotionSensorInitialized; }
-    bool GetIsForcePlateInitialized() { return _isForcePlateInitialized; }
+    bool IsImuCalibrated() { return _isFixedImuCalibrated && _isMobileImuCalibrated; }
+    bool IsPressureMatCalibrated() { return _isPressureMatCalibrated; }
+
+    //To be validated, we don't use them anywhere.
+    //bool GetIsAlarmInitialized() { return _isAlarmInitialized; }
+    //bool GetIsFixedImuInitialized() { return _isFixedImuInitialized; }
+    //bool GetIsMobileInitialized() { return _isMobileImuInitialized; }
+    //bool GetIsMotionSensorInitialized() { return _isMotionSensorInitialized; }
+    //bool GetIsForcePlateInitialized() { return _isForcePlateInitialized; }
 
     // Singleton
     static DeviceManager *GetInstance(FileManager *fileManager)

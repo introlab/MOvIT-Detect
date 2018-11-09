@@ -25,7 +25,7 @@ class MotionSensor: public Sensor
 
     bool Initialize();
     bool IsConnected();
-    bool GetIsMoving();
+    bool IsMoving();
 
   private:
 

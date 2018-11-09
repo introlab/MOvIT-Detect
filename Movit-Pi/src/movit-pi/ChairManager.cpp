@@ -87,13 +87,23 @@ void ChairManager::UpdateDevices()
     if (_mosquittoBroker->CalibPressureMatRequired())
     {
         _deviceManager->CalibratePressureMat();
+        _isPressureMatCalibrationChanged = true;
+    }
+    if (_deviceManager->IsPressureMatCalibrated() && _isPressureMatCalibrationChanged)
+    {
         _mosquittoBroker->SendIsPressureMatCalib(true, _currentDatetime);
+        _isPressureMatCalibrationChanged = false;
     }
 
     if (_mosquittoBroker->CalibIMURequired())
     {
         _deviceManager->CalibrateIMU();
+        _isIMUCalibrationChanged = true;
+    }
+    if (_deviceManager->IsImuCalibrated() && _isIMUCalibrationChanged)
+    {
         _mosquittoBroker->SendIsIMUCalib(true, _currentDatetime);
+        _isIMUCalibrationChanged = false;
     }
 
     _prevIsSomeoneThere = _isSomeoneThere;
@@ -101,7 +111,7 @@ void ChairManager::UpdateDevices()
     _copCoord = _deviceManager->GetCenterOfPressure();
     _currentChairAngle = _deviceManager->GetBackSeatAngle();
     bool prevIsMoving = _isMoving;
-    _isMoving = _deviceManager->GetIsMoving();
+    _isMoving = _deviceManager->IsMoving();
     _isChairInclined = _deviceManager->IsChairInclined();
 
 #ifdef DEBUG_PRINT

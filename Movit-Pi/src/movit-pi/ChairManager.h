@@ -57,7 +57,9 @@ class ChairManager
     bool _overrideNotificationPattern = false;
     bool _setAlarmOn = false;
     bool _isVibrationsActivated = true;
-
+    bool _isIMUCalibrationChanged = false;
+    bool _isPressureMatCalibrationChanged = false;
+    
     int _requiredBackRestAngle = 0;
     uint32_t _requiredPeriod = 0;
     uint32_t _requiredDuration = 0;

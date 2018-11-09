@@ -133,7 +133,7 @@ bool MotionSensor::ValidDistanceToTheGround()
     return true;
 }
 
-bool MotionSensor::GetIsMoving()
+bool MotionSensor::IsMoving()
 {
     const uint16_t wheelchairMovingThreshold = 2500;
 

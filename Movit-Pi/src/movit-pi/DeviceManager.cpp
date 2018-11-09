@@ -188,12 +188,9 @@ void DeviceManager::CalibratePressureMat()
     printf("Calibrating pressure mat ... \n");
     UpdateForcePlateData();
     _sensorMatrix.CalibrateForceSensor(_max11611Data, _max11611);
-
     _fileManager->SetPressureMatOffsets(_sensorMatrix.GetOffsets());
     _fileManager->Save();
-
     _isPressureMatCalibrated = true;
-
     printf("DONE\n");
 }
 
@@ -254,7 +251,7 @@ void DeviceManager::Update()
     _timeSinceEpoch = _datetimeRTC->GetTimeSinceEpoch();
     if (_isMotionSensorInitialized)
     {
-        _isMoving = _motionSensor->GetIsMoving();
+        _isMoving = _motionSensor->IsMoving();
     }
 
     if (_isFixedImuInitialized && _isMobileImuInitialized && _isFixedImuCalibrated && _isMobileImuCalibrated)
