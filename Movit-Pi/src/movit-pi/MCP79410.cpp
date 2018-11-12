@@ -1,7 +1,9 @@
 #include "MCP79410.h"
 #include "Utils.h"
+#include <unistd.h>
 
 //For more information see: http://ww1.microchip.com/downloads/en/DeviceDoc/20002266H.pdf section 5.3
+#define STOP_RTC_SLEEP_TIME 1000 //Min 100 us
 
 #define ENABLE_OSCILLATOR 0x80
 #define DISABLE_OSCILLATOR 0x00
@@ -25,6 +27,8 @@ MCP79410::MCP79410()
 
 void MCP79410::SetDefaultDateTime()
 {
+    I2Cdev::WriteByte(_devAddr, ADDR_SEC, DISABLE_OSCILLATOR);
+    sleep_for_microseconds(STOP_RTC_SLEEP_TIME);
     I2Cdev::WriteByte(_devAddr, ADDR_SEC, DEFAULT_SEC);
     I2Cdev::WriteByte(_devAddr, ADDR_MIN, DEFAULT_MIN);
     I2Cdev::WriteByte(_devAddr, ADDR_HOUR, DEFAULT_HOUR);
@@ -35,30 +39,49 @@ void MCP79410::SetDefaultDateTime()
     I2Cdev::WriteByte(_devAddr, ADDR_SEC, ENABLE_OSCILLATOR);
 }
 
-void MCP79410::SetDateTime(unsigned char dt[])
+void MCP79410::SetDateTime(uint8_t dt[])
 {
+    SetLeapYearBit(dt);
+    I2Cdev::WriteByte(_devAddr, ADDR_SEC, DISABLE_OSCILLATOR);        //STOP MCP79410
+    sleep_for_microseconds(STOP_RTC_SLEEP_TIME);
     I2Cdev::WriteByte(_devAddr, ADDR_SEC, DISABLE_OSCILLATOR);        //STOP MCP79410
     I2Cdev::WriteByte(_devAddr, ADDR_MIN, dt[1]);                     //MINUTE=20
     I2Cdev::WriteByte(_devAddr, ADDR_HOUR, dt[2] & 0x3f);             //HOUR=dt[2], forcing 24h format
     I2Cdev::WriteByte(_devAddr, ADDR_DAY, dt[3] | 0x0F);              //DAY=dt[3] AND VBAT=1
     I2Cdev::WriteByte(_devAddr, ADDR_DATE, dt[4]);                    //DATE=dt[4]
-    I2Cdev::WriteByte(_devAddr, ADDR_MNTH, dt[5] & 0x1F);             //MONTH=dt[5] bloquing LPYR
+    I2Cdev::WriteByte(_devAddr, ADDR_MNTH, dt[5]);                    //MONTH=dt[5]
     I2Cdev::WriteByte(_devAddr, ADDR_YEAR, dt[6]);                    //YEAR=dt[6]
     I2Cdev::WriteByte(_devAddr, ADDR_SEC, ENABLE_OSCILLATOR | dt[0]); //START  MCP79410, SECOND=dt[0];
 }
 
-void MCP79410::GetDateTime(unsigned char dt[])
+void MCP79410::GetDateTime(uint8_t dt[])
 {
-    I2Cdev::ReadByte(_devAddr, ADDR_SEC, _buffer);
-    dt[0] = *_buffer & 0xff >> (8 - _validBits[0]);
-    I2Cdev::ReadByte(_devAddr, ADDR_MIN, _buffer);
-    dt[1] = *_buffer & 0xff >> (8 - _validBits[1]);
-    I2Cdev::ReadByte(_devAddr, ADDR_HOUR, _buffer);
-    dt[2] = *_buffer & 0xff >> (8 - _validBits[2]);
-    I2Cdev::ReadByte(_devAddr, ADDR_DATE, _buffer);
-    dt[4] = *_buffer & 0xff >> (8 - _validBits[4]);
-    I2Cdev::ReadByte(_devAddr, ADDR_MNTH, _buffer);
-    dt[5] = *_buffer & 0xff >> (8 - _validBits[5]);
-    I2Cdev::ReadByte(_devAddr, ADDR_YEAR, _buffer);
-    dt[6] = *_buffer & 0xff >> (8 - _validBits[6]);
+    uint8_t buffer[DATE_TIME_SIZE];
+    I2Cdev::ReadBytes(_devAddr, ADDR_SEC, DATE_TIME_SIZE, buffer);
+    for (uint8_t i = 0; i < DATE_TIME_SIZE; i++)
+    {
+        dt[i] = buffer[i] & 0xFF >> (8 - _validBits[i]);
+    }
+}
+
+void MCP79410::SetLeapYearBit(uint8_t dt[])
+{
+    const uint8_t leapYearBit = 5;
+    uint16_t year = BCDToDEC(dt[6]) + 2000;
+
+    if (IsALeapYear(year))
+    {
+        dt[5] |= 1 << leapYearBit;
+    }
+    else
+    {
+        dt[5] &= ~(1 << leapYearBit);
+    }
+}
+
+bool MCP79410::IsALeapYear(uint16_t year)
+{
+    /* Check if the year is divisible by 4 or 
+	is divisible by 400 */
+    return ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0));
 }

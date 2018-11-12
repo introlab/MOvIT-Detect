@@ -40,7 +40,6 @@ struct pressure_mat_offset_t
     uint16_t analogOffset[PRESSURE_SENSOR_COUNT] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
     uint32_t totalSensorMean = 0;
     float detectionThreshold = 0;
-
 };
 
 #endif //UTILS_H

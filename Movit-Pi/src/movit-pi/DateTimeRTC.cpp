@@ -81,7 +81,7 @@ int DateTimeRTC::BCDDateTimeToEpoch(uint8_t *bcdDateTime)
     struct tm t = {0};
 
     t.tm_year = BCDToDEC(bcdDateTime[6]) + numberOfYearsToAdd;
-    t.tm_mon = BCDToDEC(bcdDateTime[5]);
+    t.tm_mon = BCDToDEC(bcdDateTime[5]) - 1; //We need to remove one month since the RTC returns months from 1-12 and struct Tm want months from 0-11.
     t.tm_mday = BCDToDEC(bcdDateTime[4]);
     t.tm_hour = BCDToDEC(bcdDateTime[2]);
     t.tm_min = BCDToDEC(bcdDateTime[1]);
@@ -103,6 +103,6 @@ void DateTimeRTC::EpochToBCDDateTime(int epoch, uint8_t *bcdDateTime)
     bcdDateTime[2] = DECToBCD(ptm->tm_hour);
     bcdDateTime[3] = 0x00;
     bcdDateTime[4] = DECToBCD(ptm->tm_mday);
-    bcdDateTime[5] = DECToBCD(ptm->tm_mon);
+    bcdDateTime[5] = DECToBCD(ptm->tm_mon + 1); //We need to add one month since struct Tm returns months from 0-11 and RTC want months from 1-12.
     bcdDateTime[6] = DECToBCD(ptm->tm_year % 100);
 }
