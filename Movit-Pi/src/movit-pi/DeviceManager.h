@@ -5,23 +5,15 @@
 
 #include "Imu.h"
 #include "Alarm.h"
-#include "ForcePlate.h"
-#include "ForceSensor.h"
+
 #include "FixedImu.h"
 #include "MobileImu.h"
 #include "BackSeatAngleTracker.h"
 #include "DateTimeRTC.h"
 #include "MotionSensor.h"
-#include "MAX11611.h"
 #include "FileManager.h"
 #include "Sensor.h"
-
-//Center of pressure coordinate
-struct Coord_t
-{
-    float x;
-    float y;
-};
+#include "PressureMat.h"
 
 class DeviceManager
 {
@@ -36,19 +28,19 @@ class DeviceManager
     FixedImu *GetFixedImu() { return _fixedImu; }
     MotionSensor *GetMotionSensor() { return _motionSensor; }
 
-    bool IsForcePlateConnected();
     void ReconnectSensor(const int device);
     bool IsSensorStateChanged(const int device);
 
-    // TODO: CECI EST TEMPORAIRE CAR ON A PU DE TAPIS DE PRESSION
-    //bool IsSomeoneThere() { return _isSomeoneThere; }
-    bool IsMoving() { return _isMoving; }
-    bool IsSomeoneThere() { return true; }
+    bool IsSomeoneThere() { return _pressureMat->IsSomeoneThere(); }
     bool IsChairInclined() { return _isChairInclined; }
+    bool IsForcePlateConnected() { return _pressureMat->IsConnected(); }
+    bool IsMoving() { return _isMoving; }
 
-    Coord_t GetCenterOfPressure() { return _COPCoord; }
+    pressure_mat_data_t GetPressureMatData() { return _pressureMat->GetPressureMatData(); }
+
     int GetBackSeatAngle() { return _backSeatAngle; }
     int GetTimeSinceEpoch() { return _timeSinceEpoch; }
+
     double GetXAcceleration();
 
     void CalibrateIMU();
@@ -58,22 +50,13 @@ class DeviceManager
 
     void TurnOff();
 
-    bool TestDevices();
-
     bool IsAlarmConnected() { return _alarm.IsConnected(); }
     bool IsMobileImuConnected() { return _mobileImu->IsConnected(); }
     bool IsFixedImuConnected() { return _fixedImu->IsConnected(); }
     bool IsMotionSensorConnected() { return _motionSensor->IsConnected(); }
 
     bool IsImuCalibrated() { return _isFixedImuCalibrated && _isMobileImuCalibrated; }
-    bool IsPressureMatCalibrated() { return _isPressureMatCalibrated; }
-
-    //To be validated, we don't use them anywhere.
-    //bool GetIsAlarmInitialized() { return _isAlarmInitialized; }
-    //bool GetIsFixedImuInitialized() { return _isFixedImuInitialized; }
-    //bool GetIsMobileInitialized() { return _isMobileImuInitialized; }
-    //bool GetIsMotionSensorInitialized() { return _isMotionSensorInitialized; }
-    //bool GetIsForcePlateInitialized() { return _isForcePlateInitialized; }
+    bool IsPressureMatCalibrated() { return _pressureMat->IsCalibrated(); }
 
     // Singleton
     static DeviceManager *GetInstance(FileManager *fileManager)
@@ -89,33 +72,25 @@ class DeviceManager
     void operator=(DeviceManager const &); // Don't implement.
 
     const int32_t DEFAULT_BACK_SEAT_ANGLE = 0;
-    const float DEFAULT_CENTER_OF_PRESSURE = 0.0;
 
     Sensor *GetSensor(const int device);
-    void UpdateForcePlateData();
-    void InitializeForcePlateSensors();
     void InitializeFixedImu();
     void InitializeMobileImu();
-    bool InitializeForcePlate();
+    void InitializePressureMat();
 
     bool _isAlarmInitialized = false;
     bool _isFixedImuInitialized = false;
     bool _isMobileImuInitialized = false;
     bool _isMotionSensorInitialized = false;
-    bool _isForcePlateInitialized = false;
 
     bool _isFixedImuCalibrated = false;
     bool _isMobileImuCalibrated = false;
-    bool _isPressureMatCalibrated = false;
 
     bool _isMoving = false;
-    bool _isSomeoneThere = false;
     bool _isChairInclined = false;
 
-    Coord_t _COPCoord;
     int _timeSinceEpoch = 0;
     int _backSeatAngle = 0;
-    uint16_t _max11611Data[9];
 
     FileManager *_fileManager;
 
@@ -124,9 +99,7 @@ class DeviceManager
     MobileImu *_mobileImu;
     FixedImu *_fixedImu;
     BackSeatAngleTracker _backSeatAngleTracker;
-    ForceSensor _sensorMatrix;
-    ForcePlate _globalForcePlate;
-    MAX11611 _max11611;
+    PressureMat *_pressureMat;
     MotionSensor *_motionSensor;
 };
 

@@ -40,8 +40,6 @@ ChairManager::ChairManager(MosquittoBroker *mosquittoBroker, DeviceManager *devi
                                                                                              _deviceManager(deviceManager)
 {
     _alarm = _deviceManager->GetAlarm();
-    _copCoord.x = 0;
-    _copCoord.y = 0;
 }
 
 ChairManager::~ChairManager()
@@ -110,21 +108,21 @@ void ChairManager::UpdateDevices()
 
     _prevIsSomeoneThere = _isSomeoneThere;
     _isSomeoneThere = _deviceManager->IsSomeoneThere();
-    _copCoord = _deviceManager->GetCenterOfPressure();
-    _prevChairAngle = _currentChairAngle;
     _currentChairAngle = _deviceManager->GetBackSeatAngle();
     bool prevIsMoving = _isMoving;
     _isMoving = _deviceManager->IsMoving();
     _isChairInclined = _deviceManager->IsChairInclined();
+    _pressureMatData = _deviceManager->GetPressureMatData();
+    _prevChairAngle = _currentChairAngle;
 
 #ifdef DEBUG_PRINT
     printf("\n");
     printf("_currentDatetime = %s\n", _currentDatetime.c_str());
     printf("isSomeoneThere = %i\n", _isSomeoneThere);
-    printf("getCenterOfPressure x = %f, y = %f\n", _copCoord.x, _copCoord.y);
     printf("_currentChairAngle = %i\n", _currentChairAngle);
     printf("_isMoving = %i\n", _isMoving);
     printf("_isChairInclined = %i\n", _isChairInclined);
+    printf("Global Center Of Pressure = X: %f Y: %f\n", _pressureMatData.centerOfPressure.x, _pressureMatData.centerOfPressure.y);
 #endif
 
     if (_isSomeoneThere)
@@ -132,7 +130,7 @@ void ChairManager::UpdateDevices()
         if (_centerOfPressureTimer.Elapsed() >= CENTER_OF_PRESSURE_EMISSION_PERIOD.count())
         {
             _centerOfPressureTimer.Reset();
-            _mosquittoBroker->SendCenterOfPressure(_copCoord.x, _copCoord.y, _currentDatetime);
+            _mosquittoBroker->SendPressureMatData(_pressureMatData, _currentDatetime);
         }
 
         if ((_chairAngleTimer.Elapsed() >= CHAIR_ANGLE_EMISSION_PERIOD.count()) && (_currentChairAngle != _prevChairAngle))
@@ -318,7 +316,7 @@ void ChairManager::CheckIfRequiredBackSeatAngleIsReached()
         _mosquittoBroker->SendTiltInfo(TiltInfo::FAIL, _currentDatetime);
     }
 
-    if ( _prevChairAngle < MINIMUM_ANGLE && _currentChairAngle >= MINIMUM_ANGLE)
+    if (_prevChairAngle < MINIMUM_ANGLE && _currentChairAngle >= MINIMUM_ANGLE)
     {
         _failedTiltTimer.Reset();
     }

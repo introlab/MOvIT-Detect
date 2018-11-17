@@ -2,6 +2,7 @@
 #define MOSQUITTO_BROKER_H
 
 #include "mosquittopp.h"
+#include "Utils.h"
 #include <stdint.h>
 #include <string>
 
@@ -17,7 +18,7 @@ class MosquittoBroker : public mosqpp::mosquittopp
     void on_message(const mosquitto_message *message);
 
     void SendBackRestAngle(const int angle, const std::string datetime);
-    void SendCenterOfPressure(const float x, const float y, const std::string datetime);
+    void SendPressureMatData(const pressure_mat_data_t data, const std::string datetime);
     void SendIsSomeoneThere(const bool state, const std::string datetime);
     void SendIsPressureMatCalib(const bool state, const std::string datetime);
     void SendIsIMUCalib(const bool state, const std::string datetime);

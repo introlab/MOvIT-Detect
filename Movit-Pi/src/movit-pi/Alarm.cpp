@@ -41,9 +41,9 @@ bool Alarm::Initialize()
 
 bool Alarm::IsConnected()
 {
-    return (_pca9536.GetMode(DC_MOTOR) == IO_OUTPUT
+    return _pca9536.GetMode(DC_MOTOR) == IO_OUTPUT
         && _pca9536.GetMode(GREEN_LED) == IO_OUTPUT
-        && _pca9536.GetMode(RED_LED) == IO_OUTPUT);
+        && _pca9536.GetMode(RED_LED) == IO_OUTPUT;
 }
 
 uint8_t Alarm::GetPinState(pin_t pin)

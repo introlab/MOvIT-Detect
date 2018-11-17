@@ -1,14 +1,23 @@
-#ifndef FORCE_PLATE_H
-#define FORCE_PLATE_H
+#ifndef GLOBAL_FORCE_PLATE_H
+#define GLOBAL_FORCE_PLATE_H
 
-#include "ForceSensor.h"
 #include "Utils.h"
 
-class ForcePlate
+class GlobalForcePlate
 {
   public:
-    ForcePlate(ForceSensor &sensors, uint8_t sensorNo1, uint8_t sensorNo2, uint8_t sensorNo3, uint8_t sensorNo4, float distX, float distY, float distZ0);
-    void Update();
+    //Constants - physical montage values
+    enum Quadrant
+    {
+        FrontLeft = 0,
+        FrontRight = 1,
+        BackLeft = 2,
+        BackRight = 3,
+        Count = 4
+    };
+
+    GlobalForcePlate();
+
     float GetFx() { return _fx; }
     float GetFy() { return _fy; }
     float GetFz() { return _fz; }
@@ -17,6 +26,7 @@ class ForcePlate
     float GetMz() { return _mz; }
     float GetMx1() { return _mx1; }
     float GetMy1() { return _my1; }
+
     Coord_t GetCenterOfPressure() { return _centerOfPressure; }
 
     void SetFx(float fx) { _fx = fx; }
@@ -27,13 +37,10 @@ class ForcePlate
     void SetMz(float mz) { _mz = mz; }
     void SetMx1(float mx1) { _mx1 = mx1; }
     void SetMy1(float my1) { _my1 = my1; }
+
     void SetCenterOfPressure(Coord_t centerOfPressure) { _centerOfPressure = centerOfPressure; }
 
   private:
-    float _distX;
-    float _distY;
-    float _distZ;
-
     //Force plate output signals
     float _fx12; //Force in X-Direction measured by SensorNo1 + SensorNo2
     float _fx34; //Force in X-Direction measured by SensorNo3 + SensorNo4
@@ -56,12 +63,6 @@ class ForcePlate
 
     //Coordinate of the force application point (C.O.P.)
     Coord_t _centerOfPressure; //X-Coordinate of the application point
-    ForceSensor *_forceSensor;
-
-    uint8_t _sensorNo1;
-    uint8_t _sensorNo2;
-    uint8_t _sensorNo3;
-    uint8_t _sensorNo4;
 };
 
-#endif // FORCE_PLATE_H
+#endif // GLOBAL_FORCE_PLATE_H
