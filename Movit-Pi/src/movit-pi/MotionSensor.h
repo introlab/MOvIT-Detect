@@ -37,8 +37,7 @@ class MotionSensor: public Sensor
     std::thread GetDeltaXYThread();
     bool InitializeOpticalFlowSensor();
     bool InitializeRangeSensor();
-    bool ValidDistanceToTheGround();
-
+    
     uint16_t PixelsToMillimeter(double pixels);
     double GetAverageRange();
 
