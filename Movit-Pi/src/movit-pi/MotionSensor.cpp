@@ -1,6 +1,7 @@
 #include "MotionSensor.h"
 #include <math.h>
 #include "Utils.h"
+#include "SysTime.h"
 
 #define MOVING_AVG_WINDOW_SIZE 10
 

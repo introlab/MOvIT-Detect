@@ -9,6 +9,7 @@
 #include "DeviceManager.h"
 #include "ChairManager.h"
 #include "Utils.h"
+#include "SysTime.h"
 #include "FileManager.h"
 
 using std::string;
@@ -43,7 +44,7 @@ int main(int argc, char *argv[])
 
     auto start = std::chrono::system_clock::now();
     auto end = std::chrono::system_clock::now();
-    auto period = milliseconds(1000);
+    auto period = milliseconds(static_cast<int>((1 / RUNNING_FREQUENCY) * SECONDS_TO_MILLISECONDS));
 
     chairManager.ReadVibrationsThread().detach();
 
@@ -57,6 +58,12 @@ int main(int argc, char *argv[])
 
         end = std::chrono::system_clock::now();
         auto elapse_time = std::chrono::duration_cast<milliseconds>(end - start);
+
+        if (elapse_time.count() >= period.count())
+        {
+            printf("MAIN LOOP OVERRUN. It took: %lli\n", elapse_time.count());
+            elapse_time = period;
+        }
 
         if (elapse_time.count() >= period.count())
         {

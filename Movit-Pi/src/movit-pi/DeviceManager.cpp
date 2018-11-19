@@ -4,6 +4,7 @@
 #include "MobileImu.h"
 #include "I2Cdev.h"
 #include "Utils.h"
+#include "SysTime.h"
 
 #include <unistd.h>
 #include <thread>

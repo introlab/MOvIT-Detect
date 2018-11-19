@@ -27,6 +27,7 @@ const char *ALARM_TOPIC = "data/set_alarm";
 const char *REQUIRED_ANGLE_TOPIC = "data/required_back_rest_angle";
 const char *REQUIRED_PERIOD_TOPIC = "data/required_period";
 const char *REQUIRED_DURATION_TOPIC = "data/required_duration";
+const char *REQUIRED_SNOOZE_TIME_TOPIC = "data/required_snooze_time";
 const char *CALIB_PRESSURE_MAT_TOPIC = "config/calib_pressure_mat";
 const char *CALIB_IMU_TOPIC = "config/calib_imu";
 const char *DEACTIVATE_VIBRATION = "config/deactivate_vibration";
@@ -98,6 +99,7 @@ void MosquittoBroker::on_connect(int rc)
         subscribe(NULL, CALIB_IMU_TOPIC);
         subscribe(NULL, DEACTIVATE_VIBRATION);
         subscribe(NULL, SELECT_WIFI_TOPIC);
+        subscribe(NULL, REQUIRED_SNOOZE_TIME_TOPIC);
     }
 }
 
@@ -230,6 +232,21 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
             printf(EXCEPTION_MESSAGE, e.what());
             printf("Setting _deactivate_vibration to 0\n");
             _isVibrationDeactivated = false;
+        }
+    }
+    if (topic == REQUIRED_SNOOZE_TIME_TOPIC)
+    {
+        try
+        {
+            _snoozeTime = std::stoi(message);
+            _snoozeTimeNew = true;
+        }
+        catch (const std::exception &e)
+        {
+            printf(EXCEPTION_MESSAGE, e.what());
+            printf("Setting _snoozeTime to 0\n");
+            _snoozeTime = 0;
+            _snoozeTimeNew = false;
         }
     }
 }
@@ -379,7 +396,7 @@ void MosquittoBroker::SendSensorsState(const bool alarmStatus, const bool mobile
         "\"fixedImu\":" + std::to_string(fixedImuStatus) + ","
         "\"motionSensor\":" + std::to_string(motionSensorStatus) + ","
         "\"forcePlate\":" + std::to_string(plateSensorStatus) + "}";
-        
+
     PublishMessage(SENSORS_STATUS_TOPIC, strMsg);
 }
 
@@ -443,6 +460,12 @@ std::string MosquittoBroker::GetWifiInformation()
 {
     _wifiChanged = false;
     return _wifiInformation;
+}
+
+float MosquittoBroker::GetSnoozeTime()
+{
+    _snoozeTimeNew = false;
+    return _snoozeTime;
 }
 
 bool MosquittoBroker::CalibPressureMatRequired()

@@ -1,6 +1,7 @@
 #include "ChairManager.h"
 #include <chrono>
 #include "NetworkManager.h"
+#include "SysTime.h"
 
 #define REQUIRED_SITTING_TIME 5
 #define DELTA_ANGLE_THRESHOLD 5
@@ -8,9 +9,6 @@
 #define CHECK_SENSORS_STATE_PERIOD 20
 #define VIBRATION_EMISSION_FREQUENCY 60 // Hz
 #define VIBRATION_EMISSION_THRESOLD 2   // m/s^2
-#define MINIMUM_BACK_REST_ANGLE 2
-
-#define IS_MOVING_DEBOUNCE_CONSTANT 10
 
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
@@ -20,6 +18,7 @@ enum State
 {
     INITIAL = 1,
     WAIT,
+    SNOOZE,
     CLIMB,
     STAY,
     DESCEND,
@@ -37,7 +36,8 @@ enum TiltInfo
 };
 
 ChairManager::ChairManager(MosquittoBroker *mosquittoBroker, DeviceManager *deviceManager) : _mosquittoBroker(mosquittoBroker),
-                                                                                             _deviceManager(deviceManager)
+                                                                                             _deviceManager(deviceManager),
+                                                                                             _secondsCounter(RUNNING_FREQUENCY)
 {
     _alarm = _deviceManager->GetAlarm();
 }
@@ -223,6 +223,11 @@ void ChairManager::ReadFromServer()
         _isWifiChanged = true;
         _wifiChangedTimer.Reset();
     }
+    if (_mosquittoBroker->IsSnoozeTimeNew())
+    {
+        _snoozeTime = _mosquittoBroker->GetSnoozeTime();
+        printf("Something new for _snoozeTime = %f\n", _snoozeTime);
+    }
     _deviceManager->GetAlarm()->DeactivateVibration(_mosquittoBroker->IsVibrationDeactivated());
 }
 
@@ -244,19 +249,22 @@ void ChairManager::CheckNotification()
 
     switch (_state)
     {
-    case 1:
+    case State::INITIAL:
         CheckIfUserHasBeenSittingForRequiredTime();
         break;
-    case 2:
+    case State::WAIT:
         CheckIfBackRestIsRequired();
         break;
-    case 3:
+    case State::SNOOZE:
+        NotificationSnoozed();
+        break;
+    case State::CLIMB:
         CheckIfRequiredBackSeatAngleIsReached();
         break;
-    case 4:
+    case State::STAY:
         CheckIfRequiredBackSeatAngleIsMaintained();
         break;
-    case 5:
+    case State::DESCEND:
         CheckIfBackSeatIsBackToInitialPosition();
         break;
     default:
@@ -266,7 +274,7 @@ void ChairManager::CheckNotification()
 
 void ChairManager::CheckIfUserHasBeenSittingForRequiredTime()
 {
-    printf("State INIT\t_secondsCounter: %i\n", _secondsCounter);
+    printf("State INIT\t_secondsCounter: %f\n", _secondsCounter.Value());
 
     if (++_secondsCounter >= REQUIRED_SITTING_TIME)
     {
@@ -274,12 +282,24 @@ void ChairManager::CheckIfUserHasBeenSittingForRequiredTime()
         _secondsCounter = 0;
     }
 }
+void ChairManager::NotificationSnoozed()
+{
+    _secondsCounter++;
+
+    printf("State SNOOZED\t_secondsCounter: %f\n", _secondsCounter.Value());
+
+    if (_secondsCounter >= _snoozeTime)
+    {
+        _secondsCounter = 0;
+        _state = State::WAIT;
+    }
+}
 
 void ChairManager::CheckIfBackRestIsRequired()
 {
     _secondsCounter++;
 
-    printf("State WAIT\t_secondsCounter: %i\n", _secondsCounter);
+    printf("State WAIT\t_secondsCounter: %f\n", _secondsCounter.Value());
 
     if (_secondsCounter >= _requiredPeriod && _currentChairAngle < MINIMUM_ANGLE)
     {
@@ -309,10 +329,10 @@ void ChairManager::CheckIfRequiredBackSeatAngleIsReached()
 
     if ((_failedTiltTimer.Elapsed() > FAILED_TILT_TIME.count()) && (_currentChairAngle <= MINIMUM_ANGLE))
     {
+        printf("Failed bascule\n");
         _state = State::WAIT;
         _secondsCounter = 0;
         _alarm->StopBlinkRedAlarm();
-        printf("Failed bascule\n");
         _mosquittoBroker->SendTiltInfo(TiltInfo::FAIL, _currentDatetime);
     }
 
@@ -321,14 +341,24 @@ void ChairManager::CheckIfRequiredBackSeatAngleIsReached()
         _failedTiltTimer.Reset();
     }
 
-    if ((_failedTiltTimer.Elapsed() > (_requiredDuration * SECONDS_TO_MILLISECONDS)) && (_currentChairAngle > MINIMUM_ANGLE && _currentChairAngle <= _requiredBackRestAngle))
+    if ((_failedTiltTimer.Elapsed() > (_requiredDuration * SECONDS_TO_MILLISECONDS)) &&
+        (_currentChairAngle > MINIMUM_ANGLE && _currentChairAngle <= _requiredBackRestAngle))
     {
+        printf("Tilt too low\n");
         _state = State::WAIT;
         _secondsCounter = 0;
         _alarm->StopBlinkRedAlarm();
         _alarm->TurnOnRedLed();
-        printf("Tilt too low\n");
         _mosquittoBroker->SendTiltInfo(TiltInfo::TOO_LOW, _currentDatetime);
+    }
+
+    if (_alarm->ButtonPressed())
+    {
+        printf("Notification snoozed\n");
+        _state = State::SNOOZE;
+        _secondsCounter = 0;
+        _alarm->TurnOffAlarm();
+        _mosquittoBroker->SendTiltInfo(TiltInfo::SNOOZED, _currentDatetime);
     }
 
     if (_currentChairAngle > _requiredBackRestAngle)
@@ -347,7 +377,7 @@ void ChairManager::CheckIfRequiredBackSeatAngleIsMaintained()
     {
         _secondsCounter++;
 
-        printf("State STAY\t_secondsCounter: %i\n", _secondsCounter);
+        printf("State STAY\t_secondsCounter: %f\n", _secondsCounter.Value());
 
         if (_secondsCounter >= _requiredDuration)
         {
@@ -358,7 +388,6 @@ void ChairManager::CheckIfRequiredBackSeatAngleIsMaintained()
             _state = State::DESCEND;
         }
     }
-    // Si on est entre min angle et required angle ?
     else if (_currentChairAngle < (_requiredBackRestAngle - DELTA_ANGLE_THRESHOLD))
     {
         printf("State STAY climb UP\n");
@@ -371,8 +400,8 @@ void ChairManager::CheckIfRequiredBackSeatAngleIsMaintained()
     }
     else if (_currentChairAngle < MINIMUM_ANGLE)
     {
-        _state = State::WAIT;
         printf("Tilt too short\n");
+        _state = State::WAIT;
         _mosquittoBroker->SendTiltInfo(TiltInfo::TOO_SHORT, _currentDatetime);
     }
 }
@@ -381,7 +410,7 @@ void ChairManager::CheckIfBackSeatIsBackToInitialPosition()
 {
     _secondsCounter++;
 
-    printf("State DESCEND\t_secondsCounter: %i\n", _secondsCounter);
+    printf("State DESCEND\t_secondsCounter: %f\n", _secondsCounter.Value());
 
     if (_currentChairAngle < MINIMUM_ANGLE)
     {

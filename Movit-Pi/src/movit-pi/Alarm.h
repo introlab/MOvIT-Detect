@@ -27,6 +27,8 @@ public:
   void TurnOffGreenLed();
   void TurnOffAlarm();
 
+  bool ButtonPressed() { return !GetPinState(PUSH_BUTTON); }
+
   void TurnOnBlinkLedsAlarm();
   void TurnOnBlinkRedAlarm();
   void TurnOnGreenAlarm();

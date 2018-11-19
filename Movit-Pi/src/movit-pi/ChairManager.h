@@ -5,6 +5,7 @@
 #include "Utils.h"
 #include "Timer.h"
 #include "DeviceManager.h"
+#include "SecondsCounter.h"
 
 #include <string>
 #include <unistd.h>
@@ -26,7 +27,7 @@ class ChairManager
 
   private:
     static constexpr auto CENTER_OF_PRESSURE_EMISSION_PERIOD = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::seconds(10));
-    static constexpr auto FAILED_TILT_TIME = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::minutes(2));    
+    static constexpr auto FAILED_TILT_TIME = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::minutes(2));
     static constexpr auto CHAIR_ANGLE_EMISSION_PERIOD = std::chrono::milliseconds(1000);
     static constexpr auto WIFI_VALIDATION_PERIOD = std::chrono::seconds(10);
     static constexpr auto HEARTBEAT_PERIOD = std::chrono::milliseconds(1000);
@@ -38,11 +39,12 @@ class ChairManager
     DeviceManager *_deviceManager;
 
     int _updateDevicesCounter = 0;
-    uint32_t _secondsCounter = 0;
+    SecondsCounter _secondsCounter;
     uint8_t _state = 0;
 
     int _currentChairAngle = 0;
     int _prevChairAngle = 0;
+    float _snoozeTime = 0.0f;
     std::string _currentDatetime = "";
 
     bool _isSomeoneThere = false;
@@ -55,6 +57,7 @@ class ChairManager
     bool _isVibrationsActivated = true;
     bool _isIMUCalibrationChanged = false;
     bool _isPressureMatCalibrationChanged = false;
+
     pressure_mat_data_t _pressureMatData;
     int _requiredBackRestAngle = 0;
     uint32_t _requiredPeriod = 0;
@@ -68,6 +71,7 @@ class ChairManager
 
     void CheckIfUserHasBeenSittingForRequiredTime();
     void CheckIfBackRestIsRequired();
+    void NotificationSnoozed();
     void CheckIfRequiredBackSeatAngleIsReached();
     void CheckIfRequiredBackSeatAngleIsMaintained();
     void CheckIfBackSeatIsBackToInitialPosition();
