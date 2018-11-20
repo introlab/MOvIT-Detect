@@ -84,6 +84,12 @@ void ChairManager::UpdateDevices()
         _updateDevicesCounter = 0;
     }
 
+    if (_mosquittoBroker->IsNotificationsSettingsChanged())
+    {
+        std::string notificationsSettingsStr =_mosquittoBroker->GetNotificationsSettings();
+        _deviceManager->UpdateNotificationsSettings(notificationsSettingsStr);
+    }
+
     if (_mosquittoBroker->CalibPressureMatRequired())
     {
         _deviceManager->CalibratePressureMat();
@@ -223,12 +229,10 @@ void ChairManager::ReadFromServer()
         _isWifiChanged = true;
         _wifiChangedTimer.Reset();
     }
-    if (_mosquittoBroker->IsSnoozeTimeNew())
-    {
-        _snoozeTime = _mosquittoBroker->GetSnoozeTime();
-        printf("Something new for _snoozeTime = %f\n", _snoozeTime);
-    }
-    _deviceManager->GetAlarm()->DeactivateVibration(_mosquittoBroker->IsVibrationDeactivated());
+
+    _snoozeTime = _deviceManager->GetSnoozeTime();
+    _deviceManager->GetAlarm()->DeactivateVibration(_deviceManager->IsVibrationEnabled());
+    _deviceManager->GetAlarm()->DeactivateLedBlinking(_deviceManager->IsLedBlinkingEnabled());
 }
 
 void ChairManager::CheckNotification()

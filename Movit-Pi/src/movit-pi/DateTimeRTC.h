@@ -14,8 +14,8 @@ class DateTimeRTC
 
     static DateTimeRTC *GetInstance()
     {
-      static DateTimeRTC instance;
-      return &instance;
+        static DateTimeRTC instance;
+        return &instance;
     }
 
   private:

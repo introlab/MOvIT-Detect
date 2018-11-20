@@ -10,24 +10,24 @@ using rapidjson::Value;
 using rapidjson::Writer;
 using std::string;
 
-const std::string OFFSETS_FILENAME = "offsets.txt";
-
-const std::string PRESSURE_MAT_OBJECT = "pressure_mat_offset";
-const std::string FIXED_IMU_OBJECT = "fixed_imu_offset";
-const std::string MOBILE_IMU_OBJECT = "mobile_imu_offset";
+const string SETTINGS_FILENAME = "settings.txt";
+const string NOTIFICATIONS_SETTINGS_OBJECT = "notifications_settings";
+const string PRESSURE_MAT_OBJECT = "pressure_mat_offset";
+const string FIXED_IMU_OBJECT = "fixed_imu_offset";
+const string MOBILE_IMU_OBJECT = "mobile_imu_offset";
 
 void FileManager::Read()
 {
     std::fstream file;
-    file.open(OFFSETS_FILENAME, std::fstream::in | std::fstream::out);
+    file.open(SETTINGS_FILENAME, std::fstream::in | std::fstream::out);
 
     if (!file.is_open())
     {
-        printf("ReadFile: error opening %s...\n", OFFSETS_FILENAME.c_str());
+        printf("ReadFile: error opening %s...\n", SETTINGS_FILENAME.c_str());
         return;
     }
 
-    std::string line;
+    string line;
     while (getline(file, line))
     {
         Document doc;
@@ -36,6 +36,7 @@ void FileManager::Read()
         if (doc.IsObject())
         {
             _pressureMatOffset = ParsePressureMatOffset(doc);
+            _notificationsSettings = ParseNotificationsSettings(doc);
             _fixedImuOffset = ParseIMUOffset(doc, FIXED_IMU_OBJECT);
             _mobileImuOffset = ParseIMUOffset(doc, MOBILE_IMU_OBJECT);
         }
@@ -52,14 +53,15 @@ void FileManager::Save()
     FormatPressureMatOffset(writer, _pressureMatOffset, PRESSURE_MAT_OBJECT);
     FormatImuOffset(writer, _fixedImuOffset, FIXED_IMU_OBJECT);
     FormatImuOffset(writer, _mobileImuOffset, MOBILE_IMU_OBJECT);
+    FormatNotificationsSettings(writer, _notificationsSettings, NOTIFICATIONS_SETTINGS_OBJECT);
     writer.EndObject();
 
     std::fstream file;
-    file.open(OFFSETS_FILENAME, std::fstream::out);
+    file.open(SETTINGS_FILENAME, std::fstream::out);
 
     if (!file.is_open())
     {
-        printf("Save: error opening %s...\n", OFFSETS_FILENAME.c_str());
+        printf("Save: error opening %s...\n", SETTINGS_FILENAME.c_str());
         return;
     }
 
@@ -107,6 +109,34 @@ void FileManager::FormatImuOffset(Writer<StringBuffer> &writer, imu_offset_t off
     writer.EndObject();
 }
 
+void FileManager::FormatNotificationsSettings(Writer<StringBuffer> &writer, notifications_settings_t notificationsSettings, string objectName)
+{
+    writer.Key(objectName.c_str());
+    writer.StartObject();
+    writer.Key("isLedBlinkingEnabled");
+    writer.Bool(notificationsSettings.isLedBlinkingEnabled);
+    writer.Key("isVibrationEnabled");
+    writer.Bool(notificationsSettings.isVibrationEnabled);
+    writer.Key("snoozeTime");
+    writer.Double(notificationsSettings.snoozeTime);
+    writer.EndObject();
+}
+
+notifications_settings_t FileManager::ParseNotificationsSettings(Document &document)
+{
+    notifications_settings_t ret;
+
+    if (document["notifications_settings"].IsObject())
+    {
+        Value &object = document["notifications_settings"];
+        ret.isLedBlinkingEnabled = object["isLedBlinkingEnabled"].GetBool();
+        ret.isVibrationEnabled = object["isVibrationEnabled"].GetBool();
+        ret.snoozeTime = object["snoozeTime"].GetFloat();
+    }
+
+    return ret;
+}
+
 imu_offset_t FileManager::ParseIMUOffset(Document &document, string objectName)
 {
     imu_offset_t ret;
@@ -119,7 +149,6 @@ imu_offset_t FileManager::ParseIMUOffset(Document &document, string objectName)
         {
             for (size_t i = 0; i < jsonArray.Size(); i++)
             {
-                // printf("accelerometerOffsets[%d] = %d\n", i, a[i].GetInt());
                 ret.accelerometerOffsets[i] = jsonArray[i].GetInt();
             }
         }
@@ -128,7 +157,6 @@ imu_offset_t FileManager::ParseIMUOffset(Document &document, string objectName)
         {
             for (size_t i = 0; i < jsonArray.Size(); i++)
             {
-                // printf("gyroscopeOffsets[%d] = %d\n", i, a[i].GetInt());
                 ret.gyroscopeOffsets[i] = jsonArray[i].GetInt();
             }
         }
@@ -150,13 +178,9 @@ pressure_mat_offset_t FileManager::ParsePressureMatOffset(Document &document)
         {
             for (size_t i = 0; i < jsonArray.Size(); i++)
             {
-                // printf("analogOffset[%d] = %d\n", i, a[i].GetInt());
                 ret.analogOffset[i] = jsonArray[i].GetInt();
             }
         }
-
-        // printf("%i \n", object["totalSensorMean"].GetInt());
-        // printf("%f \n", object["detectionThreshold"].GetFloat());
 
         ret.totalSensorMean = object["totalSensorMean"].GetInt();
         ret.detectionThreshold = object["detectionThreshold"].GetFloat();
@@ -209,4 +233,14 @@ imu_offset_t FileManager::GetFixedImuOffsets()
     }
 
     return ret;
+}
+
+void FileManager::SetNotificationsSettings(string notificationsSettingsString)
+{
+    Document doc;
+    doc.Parse(notificationsSettingsString.c_str());
+    if (doc.IsObject())
+    {
+        _notificationsSettings = ParseNotificationsSettings(doc);
+    }
 }

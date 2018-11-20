@@ -25,6 +25,8 @@ void DeviceManager::InitializeDevices()
 
     _fileManager->Read();
 
+    _notificationsSettings = _fileManager->GetNotificationsSettings();
+
     InitializePressureMat();
     InitializeMobileImu();
     InitializeFixedImu();
@@ -242,4 +244,10 @@ double DeviceManager::GetXAcceleration()
         return _fixedImu->GetXAcceleration();
     }
     return 0;
+}
+
+void DeviceManager::UpdateNotificationsSettings(std::string notificationsSettings)
+{
+    _fileManager->SetNotificationsSettings(notificationsSettings);
+    _fileManager->Save();
 }

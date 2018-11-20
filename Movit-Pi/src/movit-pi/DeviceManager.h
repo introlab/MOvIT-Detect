@@ -49,6 +49,7 @@ class DeviceManager
     void CalibratePressureMat();
 
     void TurnOff();
+    void UpdateNotificationsSettings(std::string notificationsSettings);
 
     bool IsAlarmConnected() { return _alarm.IsConnected(); }
     bool IsMobileImuConnected() { return _mobileImu->IsConnected(); }
@@ -57,6 +58,10 @@ class DeviceManager
 
     bool IsImuCalibrated() { return _isFixedImuCalibrated && _isMobileImuCalibrated; }
     bool IsPressureMatCalibrated() { return _pressureMat->IsCalibrated(); }
+
+    bool IsLedBlinkingEnabled() { return _notificationsSettings.isLedBlinkingEnabled; }
+    bool IsVibrationEnabled() { return _notificationsSettings.isVibrationEnabled; }
+    float GetSnoozeTime() { return _notificationsSettings.snoozeTime * 60; }
 
     // Singleton
     static DeviceManager *GetInstance(FileManager *fileManager)
@@ -101,6 +106,8 @@ class DeviceManager
     BackSeatAngleTracker _backSeatAngleTracker;
     PressureMat *_pressureMat;
     MotionSensor *_motionSensor;
+
+    notifications_settings_t _notificationsSettings;
 };
 
 #endif // DEVICE_MANAGER_H

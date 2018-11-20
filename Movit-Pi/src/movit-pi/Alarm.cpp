@@ -127,7 +127,7 @@ void Alarm::TurnOnBlinkRedAlarm()
         TurnOnDCMotor();
     }
 
-    while (_isBlinkRedAlarmOn)
+    while (_isBlinkRedAlarmOn && !_deactivateBlinking)
     {
         _pca9536.ToggleState(RED_LED);
         sleep_for_milliseconds((1 / _blinkFrequency) * SECONDS_TO_MILLISECONDS);

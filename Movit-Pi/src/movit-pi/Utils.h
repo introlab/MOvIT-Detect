@@ -49,4 +49,11 @@ struct pressure_mat_data_t
     Coord_t quadrantPressure[PRESSURE_SENSOR_COUNT] = {{0.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f}};
 };
 
+struct notifications_settings_t
+{
+    bool isLedBlinkingEnabled = true;
+    bool isVibrationEnabled = true;
+    float snoozeTime = 10.0f; //in minutes
+};
+
 #endif //UTILS_H
