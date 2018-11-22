@@ -56,4 +56,11 @@ struct notifications_settings_t
     float snoozeTime = 10.0f; //in minutes
 };
 
+struct tilt_settings_t
+{
+    int requiredBackRestAngle = 0;
+    uint32_t requiredPeriod = 0;
+    uint32_t requiredDuration = 0;
+};
+
 #endif //UTILS_H

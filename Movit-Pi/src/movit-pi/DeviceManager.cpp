@@ -26,7 +26,7 @@ void DeviceManager::InitializeDevices()
     _fileManager->Read();
 
     _notificationsSettings = _fileManager->GetNotificationsSettings();
-
+    _tiltSettings = _fileManager->GetTiltSettings();
     InitializePressureMat();
     InitializeMobileImu();
     InitializeFixedImu();
@@ -251,5 +251,12 @@ double DeviceManager::GetXAcceleration()
 void DeviceManager::UpdateNotificationsSettings(notifications_settings_t notificationsSettings)
 {
     _fileManager->SetNotificationsSettings(notificationsSettings);
+    _fileManager->Save();
+}
+
+void DeviceManager::UpdateTiltSettings(tilt_settings_t tiltSettings)
+{
+    _tiltSettings = tiltSettings;
+    _fileManager->SetTiltSettings(tiltSettings);
     _fileManager->Save();
 }

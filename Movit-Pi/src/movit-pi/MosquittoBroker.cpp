@@ -27,7 +27,6 @@ const char *ALARM_TOPIC = "data/set_alarm";
 const char *REQUIRED_ANGLE_TOPIC = "data/required_back_rest_angle";
 const char *REQUIRED_PERIOD_TOPIC = "data/required_period";
 const char *REQUIRED_DURATION_TOPIC = "data/required_duration";
-const char *REQUIRED_SNOOZE_TIME_TOPIC = "data/required_snooze_time";
 const char *CALIB_PRESSURE_MAT_TOPIC = "config/calib_pressure_mat";
 const char *CALIB_IMU_TOPIC = "config/calib_imu";
 const char *NOTIFICATIONS_SETTINGS_TOPIC = "config/notifications_settings";
@@ -99,7 +98,6 @@ void MosquittoBroker::on_connect(int rc)
         subscribe(NULL, CALIB_IMU_TOPIC);
         subscribe(NULL, NOTIFICATIONS_SETTINGS_TOPIC);
         subscribe(NULL, SELECT_WIFI_TOPIC);
-        subscribe(NULL, REQUIRED_SNOOZE_TIME_TOPIC);
     }
 }
 
@@ -153,45 +151,45 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
     {
         try
         {
-            _requiredBackRestAngle = std::stoi(message);
-            _requiredBackRestAngleNew = true;
+            _tiltSettings.requiredBackRestAngle = std::stoi(message);
+            _isTiltSettingsChanged = true;
         }
         catch (const std::exception &e)
         {
             printf(EXCEPTION_MESSAGE, e.what());
             printf("Setting _requiredBackRestAngle to 0 and _requiredBackRestAngleNew to false\n");
-            _requiredBackRestAngle = 0;
-            _requiredBackRestAngleNew = false;
+            _tiltSettings.requiredBackRestAngle = 0;
+            _isTiltSettingsChanged = false;
         }
     }
     else if (topic == REQUIRED_PERIOD_TOPIC)
     {
         try
         {
-            _requiredPeriod = std::stoi(message);
-            _requiredPeriodNew = true;
+            _tiltSettings.requiredPeriod = std::stoi(message);
+            _isTiltSettingsChanged = true;
         }
         catch (const std::exception &e)
         {
             printf(EXCEPTION_MESSAGE, e.what());
             printf("Setting _requiredPeriod to 0 and _requiredPeriodNew to false\n");
-            _requiredPeriod = 0;
-            _requiredPeriodNew = false;
+            _tiltSettings.requiredPeriod = 0;
+            _isTiltSettingsChanged = false;
         }
     }
     else if (topic == REQUIRED_DURATION_TOPIC)
     {
         try
         {
-            _requiredDuration = std::stoi(message);
-            _requiredDurationNew = true;
+            _tiltSettings.requiredDuration = std::stoi(message);
+            _isTiltSettingsChanged = true;
         }
         catch (const std::exception &e)
         {
             printf(EXCEPTION_MESSAGE, e.what());
             printf("Setting _requiredDuration to 0 and _requiredDurationNew to false\n");
-            _requiredDuration = 0;
-            _requiredDurationNew = false;
+            _tiltSettings.requiredDuration = 0;
+            _isTiltSettingsChanged = false;
         }
     }
     else if (topic == CALIB_PRESSURE_MAT_TOPIC)
@@ -430,22 +428,10 @@ bool MosquittoBroker::GetSetAlarmOn()
     return _setAlarmOn;
 }
 
-uint32_t MosquittoBroker::GetRequiredBackRestAngle()
+tilt_settings_t MosquittoBroker::GetTiltSettings()
 {
-    _requiredBackRestAngleNew = false;
-    return _requiredBackRestAngle;
-}
-
-uint32_t MosquittoBroker::GetRequiredPeriod()
-{
-    _requiredPeriodNew = false;
-    return _requiredPeriod;
-}
-
-uint32_t MosquittoBroker::GetRequiredDuration()
-{
-    _requiredDurationNew = false;
-    return _requiredDuration;
+    _isTiltSettingsChanged = false;
+    return _tiltSettings;
 }
 
 std::string MosquittoBroker::GetWifiInformation()

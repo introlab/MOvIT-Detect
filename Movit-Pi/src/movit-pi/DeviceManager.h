@@ -50,6 +50,9 @@ class DeviceManager
 
     void TurnOff();
 
+    void UpdateTiltSettings(tilt_settings_t tiltSettings);
+    tilt_settings_t GetTiltSettings() { return _tiltSettings; }
+  
     void UpdateNotificationsSettings(notifications_settings_t notificationsSettings);
 
     bool IsAlarmConnected() { return _alarm.IsConnected(); }
@@ -62,7 +65,6 @@ class DeviceManager
 
     bool IsLedBlinkingEnabled() { return _notificationsSettings.isLedBlinkingEnabled; }
     bool IsVibrationEnabled() { return _notificationsSettings.isVibrationEnabled; }
-    float GetSnoozeTime() { return _notificationsSettings.snoozeTime * 60; }
 
     // Singleton
     static DeviceManager *GetInstance(FileManager *fileManager)
@@ -109,6 +111,7 @@ class DeviceManager
     MotionSensor *_motionSensor;
 
     notifications_settings_t _notificationsSettings;
+    tilt_settings_t _tiltSettings;
 };
 
 #endif // DEVICE_MANAGER_H

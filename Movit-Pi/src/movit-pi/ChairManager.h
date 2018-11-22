@@ -58,9 +58,7 @@ class ChairManager
     bool _isPressureMatCalibrationChanged = false;
 
     pressure_mat_data_t _pressureMatData;
-    int _requiredBackRestAngle = 0;
-    uint32_t _requiredPeriod = 0;
-    uint32_t _requiredDuration = 0;
+    tilt_settings_t _tiltSettings;
 
     Timer _centerOfPressureTimer;
     Timer _wifiChangedTimer;
