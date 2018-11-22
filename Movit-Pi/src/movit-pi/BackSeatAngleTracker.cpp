@@ -4,7 +4,7 @@
 #include "Utils.h"
 #include <math.h>
 
-BackSeatAngleTracker::BackSeatAngleTracker()
+BackSeatAngleTracker::BackSeatAngleTracker(): _angle(10)
 {
 }
 
@@ -26,5 +26,7 @@ int BackSeatAngleTracker::GetBackSeatAngle()
     double fixedPitch = mobileImu->GetPitch();
     double mobilePitch = fixedImu->GetPitch();
 
-    return int(fixedPitch - mobilePitch);
+    _angle.AddSample(static_cast<int>(fixedPitch - mobilePitch));
+
+    return _angle.GetAverage();
 }

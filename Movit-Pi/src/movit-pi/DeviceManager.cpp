@@ -31,9 +31,9 @@ void DeviceManager::InitializeDevices()
     InitializeMobileImu();
     InitializeFixedImu();
 
-    _datetimeRTC->SetCurrentDateTimeThread().detach();
     _isAlarmInitialized = _alarm.Initialize();
     _isMotionSensorInitialized = _motionSensor->Initialize();
+    _datetimeRTC->SetCurrentDateTimeThread().detach();
 
     _fileManager->Save();
 
@@ -211,8 +211,10 @@ void DeviceManager::CalibrateMobileIMU()
 void DeviceManager::Update()
 {
     _timeSinceEpoch = _datetimeRTC->GetTimeSinceEpoch();
+    
     if (_isMotionSensorInitialized)
     {
+        _motionSensor->GetDeltaXY();
         _isMoving = _motionSensor->IsMoving();
     }
 
@@ -246,7 +248,7 @@ double DeviceManager::GetXAcceleration()
     return 0;
 }
 
-void DeviceManager::UpdateNotificationsSettings(std::string notificationsSettings)
+void DeviceManager::UpdateNotificationsSettings(notifications_settings_t notificationsSettings)
 {
     _fileManager->SetNotificationsSettings(notificationsSettings);
     _fileManager->Save();

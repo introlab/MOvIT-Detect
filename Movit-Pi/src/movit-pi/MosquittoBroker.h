@@ -49,7 +49,7 @@ class MosquittoBroker : public mosqpp::mosquittopp
     bool CalibIMURequired();
 
     bool IsNotificationsSettingsChanged() { return _isNotificationsSettingsChanged; }
-    std::string GetNotificationsSettings();
+    notifications_settings_t GetNotificationsSettings();
 
   private:
     void PublishMessage(const char *topic, const std::string message);
@@ -59,7 +59,7 @@ class MosquittoBroker : public mosqpp::mosquittopp
     uint32_t _requiredPeriod = 0;
     uint32_t _requiredDuration = 0;
     std::string _wifiInformation = "";
-    std::string _notificationsSettings = "";
+    notifications_settings_t _notificationsSettings;
 
     bool _isNotificationsSettingsChanged = false;
     bool _calibPressureMatRequired = false;

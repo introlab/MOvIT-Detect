@@ -49,7 +49,8 @@ class DeviceManager
     void CalibratePressureMat();
 
     void TurnOff();
-    void UpdateNotificationsSettings(std::string notificationsSettings);
+
+    void UpdateNotificationsSettings(notifications_settings_t notificationsSettings);
 
     bool IsAlarmConnected() { return _alarm.IsConnected(); }
     bool IsMobileImuConnected() { return _mobileImu->IsConnected(); }

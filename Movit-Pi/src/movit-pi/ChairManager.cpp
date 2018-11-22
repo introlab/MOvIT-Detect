@@ -84,12 +84,6 @@ void ChairManager::UpdateDevices()
         _updateDevicesCounter = 0;
     }
 
-    if (_mosquittoBroker->IsNotificationsSettingsChanged())
-    {
-        std::string notificationsSettingsStr =_mosquittoBroker->GetNotificationsSettings();
-        _deviceManager->UpdateNotificationsSettings(notificationsSettingsStr);
-    }
-
     if (_mosquittoBroker->CalibPressureMatRequired())
     {
         _deviceManager->CalibratePressureMat();
@@ -114,12 +108,12 @@ void ChairManager::UpdateDevices()
 
     _prevIsSomeoneThere = _isSomeoneThere;
     _isSomeoneThere = _deviceManager->IsSomeoneThere();
+    _prevChairAngle = _currentChairAngle;
     _currentChairAngle = _deviceManager->GetBackSeatAngle();
     bool prevIsMoving = _isMoving;
     _isMoving = _deviceManager->IsMoving();
     _isChairInclined = _deviceManager->IsChairInclined();
     _pressureMatData = _deviceManager->GetPressureMatData();
-    _prevChairAngle = _currentChairAngle;
 
 #ifdef DEBUG_PRINT
     printf("\n");
@@ -128,6 +122,7 @@ void ChairManager::UpdateDevices()
     printf("_currentChairAngle = %i\n", _currentChairAngle);
     printf("_isMoving = %i\n", _isMoving);
     printf("_isChairInclined = %i\n", _isChairInclined);
+    printf("_snoozeTime = %f\n", _snoozeTime);
     printf("Global Center Of Pressure = X: %f Y: %f\n", _pressureMatData.centerOfPressure.x, _pressureMatData.centerOfPressure.y);
 #endif
 
@@ -198,7 +193,6 @@ void ChairManager::ReadFromServer()
 {
     if (_mosquittoBroker->IsSetAlarmOnNew())
     {
-        _overrideNotificationPattern = true;
         _setAlarmOn = _mosquittoBroker->GetSetAlarmOn();
         printf("Something new for setAlarmOn = %i\n", _setAlarmOn);
     }
@@ -230,14 +224,20 @@ void ChairManager::ReadFromServer()
         _wifiChangedTimer.Reset();
     }
 
-    _snoozeTime = _deviceManager->GetSnoozeTime();
-    _deviceManager->GetAlarm()->DeactivateVibration(_deviceManager->IsVibrationEnabled());
-    _deviceManager->GetAlarm()->DeactivateLedBlinking(_deviceManager->IsLedBlinkingEnabled());
+    if (_mosquittoBroker->IsNotificationsSettingsChanged())
+    {
+        notifications_settings_t notificationsSettings = _mosquittoBroker->GetNotificationsSettings();
+        _deviceManager->UpdateNotificationsSettings(notificationsSettings);
+
+        _snoozeTime = notificationsSettings.snoozeTime;
+        _deviceManager->GetAlarm()->DeactivateVibration(!notificationsSettings.isVibrationEnabled);
+        _deviceManager->GetAlarm()->DeactivateLedBlinking(!notificationsSettings.isVibrationEnabled);
+    }
 }
 
 void ChairManager::CheckNotification()
 {
-    if (_overrideNotificationPattern)
+    if (_setAlarmOn)
     {
         OverrideNotificationPattern();
         return;
@@ -392,16 +392,6 @@ void ChairManager::CheckIfRequiredBackSeatAngleIsMaintained()
             _state = State::DESCEND;
         }
     }
-    else if (_currentChairAngle < (_requiredBackRestAngle - DELTA_ANGLE_THRESHOLD))
-    {
-        printf("State STAY climb UP\n");
-        if (!_alarm->IsRedAlarmOn())
-        {
-            _alarm->TurnOnBlinkRedAlarmThread().detach();
-        }
-        _state = State::CLIMB;
-        _secondsCounter = 0;
-    }
     else if (_currentChairAngle < MINIMUM_ANGLE)
     {
         printf("Tilt too short\n");
@@ -440,5 +430,4 @@ void ChairManager::OverrideNotificationPattern()
     {
         _alarm->TurnOffAlarm();
     }
-    _overrideNotificationPattern = false;
 }

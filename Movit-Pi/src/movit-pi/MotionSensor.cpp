@@ -12,6 +12,7 @@ MotionSensor::MotionSensor() : _rangeAverage(MOVING_AVG_WINDOW_SIZE),
                                _deltaXAverage(MOVING_AVG_WINDOW_SIZE),
                                _deltaYAverage(MOVING_AVG_WINDOW_SIZE)
 {
+    _timer.Reset();
 }
 
 bool MotionSensor::Initialize()
@@ -22,7 +23,6 @@ bool MotionSensor::Initialize()
 
     if (isInitialized)
     {
-        GetDeltaXYThread().detach();
         return true;
     }
     return false;
@@ -71,14 +71,8 @@ std::thread MotionSensor::GetDeltaXYThread()
 
 void MotionSensor::GetDeltaXY()
 {
-    const uint32_t timeBetweenReadings = 250; // In milliseconds
-
-    while (true)
-    {
-        ReadRangeSensor();
-        ReadFlowSensor();
-        sleep_for_milliseconds(timeBetweenReadings);
-    }
+    ReadRangeSensor();
+    ReadFlowSensor();
 }
 
 void MotionSensor::ReadRangeSensor()
@@ -122,23 +116,25 @@ double MotionSensor::GetAverageRange()
 
 bool MotionSensor::IsMoving()
 {
-    const uint16_t wheelchairMovingThreshold = 2500;
-
-    if (_timer.Elapsed() >= WHEELCHAIR_MOVING_TIMEOUT.count() && _isMovingTravel < wheelchairMovingThreshold)
+    printf("Total moving travel: %d\n", _isMovingTravel);
+    if (_timer.Elapsed() >= WHEELCHAIR_MOVING_TIMEOUT.count())
     {
-        return false;
-    }
-    else if (_timer.Elapsed() < WHEELCHAIR_MOVING_TIMEOUT.count() && _isMovingTravel >= wheelchairMovingThreshold)
-    {
+        const uint16_t wheelchairMovingThreshold = 100;
+        if (_isMovingTravel >= wheelchairMovingThreshold)
+        {
+            _lastState = true;
+        }
+        else
+        {
+            _lastState = false;
+        }
         _isMovingTravel = 0;
         _deltaXAverage.Reset();
         _deltaYAverage.Reset();
         _rangeAverage.Reset();
         _timer.Reset();
-        return true;
     }
-    _timer.Reset();
-    return false;
+    return _lastState;
 }
 
 uint16_t MotionSensor::PixelsToMillimeter(double pixels)

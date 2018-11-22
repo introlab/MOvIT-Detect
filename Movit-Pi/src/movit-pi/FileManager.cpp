@@ -234,13 +234,3 @@ imu_offset_t FileManager::GetFixedImuOffsets()
 
     return ret;
 }
-
-void FileManager::SetNotificationsSettings(string notificationsSettingsString)
-{
-    Document doc;
-    doc.Parse(notificationsSettingsString.c_str());
-    if (doc.IsObject())
-    {
-        _notificationsSettings = ParseNotificationsSettings(doc);
-    }
-}

@@ -46,14 +46,16 @@ int main(int argc, char *argv[])
     auto end = std::chrono::system_clock::now();
     auto period = milliseconds(static_cast<int>((1 / RUNNING_FREQUENCY) * SECONDS_TO_MILLISECONDS));
 
-    chairManager.ReadVibrationsThread().detach();
+    // Ce feature ne sera pas implemente pour l'instant.
+    // Aussi ca ne devrais pas être un thread car ca cause des problemes avec le port i2c
+    // chairManager.ReadVibrationsThread().detach();
 
     while (true)
     {
         start = std::chrono::system_clock::now();
 
-        chairManager.UpdateDevices();
         chairManager.ReadFromServer();
+        chairManager.UpdateDevices();
         chairManager.CheckNotification();
 
         end = std::chrono::system_clock::now();
@@ -62,11 +64,6 @@ int main(int argc, char *argv[])
         if (elapse_time.count() >= period.count())
         {
             printf("MAIN LOOP OVERRUN. It took: %lli\n", elapse_time.count());
-            elapse_time = period;
-        }
-
-        if (elapse_time.count() >= period.count())
-        {
             elapse_time = period;
         }
 

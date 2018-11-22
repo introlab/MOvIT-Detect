@@ -22,5 +22,5 @@ sudo chmod +x *.sh
 ./kill_all.sh
 
 # start all
-./start_frontend.sh &
 ./start_control.sh &
+./start_frontend.sh &

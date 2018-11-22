@@ -222,7 +222,19 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
     }
     else if (topic == NOTIFICATIONS_SETTINGS_TOPIC)
     {
-        _notificationsSettings = message;
+        Document document;
+        document.Parse(message.c_str());
+
+        // Pour une certaine raison obscure, je ne suis pas capable de gerer le cas
+        // ou il n'y a pas d'object notifications_settings. Pas cool rapidjson
+        if (document["notifications_settings"].IsObject())
+        {
+            Value &object = document["notifications_settings"];
+            _notificationsSettings.isLedBlinkingEnabled = object["isLedBlinkingEnabled"].GetBool();
+            _notificationsSettings.isVibrationEnabled = object["isVibrationEnabled"].GetBool();
+            _notificationsSettings.snoozeTime = object["snoozeTime"].GetFloat();
+        }
+
         _isNotificationsSettingsChanged = true;
     }
     else
@@ -386,24 +398,24 @@ void MosquittoBroker::SendSensorState(const int device, const bool status, const
 
     switch (device)
     {
-        case alarmSensor:
-            sensorName = "alarm";
-            break;
-        case mobileImu:
-            sensorName = "mobileImu";
-            break;
-        case fixedImu:
-            sensorName = "fixedImu";
-            break;
-        case motionSensor:
-            sensorName = "motionSensor";
-            break;
-        case plateSensor:
-            sensorName = "plateSensor";
-            break;
-        default:
-            throw "Error: Invalid device";
-            break;
+    case alarmSensor:
+        sensorName = "alarm";
+        break;
+    case mobileImu:
+        sensorName = "mobileImu";
+        break;
+    case fixedImu:
+        sensorName = "fixedImu";
+        break;
+    case motionSensor:
+        sensorName = "motionSensor";
+        break;
+    case plateSensor:
+        sensorName = "plateSensor";
+        break;
+    default:
+        throw "Error: Invalid device";
+        break;
     }
 
     const std::string strState = std::to_string(status);
@@ -442,7 +454,7 @@ std::string MosquittoBroker::GetWifiInformation()
     return _wifiInformation;
 }
 
-std::string MosquittoBroker::GetNotificationsSettings()
+notifications_settings_t MosquittoBroker::GetNotificationsSettings()
 {
     _isNotificationsSettingsChanged = false;
     return _notificationsSettings;

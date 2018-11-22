@@ -26,6 +26,8 @@ CPPFLAGS += -c
 CPPFLAGS += -Wall
 CXXFLAGS += -std=c++11
 CXXFLAGS += -O3
+# Uncomment for debug capabilities using GDB on target
+# CXXFLAGS += -g
 CXXFLAGS += -I$(INC_DIR)
 export CPPFLAGS
 export CXXFLAGS

@@ -42,9 +42,7 @@ bool Alarm::Initialize()
 
 bool Alarm::IsConnected()
 {
-    return _pca9536.GetMode(DC_MOTOR) == IO_OUTPUT
-        && _pca9536.GetMode(GREEN_LED) == IO_OUTPUT
-        && _pca9536.GetMode(RED_LED) == IO_OUTPUT;
+    return _pca9536.GetMode(DC_MOTOR) == IO_OUTPUT && _pca9536.GetMode(GREEN_LED) == IO_OUTPUT && _pca9536.GetMode(RED_LED) == IO_OUTPUT;
 }
 
 uint8_t Alarm::GetPinState(pin_t pin)
@@ -54,12 +52,18 @@ uint8_t Alarm::GetPinState(pin_t pin)
 
 void Alarm::TurnOnDCMotor()
 {
-    _pca9536.SetState(DC_MOTOR, IO_HIGH);
+    if (GetPinState(DC_MOTOR) == IO_LOW)
+    {
+        _pca9536.SetState(DC_MOTOR, IO_HIGH);
+    }
 }
 
 void Alarm::TurnOffDCMotor()
 {
-    _pca9536.SetState(DC_MOTOR, IO_LOW);
+    if (GetPinState(DC_MOTOR) == IO_HIGH)
+    {
+        _pca9536.SetState(DC_MOTOR, IO_LOW);
+    }
 }
 
 void Alarm::TurnOnRedLed()
@@ -127,9 +131,13 @@ void Alarm::TurnOnBlinkRedAlarm()
         TurnOnDCMotor();
     }
 
-    while (_isBlinkRedAlarmOn && !_deactivateBlinking)
+    TurnOnRedLed();
+    while (_isBlinkRedAlarmOn)
     {
-        _pca9536.ToggleState(RED_LED);
+        if (!_deactivateBlinking)
+        {
+            _pca9536.ToggleState(RED_LED);
+        }
         sleep_for_milliseconds((1 / _blinkFrequency) * SECONDS_TO_MILLISECONDS);
     }
 

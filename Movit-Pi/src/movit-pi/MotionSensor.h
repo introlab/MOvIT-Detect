@@ -26,9 +26,12 @@ class MotionSensor: public Sensor
     bool Initialize();
     bool IsConnected();
     bool IsMoving();
+    void GetDeltaXY();
 
   private:
 
+    static constexpr auto WHEELCHAIR_MOVING_TIMEOUT = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::seconds(4));
+    
     //Singleton
     MotionSensor();
     MotionSensor(MotionSensor const &);   // Don't Implement.
@@ -44,18 +47,17 @@ class MotionSensor: public Sensor
     void ReadRangeSensor();
     void ReadFlowSensor();
     void UpdateTravel();
-    void GetDeltaXY();
 
     std::chrono::high_resolution_clock::time_point _timeoutStartMs;
     PMW3901 _opticalFLowSensor; // Optical Flow Sensor
     VL53L0X _rangeSensor;       // Range Sensor
-    uint16_t _isMovingTravel;
+    uint16_t _isMovingTravel = 0;
     MovingAverage<uint16_t> _rangeAverage;
     MovingAverage<int16_t> _deltaXAverage;
     MovingAverage<int16_t> _deltaYAverage;
 
-    static constexpr auto WHEELCHAIR_MOVING_TIMEOUT = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::seconds(4));
     Timer _timer;
+    bool _lastState = false;
 };
 
 #endif // MOVING_SENSOR_H

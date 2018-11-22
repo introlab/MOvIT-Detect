@@ -52,7 +52,6 @@ class ChairManager
     bool _isMoving = false;
     bool _isChairInclined = false;
     bool _isWifiChanged = false;
-    bool _overrideNotificationPattern = false;
     bool _setAlarmOn = false;
     bool _isVibrationsActivated = true;
     bool _isIMUCalibrationChanged = false;

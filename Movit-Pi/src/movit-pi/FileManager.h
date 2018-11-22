@@ -21,7 +21,7 @@ class FileManager
 	void SetMobileImuOffsets(imu_offset_t offset) { _mobileImuOffset = offset; }
 	void SetFixedImuOffsets(imu_offset_t offset) { _fixedImuOffset = offset; }
 	void SetPressureMatOffsets(pressure_mat_offset_t offset) { _pressureMatOffset = offset; }
-	void SetNotificationsSettings(std::string notificationsSettingsString);
+	void SetNotificationsSettings(notifications_settings_t notificationsSettings) { _notificationsSettings = notificationsSettings; }
 
 	// Singleton
 	static FileManager *GetInstance()
