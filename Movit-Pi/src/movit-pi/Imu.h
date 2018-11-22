@@ -5,6 +5,7 @@
 
 #include "MPU6050.h"
 #include "Utils.h"
+#include "DataType.h"
 #include "Sensor.h"
 
 #define ACCELEROMETER_DEADZONE 8 // Accelerometer error allowed, make it lower to get more precision, but sketch may not converge (default: 8)

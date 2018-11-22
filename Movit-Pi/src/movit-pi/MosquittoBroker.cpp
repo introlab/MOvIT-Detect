@@ -42,7 +42,6 @@ const char *VIBRATION_TOPIC = "data/vibration";
 const char *IS_MOVING_TOPIC = "data/is_moving";
 const char *TILT_INFO_TOPIC = "data/tilt_info";
 
-const char *SENSOR_STATUS_TOPIC = "status/sensor";
 const char *SENSORS_STATUS_TOPIC = "status/sensors";
 
 const char *EXCEPTION_MESSAGE = "Exception thrown by %s()\n";
@@ -235,10 +234,6 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
 
         _isNotificationsSettingsChanged = true;
     }
-    else
-    {
-        throw "Error: Invalid topic";
-    }
 }
 
 void MosquittoBroker::SendBackRestAngle(const int angle, const std::string datetime)
@@ -375,51 +370,26 @@ void MosquittoBroker::SendHeartbeat(const std::string datetime)
     PublishMessage(HEARTBEAT_TOPIC, strMsg);
 }
 
-void MosquittoBroker::SendSensorsState(const bool alarmStatus, const bool mobileImuStatus,
-                                       const bool fixedImuStatus, const bool motionSensorStatus, const bool plateSensorStatus,
-                                       const std::string datetime)
+void MosquittoBroker::SendSensorsState(sensor_state_t sensorState, const std::string datetime)
 {
-    std::string strMsg = "{"
-        "\"datetime\":" +  datetime + ","
-        "\"alarm\":" + std::to_string(alarmStatus) + ","
-        "\"mobileImu\":" + std::to_string(mobileImuStatus) + ","
-        "\"fixedImu\":" + std::to_string(fixedImuStatus) + ","
-        "\"motionSensor\":" + std::to_string(motionSensorStatus) + ","
-        "\"forcePlate\":" + std::to_string(plateSensorStatus) + "}";
+    StringBuffer strBuff;
+    Writer<StringBuffer> writer(strBuff);
+    writer.StartObject();
 
-    PublishMessage(SENSORS_STATUS_TOPIC, strMsg);
-}
+    writer.Key("notificationModule");
+    writer.Bool(sensorState.notificationModuleValid);
+    writer.Key("fixedAccelerometer");
+    writer.Bool(sensorState.fixedAccelerometerValid);
+    writer.Key("mobileAccelerometer");
+    writer.Bool(sensorState.mobileAccelerometerValid);
+    writer.Key("pressureMat");
+    writer.Bool(sensorState.pressureMatValid);
+    writer.Key("datetime");
+    writer.String(datetime.c_str());
 
-void MosquittoBroker::SendSensorState(const int device, const bool status, const std::string datetime)
-{
-    std::string sensorName;
+    writer.EndObject();
 
-    switch (device)
-    {
-    case alarmSensor:
-        sensorName = "alarm";
-        break;
-    case mobileImu:
-        sensorName = "mobileImu";
-        break;
-    case fixedImu:
-        sensorName = "fixedImu";
-        break;
-    case motionSensor:
-        sensorName = "motionSensor";
-        break;
-    case plateSensor:
-        sensorName = "plateSensor";
-        break;
-    default:
-        throw "Error: Invalid device";
-        break;
-    }
-
-    const std::string strState = std::to_string(status);
-    const std::string strMsg = "{\"datetime\":" + datetime + ",\"" + sensorName + "\":" + strState + "}";
-
-    PublishMessage(SENSORS_STATUS_TOPIC, strMsg);
+    PublishMessage(SENSORS_STATUS_TOPIC, strBuff.GetString());
 }
 
 bool MosquittoBroker::GetSetAlarmOn()

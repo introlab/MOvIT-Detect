@@ -40,7 +40,6 @@ int main(int argc, char *argv[])
     ChairManager chairManager(&mosquittoBroker, deviceManager);
 
     deviceManager->InitializeDevices();
-    chairManager.SendSensorsState();
 
     auto start = std::chrono::system_clock::now();
     auto end = std::chrono::system_clock::now();

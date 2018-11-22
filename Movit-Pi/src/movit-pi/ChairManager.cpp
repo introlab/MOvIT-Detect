@@ -46,43 +46,11 @@ ChairManager::~ChairManager()
 {
 }
 
-void ChairManager::SendSensorsState()
-{
-    _currentDatetime = std::to_string(_deviceManager->GetTimeSinceEpoch());
-
-    const bool isAlarmConnected = _deviceManager->IsAlarmConnected();
-    const bool isFixedImuConnected = _deviceManager->IsFixedImuConnected();
-    const bool isMobileImuConnected = _deviceManager->IsMobileImuConnected();
-    const bool isMotionSensorConnected = _deviceManager->IsMotionSensorConnected();
-    const bool isForcePlateConnected = _deviceManager->IsForcePlateConnected();
-
-    _mosquittoBroker->SendSensorsState(isAlarmConnected, isFixedImuConnected, isMobileImuConnected, isMotionSensorConnected, isForcePlateConnected, _currentDatetime);
-}
-
-void ChairManager::UpdateSensor(int device, bool isConnected)
-{
-    if (_deviceManager->IsSensorStateChanged(device))
-    {
-        _mosquittoBroker->SendSensorState(device, isConnected, _currentDatetime);
-    }
-    _deviceManager->ReconnectSensor(device);
-}
-
 void ChairManager::UpdateDevices()
 {
     _deviceManager->Update();
 
     _currentDatetime = std::to_string(_deviceManager->GetTimeSinceEpoch());
-
-    // Needs refactoring
-    if (++_updateDevicesCounter > CHECK_SENSORS_STATE_PERIOD)
-    {
-        UpdateSensor(DEVICES::alarmSensor, _deviceManager->IsAlarmConnected());
-        UpdateSensor(DEVICES::fixedImu, _deviceManager->IsFixedImuConnected());
-        UpdateSensor(DEVICES::mobileImu, _deviceManager->IsMobileImuConnected());
-        // UpdateSensor(DEVICES::motionSensor, _deviceManager->IsMotionSensorConnected());
-        _updateDevicesCounter = 0;
-    }
 
     if (_mosquittoBroker->CalibPressureMatRequired())
     {
@@ -162,6 +130,8 @@ void ChairManager::UpdateDevices()
     {
         _mosquittoBroker->SendIsMoving(_isMoving, _currentDatetime);
     }
+
+    _mosquittoBroker->SendSensorsState(_deviceManager->GetSensorState(), _currentDatetime);
 }
 
 void ChairManager::ReadVibrations()
@@ -218,7 +188,7 @@ void ChairManager::ReadFromServer()
 
         _snoozeTime = notificationsSettings.snoozeTime * 60.0f;
         _deviceManager->GetAlarm()->DeactivateVibration(!notificationsSettings.isVibrationEnabled);
-        _deviceManager->GetAlarm()->DeactivateLedBlinking(!notificationsSettings.isVibrationEnabled);
+        _deviceManager->GetAlarm()->DeactivateLedBlinking(!notificationsSettings.isLedBlinkingEnabled);
     }
 }
 
@@ -282,7 +252,8 @@ void ChairManager::NotificationSnoozed()
     if (_secondsCounter >= _snoozeTime)
     {
         _secondsCounter = 0;
-        _state = State::WAIT;
+        _state = State::CLIMB;
+        _failedTiltTimer.Reset();
     }
 }
 

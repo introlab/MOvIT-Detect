@@ -17,8 +17,6 @@ class ChairManager
     ChairManager(MosquittoBroker *mosquittoBroker, DeviceManager *deviceManager);
     ~ChairManager();
 
-    void SendSensorsState();
-    void UpdateSensor(int device, bool isConnected);
     void UpdateDevices();
     void ReadFromServer();
     void CheckNotification();
@@ -38,7 +36,6 @@ class ChairManager
     MosquittoBroker *_mosquittoBroker;
     DeviceManager *_deviceManager;
 
-    int _updateDevicesCounter = 0;
     SecondsCounter _secondsCounter;
     uint8_t _state = 0;
 

@@ -10,6 +10,7 @@ class Sensor
 
   protected:
     bool _isConnected = false;
+    bool _prevIsConnected = false;
 };
 
 #endif // SENSOR_H

@@ -2,6 +2,7 @@
 #define FILE_MANAGER_H
 
 #include "Utils.h"
+#include "DataType.h"
 
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"

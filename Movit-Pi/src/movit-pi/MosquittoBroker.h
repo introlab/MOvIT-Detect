@@ -3,6 +3,7 @@
 
 #include "mosquittopp.h"
 #include "Utils.h"
+#include "DataType.h"
 #include <stdint.h>
 #include <string>
 
@@ -28,8 +29,7 @@ class MosquittoBroker : public mosqpp::mosquittopp
     void SendIsMoving(const bool state, const std::string datetime);
     void SendTiltInfo(const int info, const std::string datetime);
 
-    void SendSensorState(const int device, const bool alarmStatus, const std::string datetime);
-    void SendSensorsState(const bool alarmStatus, const bool mobileImuStatus, const bool fixedImuStatus, const bool motionSensorStatus, const bool plateSensorStatus, const std::string datetime);
+    void SendSensorsState(sensor_state_t sensorState, const std::string datetime);
     void SendIsWifiConnected(const bool state, const std::string datetime);
 
     bool GetSetAlarmOn();

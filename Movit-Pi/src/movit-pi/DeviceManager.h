@@ -28,9 +28,6 @@ class DeviceManager
     FixedImu *GetFixedImu() { return _fixedImu; }
     MotionSensor *GetMotionSensor() { return _motionSensor; }
 
-    void ReconnectSensor(const int device);
-    bool IsSensorStateChanged(const int device);
-
     bool IsSomeoneThere() { return _pressureMat->IsSomeoneThere(); }
     bool IsChairInclined() { return _isChairInclined; }
     bool IsForcePlateConnected() { return _pressureMat->IsConnected(); }
@@ -52,19 +49,22 @@ class DeviceManager
 
     void UpdateTiltSettings(tilt_settings_t tiltSettings);
     tilt_settings_t GetTiltSettings() { return _tiltSettings; }
-  
+
     void UpdateNotificationsSettings(notifications_settings_t notificationsSettings);
 
-    bool IsAlarmConnected() { return _alarm.IsConnected(); }
-    bool IsMobileImuConnected() { return _mobileImu->IsConnected(); }
-    bool IsFixedImuConnected() { return _fixedImu->IsConnected(); }
-    bool IsMotionSensorConnected() { return _motionSensor->IsConnected(); }
+    bool IsAlarmConnected();
+    bool IsMobileImuConnected();
+    bool IsFixedImuConnected();
+    bool IsMotionSensorConnected();
+    bool IsPressureMatConnected();
 
     bool IsImuCalibrated() { return _isFixedImuCalibrated && _isMobileImuCalibrated; }
     bool IsPressureMatCalibrated() { return _pressureMat->IsCalibrated(); }
 
     bool IsLedBlinkingEnabled() { return _notificationsSettings.isLedBlinkingEnabled; }
     bool IsVibrationEnabled() { return _notificationsSettings.isVibrationEnabled; }
+
+    sensor_state_t GetSensorState() { return _sensorState; }
 
     // Singleton
     static DeviceManager *GetInstance(FileManager *fileManager)
@@ -82,14 +82,18 @@ class DeviceManager
     const int32_t DEFAULT_BACK_SEAT_ANGLE = 0;
 
     Sensor *GetSensor(const int device);
-    void InitializeFixedImu();
-    void InitializeMobileImu();
-    void InitializePressureMat();
+    bool GetSensorValidity(const int device, const bool isConnected);
+    bool IsSensorStateChanged(const int device);
+
+    bool InitializeFixedImu();
+    bool InitializeMobileImu();
+    bool InitializePressureMat();
 
     bool _isAlarmInitialized = false;
     bool _isFixedImuInitialized = false;
     bool _isMobileImuInitialized = false;
     bool _isMotionSensorInitialized = false;
+    bool _isPressureMatInitialized = false;
 
     bool _isFixedImuCalibrated = false;
     bool _isMobileImuCalibrated = false;
@@ -111,6 +115,7 @@ class DeviceManager
     MotionSensor *_motionSensor;
 
     notifications_settings_t _notificationsSettings;
+    sensor_state_t _sensorState;
     tilt_settings_t _tiltSettings;
 };
 

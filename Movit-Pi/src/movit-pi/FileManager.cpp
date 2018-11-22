@@ -1,5 +1,6 @@
 #include "FileManager.h"
 #include "Utils.h"
+#include "DataType.h"
 #include "rapidjson/document.h"
 #include <iostream>
 #include <fstream>

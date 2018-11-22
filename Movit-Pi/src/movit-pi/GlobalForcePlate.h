@@ -2,6 +2,7 @@
 #define GLOBAL_FORCE_PLATE_H
 
 #include "Utils.h"
+#include "DataType.h"
 
 class GlobalForcePlate
 {
