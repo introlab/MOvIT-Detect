@@ -1,26 +1,10 @@
-# update embedded
-# sudo pkill -f movit
-# cd ~/embedded
-# git checkout -f
-# git pull origin master
-
-# # update front-end
-# cd ~/frontend
-# git checkout -f
-# git pull origin master
-
-# # update back-end
-# node-red-stop
-# sudo pkill -f node-red
-# cd ~/backend
-# git checkout -f
-# git pull origin master
+#!/bin/sh
+# This script is executed by rc.local at startup
 
 cd /home/pi/embedded
-sudo chmod +x *.sh
 
 ./kill_all.sh
 
 # start all
-./start_frontend.sh &
 ./start_control.sh &
+./start_frontend.sh &

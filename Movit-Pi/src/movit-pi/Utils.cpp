@@ -1,6 +1,5 @@
 #include "Utils.h"
 #include <stdio.h>
-#include <thread>
 
 uint8_t DECToBCD(const uint8_t &value)
 {
@@ -32,19 +31,4 @@ uint8_t BCDSubstract(const uint8_t &BCDlvalue, const uint8_t &DECrvalue)
     uint8_t dec = BCDToDEC(BCDlvalue) - DECrvalue;
 
     return DECToBCD(dec);
-}
-
-void sleep_for_microseconds(uint32_t microseconds)
-{
-    std::this_thread::sleep_for(std::chrono::microseconds(microseconds));
-}
-
-void sleep_for_milliseconds(uint32_t milliseconds)
-{
-    std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
-}
-
-void sleep_for_seconds(uint32_t seconds)
-{
-    std::this_thread::sleep_for(std::chrono::seconds(seconds));
 }

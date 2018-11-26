@@ -17,8 +17,8 @@ double FixedImu::GetXAcceleration()
 
     _imu.GetAcceleration(&ax, &ay, &az);
 
-    const int g = -1;
-    double accelerationGravity = double(ax) * 2 / 32768.0f;
+    const double g = -1;
+    double accelerationGravity = static_cast<double>(ax) * 2 / 32768.0f;
     double accelerationMeterSquare = (accelerationGravity - g) * GRAVITY;
 
     return accelerationMeterSquare;

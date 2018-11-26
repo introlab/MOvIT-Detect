@@ -2,14 +2,13 @@
 
 bool Sensor::IsStateChanged()
 {
-    const bool isConnected = IsConnected();
-
-    if (_isConnected != isConnected)
+    if (_isConnected != _prevIsConnected)
     {
-        _isConnected = isConnected;
+        _prevIsConnected = _isConnected;
         return true;
     }
 
+    _prevIsConnected = _isConnected;
     return false;
 }
 

@@ -9,12 +9,14 @@ class MobileImu : public Imu
   public:
     static MobileImu *GetInstance()
     {
-        static MobileImu instance;
-        return &instance;
+      static MobileImu instance;
+      return &instance;
     }
 
   private:
     MobileImu();
+    MobileImu(MobileImu const &);      // Don't Implement.
+    void operator=(MobileImu const &); // Don't implement.
 };
 
 #endif // MOBILE_IMU_H

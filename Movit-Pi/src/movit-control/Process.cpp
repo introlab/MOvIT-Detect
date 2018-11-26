@@ -88,7 +88,7 @@ bool Process::Kill()
         return false;
     }
 
-    if (::kill(_pid, SIGINT))
+    if (::kill(_pid, SIGKILL))
     {
         return false;
     }

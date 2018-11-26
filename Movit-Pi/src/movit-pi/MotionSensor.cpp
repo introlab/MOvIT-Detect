@@ -1,6 +1,7 @@
 #include "MotionSensor.h"
 #include <math.h>
 #include "Utils.h"
+#include "SysTime.h"
 
 #define MOVING_AVG_WINDOW_SIZE 10
 
@@ -11,17 +12,17 @@ MotionSensor::MotionSensor() : _rangeAverage(MOVING_AVG_WINDOW_SIZE),
                                _deltaXAverage(MOVING_AVG_WINDOW_SIZE),
                                _deltaYAverage(MOVING_AVG_WINDOW_SIZE)
 {
+    _timer.Reset();
 }
 
 bool MotionSensor::Initialize()
 {
     bool isRangeSensorInitialized = InitializeRangeSensor();
     bool isFlowSensorInitialized = InitializeOpticalFlowSensor();
-    bool isInitialized = isRangeSensorInitialized && isFlowSensorInitialized && ValidDistanceToTheGround();
+    bool isInitialized = isRangeSensorInitialized && isFlowSensorInitialized;
 
     if (isInitialized)
     {
-        GetDeltaXYThread().detach();
         return true;
     }
     return false;
@@ -70,14 +71,8 @@ std::thread MotionSensor::GetDeltaXYThread()
 
 void MotionSensor::GetDeltaXY()
 {
-    const uint32_t timeBetweenReadings = 250; // In milliseconds
-
-    while (true)
-    {
-        ReadRangeSensor();
-        ReadFlowSensor();
-        sleep_for_milliseconds(timeBetweenReadings);
-    }
+    ReadRangeSensor();
+    ReadFlowSensor();
 }
 
 void MotionSensor::ReadRangeSensor()
@@ -119,39 +114,27 @@ double MotionSensor::GetAverageRange()
     return _rangeAverage.GetAverage();
 }
 
-bool MotionSensor::ValidDistanceToTheGround()
+bool MotionSensor::IsMoving()
 {
-    const double minimumWorkingRange = 80.0; //The sensor needs a minimum of 80 mm to the ground.
-    printf("Validation of the minimum height of the flow sensor ... ");
-
-    if (GetAverageRange() < minimumWorkingRange)
+    printf("Total moving travel: %d\n", _isMovingTravel);
+    if (_timer.Elapsed() >= WHEELCHAIR_MOVING_TIMEOUT.count())
     {
-        printf(FAIL_MESSAGE);
-        return false;
-    }
-    printf(SUCCESS_MESSAGE);
-    return true;
-}
-
-bool MotionSensor::GetIsMoving()
-{
-    const uint16_t wheelchairMovingThreshold = 2500;
-
-    if (_timer.Elapsed() >= WHEELCHAIR_MOVING_TIMEOUT.count() && _isMovingTravel < wheelchairMovingThreshold)
-    {
-        return false;
-    }
-    else if (_timer.Elapsed() < WHEELCHAIR_MOVING_TIMEOUT.count() && _isMovingTravel >= wheelchairMovingThreshold)
-    {
+        const uint16_t wheelchairMovingThreshold = 100;
+        if (_isMovingTravel >= wheelchairMovingThreshold)
+        {
+            _lastState = true;
+        }
+        else
+        {
+            _lastState = false;
+        }
         _isMovingTravel = 0;
         _deltaXAverage.Reset();
         _deltaYAverage.Reset();
         _rangeAverage.Reset();
         _timer.Reset();
-        return true;
     }
-    _timer.Reset();
-    return false;
+    return _lastState;
 }
 
 uint16_t MotionSensor::PixelsToMillimeter(double pixels)

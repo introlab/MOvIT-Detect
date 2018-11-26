@@ -5,6 +5,7 @@
 
 #include "MPU6050.h"
 #include "Utils.h"
+#include "DataType.h"
 #include "Sensor.h"
 
 #define ACCELEROMETER_DEADZONE 8 // Accelerometer error allowed, make it lower to get more precision, but sketch may not converge (default: 8)
@@ -32,7 +33,6 @@ class Imu : public Sensor
   protected:
     std::string _imuName;
     MPU6050 _imu;
-
     int _calibrationArray[NUMBER_OF_AXIS] = {LSB_SENSITIVITY, 0, 0};
 
     imu_offset_t _offsets;

@@ -35,6 +35,10 @@ class MovingAverage
         }
         else
         {
+            if (_pos == 0)
+            {
+                return 0.0f;
+            }
             return static_cast<double>(std::accumulate(_values, _values + _pos, 0) / _pos);
         }
     }

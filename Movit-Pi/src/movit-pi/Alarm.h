@@ -5,37 +5,20 @@
 #include "PCA9536.h"
 #include <thread>
 
-#define DEFAULT_BLINK_DURATION 600
-#define DEFAULT_BLINK_FREQUENCY 0.1
+#define DEFAULT_BLINK_FREQUENCY 10
 
 class Alarm : public Sensor
 {
-  private:
-    PCA9536 _pca9536;
-
-    bool _isRedAlarmOn = false;
-    bool _isBlinkLedsAlarmOn = false;
-    bool _isBlinkGreenAlarmOn = false;
-
-    bool _isBlinkGreenAlarmRequired = false;
-
-    bool _deactivateVibration = false;
-
-    double _blinkFrequency;
-    int _blinkDuration;
-
-    uint8_t GetPinState(pin_t pin);
-
-    void SetBlinkDuration(int blinkDuraction);
-    void SetBlinkFrequency(double blinkFrequency);
-
   public:
     Alarm();
-    Alarm(int blinkDuration, double blinkFrequency);
+    Alarm(double blinkFrequency);
+    ~Alarm() = default;
+
     bool Initialize();
     bool IsConnected();
 
     void DeactivateVibration(bool state) { _deactivateVibration = state; }
+    void DeactivateLedBlinking(bool state) { _deactivateBlinking = state; }
 
     void TurnOnDCMotor();
     void TurnOffDCMotor();
@@ -45,20 +28,38 @@ class Alarm : public Sensor
     void TurnOffGreenLed();
     void TurnOffAlarm();
 
+    bool ButtonPressed() { return !GetPinState(PUSH_BUTTON); }
+
     void TurnOnBlinkLedsAlarm();
-    void TurnOnRedAlarm();
+    void TurnOnBlinkRedAlarm();
     void TurnOnGreenAlarm();
     void TurnOnBlinkGreenAlarm();
 
     void StopBlinkGreenAlarm();
+    void StopBlinkRedAlarm();
+    void StopBlinkLedsAlarm();
 
-    bool IsRedAlarmOn() { return _isRedAlarmOn; }
+    bool IsRedAlarmOn() { return _isBlinkRedAlarmOn; }
     bool IsBlinkLedsAlarmOn() { return _isBlinkLedsAlarmOn; }
     bool IsBlinkGreenAlarmOn() { return _isBlinkGreenAlarmOn; }
 
-    std::thread TurnOnRedAlarmThread();
+    std::thread TurnOnBlinkRedAlarmThread();
     std::thread TurnOnBlinkLedsAlarmThread();
     std::thread TurnOnBlinkGreenAlarmThread();
+
+  private:
+    PCA9536 _pca9536;
+
+    bool _isBlinkRedAlarmOn = false;
+    bool _isBlinkLedsAlarmOn = false;
+    bool _isBlinkGreenAlarmOn = false;
+
+    bool _deactivateVibration = false;
+    bool _deactivateBlinking = false;
+
+    double _blinkFrequency;
+
+    uint8_t GetPinState(pin_t pin);
 };
 
 #endif // ALARM_H

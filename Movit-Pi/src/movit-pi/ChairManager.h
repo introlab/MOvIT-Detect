@@ -5,6 +5,7 @@
 #include "Utils.h"
 #include "Timer.h"
 #include "DeviceManager.h"
+#include "SecondsCounter.h"
 
 #include <string>
 #include <unistd.h>
@@ -16,10 +17,6 @@ class ChairManager
     ChairManager(MosquittoBroker *mosquittoBroker, DeviceManager *deviceManager);
     ~ChairManager();
 
-    inline bool TestPattern() { return _deviceManager->TestDevices(); }
-
-    void SendSensorsState();
-    void UpdateSensor(int device, bool isConnected);
     void UpdateDevices();
     void ReadFromServer();
     void CheckNotification();
@@ -27,25 +24,24 @@ class ChairManager
     std::thread ReadVibrationsThread();
 
   private:
-
-    static constexpr auto CENTER_OF_PRESSURE_EMISSION_PERIOD = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::minutes(5));
+    static constexpr auto CENTER_OF_PRESSURE_EMISSION_PERIOD = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::seconds(10));
     static constexpr auto FAILED_TILT_TIME = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::minutes(2));
     static constexpr auto CHAIR_ANGLE_EMISSION_PERIOD = std::chrono::milliseconds(1000);
     static constexpr auto WIFI_VALIDATION_PERIOD = std::chrono::seconds(10);
     static constexpr auto HEARTBEAT_PERIOD = std::chrono::milliseconds(1000);
 
-    static constexpr int MINIMUM_ANGLE = 10; // degrees
+    static constexpr int MINIMUM_ANGLE = 15; // degrees
 
     Alarm *_alarm;
     MosquittoBroker *_mosquittoBroker;
     DeviceManager *_deviceManager;
 
-    uint32_t _secondsCounter = 0;
+    SecondsCounter _secondsCounter;
     uint8_t _state = 0;
 
     int _currentChairAngle = 0;
     int _prevChairAngle = 0;
-    Coord_t _copCoord;
+    float _snoozeTime = 600.0f; // Default snoozetime = 10 minutes
     std::string _currentDatetime = "";
 
     bool _isSomeoneThere = false;
@@ -53,13 +49,14 @@ class ChairManager
     bool _isMoving = false;
     bool _isChairInclined = false;
     bool _isWifiChanged = false;
-    bool _overrideNotificationPattern = false;
     bool _setAlarmOn = false;
     bool _isVibrationsActivated = true;
+    bool _isIMUCalibrationChanged = false;
+    bool _isPressureMatCalibrationChanged = false;
+    bool _overrideNotification = false;
 
-    int _requiredBackRestAngle = 0;
-    uint32_t _requiredPeriod = 0;
-    uint32_t _requiredDuration = 0;
+    pressure_mat_data_t _pressureMatData;
+    tilt_settings_t _tiltSettings;
 
     Timer _centerOfPressureTimer;
     Timer _wifiChangedTimer;
@@ -69,10 +66,11 @@ class ChairManager
 
     void CheckIfUserHasBeenSittingForRequiredTime();
     void CheckIfBackRestIsRequired();
+    void NotificationSnoozed();
     void CheckIfRequiredBackSeatAngleIsReached();
     void CheckIfRequiredBackSeatAngleIsMaintained();
     void CheckIfBackSeatIsBackToInitialPosition();
-    void OverrideNotificationPattern();
+    void OverrideNotification();
     void ReadVibrations();
 };
 
