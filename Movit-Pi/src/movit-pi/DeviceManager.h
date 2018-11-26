@@ -63,6 +63,7 @@ class DeviceManager
 
     bool IsLedBlinkingEnabled() { return _notificationsSettings.isLedBlinkingEnabled; }
     bool IsVibrationEnabled() { return _notificationsSettings.isVibrationEnabled; }
+    float GetSnoozeTime() { return _notificationsSettings.snoozeTime; }
 
     sensor_state_t GetSensorState() { return _sensorState; }
 

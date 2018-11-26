@@ -226,6 +226,7 @@ double DeviceManager::GetXAcceleration()
 
 void DeviceManager::UpdateNotificationsSettings(notifications_settings_t notificationsSettings)
 {
+    _notificationsSettings = notificationsSettings;
     _fileManager->SetNotificationsSettings(notificationsSettings);
     _fileManager->Save();
 }

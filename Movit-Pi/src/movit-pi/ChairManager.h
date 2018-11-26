@@ -41,7 +41,7 @@ class ChairManager
 
     int _currentChairAngle = 0;
     int _prevChairAngle = 0;
-    float _snoozeTime = 0.0f;
+    float _snoozeTime = 600.0f; // Default snoozetime = 10 minutes
     std::string _currentDatetime = "";
 
     bool _isSomeoneThere = false;
@@ -53,6 +53,7 @@ class ChairManager
     bool _isVibrationsActivated = true;
     bool _isIMUCalibrationChanged = false;
     bool _isPressureMatCalibrationChanged = false;
+    bool _overrideNotification = false;
 
     pressure_mat_data_t _pressureMatData;
     tilt_settings_t _tiltSettings;
@@ -69,7 +70,7 @@ class ChairManager
     void CheckIfRequiredBackSeatAngleIsReached();
     void CheckIfRequiredBackSeatAngleIsMaintained();
     void CheckIfBackSeatIsBackToInitialPosition();
-    void OverrideNotificationPattern();
+    void OverrideNotification();
     void ReadVibrations();
 };
 

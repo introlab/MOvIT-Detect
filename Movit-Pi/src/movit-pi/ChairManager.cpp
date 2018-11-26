@@ -40,6 +40,8 @@ ChairManager::ChairManager(MosquittoBroker *mosquittoBroker, DeviceManager *devi
                                                                                              _secondsCounter(RUNNING_FREQUENCY)
 {
     _alarm = _deviceManager->GetAlarm();
+
+    _state = State::INITIAL;
 }
 
 ChairManager::~ChairManager()
@@ -51,6 +53,10 @@ void ChairManager::UpdateDevices()
     _deviceManager->Update();
 
     _currentDatetime = std::to_string(_deviceManager->GetTimeSinceEpoch());
+    _tiltSettings = _deviceManager->GetTiltSettings();
+    _snoozeTime = _deviceManager->GetSnoozeTime();
+    _deviceManager->GetAlarm()->DeactivateVibration(!_deviceManager->IsVibrationEnabled());
+    _deviceManager->GetAlarm()->DeactivateLedBlinking(!_deviceManager->IsLedBlinkingEnabled());
 
     if (_mosquittoBroker->CalibPressureMatRequired())
     {
@@ -91,6 +97,12 @@ void ChairManager::UpdateDevices()
     printf("_isMoving = %i\n", _isMoving);
     printf("_isChairInclined = %i\n", _isChairInclined);
     printf("_snoozeTime = %f\n", _snoozeTime);
+    printf("isVibrationEnabled = %i\n", _deviceManager->IsVibrationEnabled());
+    printf("IsLedBlinkingEnabled = %i\n", _deviceManager->IsLedBlinkingEnabled());
+    printf("requiredBackRestAngle = %i\n", _tiltSettings.requiredBackRestAngle);
+    printf("requiredDuration = %i\n", _tiltSettings.requiredDuration);
+    printf("requiredPeriod = %i\n", _tiltSettings.requiredPeriod);
+    printf("_state = %i\n", _state);
     printf("Global Center Of Pressure = X: %f Y: %f\n", _pressureMatData.centerOfPressure.x, _pressureMatData.centerOfPressure.y);
 #endif
 
@@ -164,8 +176,10 @@ void ChairManager::ReadFromServer()
     if (_mosquittoBroker->IsSetAlarmOnNew())
     {
         _setAlarmOn = _mosquittoBroker->GetSetAlarmOn();
+        _overrideNotification = true;
         printf("Something new for setAlarmOn = %i\n", _setAlarmOn);
     }
+
     if (_mosquittoBroker->IsTiltSettingsChanged())
     {
         _tiltSettings = _mosquittoBroker->GetTiltSettings();
@@ -183,20 +197,20 @@ void ChairManager::ReadFromServer()
 
     if (_mosquittoBroker->IsNotificationsSettingsChanged())
     {
-        notifications_settings_t notificationsSettings = _mosquittoBroker->GetNotificationsSettings();
-        _deviceManager->UpdateNotificationsSettings(notificationsSettings);
+        printf("Something new for notifications settings\n");
+        _deviceManager->UpdateNotificationsSettings(_mosquittoBroker->GetNotificationsSettings());
 
-        _snoozeTime = notificationsSettings.snoozeTime * 60.0f;
-        _deviceManager->GetAlarm()->DeactivateVibration(!notificationsSettings.isVibrationEnabled);
-        _deviceManager->GetAlarm()->DeactivateLedBlinking(!notificationsSettings.isLedBlinkingEnabled);
+        _snoozeTime = _deviceManager->GetSnoozeTime();
+        _deviceManager->GetAlarm()->DeactivateVibration(!_deviceManager->IsVibrationEnabled());
+        _deviceManager->GetAlarm()->DeactivateLedBlinking(!_deviceManager->IsLedBlinkingEnabled());
     }
 }
 
 void ChairManager::CheckNotification()
 {
-    if (_setAlarmOn)
+    if (_overrideNotification)
     {
-        OverrideNotificationPattern();
+        OverrideNotification();
         return;
     }
 
@@ -254,6 +268,11 @@ void ChairManager::NotificationSnoozed()
         _secondsCounter = 0;
         _state = State::CLIMB;
         _failedTiltTimer.Reset();
+        _alarm->TurnOffAlarm();
+        if (!_alarm->IsRedAlarmOn())
+        {
+            _alarm->TurnOnBlinkRedAlarmThread().detach();
+        }
     }
 }
 
@@ -376,7 +395,7 @@ void ChairManager::CheckIfBackSeatIsBackToInitialPosition()
     }
 }
 
-void ChairManager::OverrideNotificationPattern()
+void ChairManager::OverrideNotification()
 {
     if (_setAlarmOn)
     {
@@ -387,5 +406,6 @@ void ChairManager::OverrideNotificationPattern()
     else
     {
         _alarm->TurnOffAlarm();
+        _overrideNotification = false;
     }
 }

@@ -246,57 +246,35 @@ void MosquittoBroker::SendBackRestAngle(const int angle, const std::string datet
 
 void MosquittoBroker::SendPressureMatData(const pressure_mat_data_t data, const std::string datetime)
 {
-    rapidjson::Document document;
-    document.SetObject();
-    rapidjson::Value array(rapidjson::kArrayType);
-    rapidjson::Document::AllocatorType &allocator = document.GetAllocator();
-    Value dateTimeString(datetime.c_str(), allocator);
-    document.AddMember("datetime", dateTimeString, allocator);
+    StringBuffer strBuff;
+    Writer<StringBuffer> writer(strBuff);
 
-    rapidjson::Value centerObject(rapidjson::kObjectType);
-    Value centerOfPressureX(std::to_string(data.centerOfPressure.x).c_str(), allocator);
-    centerObject.AddMember("x", centerOfPressureX, allocator);
-    Value centerOfPressureY(std::to_string(data.centerOfPressure.y).c_str(), allocator);
-    centerObject.AddMember("y", centerOfPressureY, allocator);
-    document.AddMember("center", centerObject, allocator);
+    writer.StartObject();
+    writer.Key("datetime");
+    writer.String(datetime.c_str());
+    writer.Key("center");
+    writer.StartObject();
+    writer.Key("x");
+    writer.Double(data.centerOfPressure.x);
+    writer.Key("y");
+    writer.Double(data.centerOfPressure.y);
+    writer.EndObject();
+    writer.Key("quadrants");
+    writer.StartArray();
+    for (int i = 0; i < 4; i++)
+    {
+        writer.StartObject();
+        writer.Key("x");
+        writer.Double(data.quadrantPressure[i].x);
+        writer.Key("y");
+        writer.Double(data.quadrantPressure[i].y);
+        writer.EndObject();
+    }
+    writer.EndArray();
 
-    Value quadrants(rapidjson::kArrayType);
+    writer.EndObject();
 
-    Value quadrant1(rapidjson::kObjectType);
-    Value quadrant1CenterOfPressureX(std::to_string(data.quadrantPressure[0].x).c_str(), allocator);
-    quadrant1.AddMember("x", quadrant1CenterOfPressureX, allocator);
-    Value quadrant1CenterOfPressureY(std::to_string(data.quadrantPressure[0].y).c_str(), allocator);
-    quadrant1.AddMember("y", quadrant1CenterOfPressureY, allocator);
-    quadrants.PushBack(quadrant1, allocator);
-
-    Value quadrant2(rapidjson::kObjectType);
-    Value quadrant2CenterOfPressureX(std::to_string(data.quadrantPressure[1].x).c_str(), allocator);
-    quadrant2.AddMember("x", quadrant2CenterOfPressureX, allocator);
-    Value quadrant2CenterOfPressureY(std::to_string(data.quadrantPressure[1].y).c_str(), allocator);
-    quadrant2.AddMember("y", quadrant2CenterOfPressureY, allocator);
-    quadrants.PushBack(quadrant2, allocator);
-
-    Value quadrant3(rapidjson::kObjectType);
-    Value quadrant3CenterOfPressureX(std::to_string(data.quadrantPressure[2].x).c_str(), allocator);
-    quadrant3.AddMember("x", quadrant3CenterOfPressureX, allocator);
-    Value quadrant3CenterOfPressureY(std::to_string(data.quadrantPressure[2].y).c_str(), allocator);
-    quadrant3.AddMember("y", quadrant3CenterOfPressureY, allocator);
-    quadrants.PushBack(quadrant3, allocator);
-
-    Value quadrant4(rapidjson::kObjectType);
-    Value quadrant4CenterOfPressureX(std::to_string(data.quadrantPressure[3].x).c_str(), allocator);
-    quadrant4.AddMember("x", quadrant4CenterOfPressureX, allocator);
-    Value quadrant4CenterOfPressureY(std::to_string(data.quadrantPressure[3].y).c_str(), allocator);
-    quadrant4.AddMember("y", quadrant4CenterOfPressureY, allocator);
-    quadrants.PushBack(quadrant4, allocator);
-
-    document.AddMember("quadrants", quadrants, allocator);
-
-    StringBuffer strMsg;
-    Writer<StringBuffer> writer(strMsg);
-    document.Accept(writer);
-
-    PublishMessage(CURRENT_PRESSURE_MAT_DATA_TOPIC, strMsg.GetString());
+    PublishMessage(CURRENT_PRESSURE_MAT_DATA_TOPIC, strBuff.GetString());
 }
 
 void MosquittoBroker::SendIsSomeoneThere(const bool state, const std::string datetime)

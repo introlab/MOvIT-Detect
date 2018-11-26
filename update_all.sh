@@ -6,3 +6,4 @@ cd /home/pi/embedded
 ./update_backend.sh
 ./update_embedded.sh
 ./start_all.sh
+
