@@ -37,7 +37,6 @@ class MotionSensor: public Sensor
     MotionSensor(MotionSensor const &);   // Don't Implement.
     void operator=(MotionSensor const &); // Don't implement.
 
-    std::thread GetDeltaXYThread();
     bool InitializeOpticalFlowSensor();
     bool InitializeRangeSensor();
     

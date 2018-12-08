@@ -36,7 +36,7 @@ bool MotionSensor::IsConnected()
 bool MotionSensor::InitializeRangeSensor()
 {
     const uint16_t timeout = 500;         // In milliseconds
-    const uint32_t timingBudget = 200000; // In milliseconds, high accuracy mode
+    const uint32_t timingBudget = 50000; // In microseconds
 
     printf("VL53L0X (Range sensor) initializing ... ");
     if (!_rangeSensor.Initialize(false))
@@ -64,11 +64,6 @@ bool MotionSensor::InitializeOpticalFlowSensor()
     return true;
 }
 
-std::thread MotionSensor::GetDeltaXYThread()
-{
-    return std::thread([=] { GetDeltaXY(); });
-}
-
 void MotionSensor::GetDeltaXY()
 {
     ReadRangeSensor();
@@ -78,7 +73,7 @@ void MotionSensor::GetDeltaXY()
 void MotionSensor::ReadRangeSensor()
 {
     uint16_t range = _rangeSensor.ReadRangeSingleMillimeters();
-    if (range != 8190)
+    if (range <= 2000) //2 meters
     {
         _rangeAverage.AddSample(range);
     }
