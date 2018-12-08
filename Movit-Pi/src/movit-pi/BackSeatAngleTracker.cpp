@@ -4,7 +4,7 @@
 #include "Utils.h"
 #include <math.h>
 
-BackSeatAngleTracker::BackSeatAngleTracker(): _angle(10)
+BackSeatAngleTracker::BackSeatAngleTracker() : _angle(10)
 {
 }
 

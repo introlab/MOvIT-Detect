@@ -8,13 +8,13 @@
 
 class BackSeatAngleTracker
 {
-public:
-  BackSeatAngleTracker();
-  bool IsInclined();
-  int GetBackSeatAngle();
+  public:
+    BackSeatAngleTracker();
+    bool IsInclined();
+    int GetBackSeatAngle();
 
-private:
-  MovingAverage<int> _angle;
+  private:
+    MovingAverage<int> _angle;
 };
 
 #endif // BACK_SEAT_ANGLE_TRACKER_H

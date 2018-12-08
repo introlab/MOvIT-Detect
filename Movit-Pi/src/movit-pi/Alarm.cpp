@@ -34,6 +34,7 @@ bool Alarm::Initialize()
     }
 
     printf("SUCCESS\n");
+
     TurnOffRedLed();
     TurnOffGreenLed();
     TurnOffDCMotor();

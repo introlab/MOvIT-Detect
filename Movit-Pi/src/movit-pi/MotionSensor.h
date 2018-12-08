@@ -7,20 +7,21 @@
 #include <thread>
 
 #include "MovingAverage.h"
+#include "DataType.h"
 #include "PMW3901.h"
 #include "VL53L0X.h"
 #include "Utils.h"
 #include "Timer.h"
 #include "Sensor.h"
 
-class MotionSensor: public Sensor
+class MotionSensor : public Sensor
 {
   public:
     // Singleton
     static MotionSensor *GetInstance()
     {
-      static MotionSensor instance;
-      return &instance;
+        static MotionSensor instance;
+        return &instance;
     }
 
     bool Initialize();
@@ -28,10 +29,13 @@ class MotionSensor: public Sensor
     bool IsMoving();
     void GetDeltaXY();
 
-  private:
+    //For test menu only
+    uint16_t GetRangeSensorValue();
+    Coord_t GetFlowSensorValues();
 
+  private:
     static constexpr auto WHEELCHAIR_MOVING_TIMEOUT = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::seconds(4));
-    
+
     //Singleton
     MotionSensor();
     MotionSensor(MotionSensor const &);   // Don't Implement.
@@ -39,7 +43,7 @@ class MotionSensor: public Sensor
 
     bool InitializeOpticalFlowSensor();
     bool InitializeRangeSensor();
-    
+
     uint16_t PixelsToMillimeter(double pixels);
     double GetAverageRange();
 

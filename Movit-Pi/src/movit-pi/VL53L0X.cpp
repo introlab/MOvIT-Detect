@@ -256,7 +256,7 @@ bool VL53L0X::Initialize(bool io_2v8)
 
   // "restore the previous Sequence Config"
   WriteReg(SYSTEM_SEQUENCE_CONFIG, 0xE8);
-  
+
   return true;
 }
 

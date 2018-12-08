@@ -7,6 +7,7 @@
 class ForcePlate
 {
   public:
+    ForcePlate();
     ForcePlate(ForceSensor &sensors, uint8_t sensorNo1, uint8_t sensorNo2, uint8_t sensorNo3, uint8_t sensorNo4, float distX, float distY, float distZ0);
     void Update();
     float GetFx() { return _fx; }

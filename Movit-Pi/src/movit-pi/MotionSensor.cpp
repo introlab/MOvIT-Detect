@@ -2,6 +2,7 @@
 #include <math.h>
 #include "Utils.h"
 #include "SysTime.h"
+#include "DataType.h"
 
 #define MOVING_AVG_WINDOW_SIZE 10
 
@@ -141,4 +142,19 @@ uint16_t MotionSensor::PixelsToMillimeter(double pixels)
     const double numberOfPixels = 30.0f;
     const double fieldOfView = 0.733038285f;
     return static_cast<uint32_t>(((pixels * fieldOfView * GetAverageRange()) / numberOfPixels));
+}
+
+//For test menu only
+uint16_t MotionSensor::GetRangeSensorValue()
+{
+    return _rangeSensor.ReadRangeSingleMillimeters();
+}
+
+//For test menu only
+Coord_t MotionSensor::GetFlowSensorValues()
+{
+    int16_t deltaX = 0;
+    int16_t deltaY = 0;
+    _opticalFLowSensor.ReadMotionCount(&deltaX, &deltaY);
+    return {static_cast<float>(deltaX), static_cast<float>(deltaY)};
 }
