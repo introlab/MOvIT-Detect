@@ -3,20 +3,20 @@ The embedded system part of the MOvIT-Detect project.
 
 ## Getting started
 
-- Télécharger [Ubuntu 18.04 64bit](http://releases.ubuntu.com/18.04/)
-- Installer Ubuntu dans une machine virtuelle ou sur une machine physique
-- Faire l'installation normale
+- Télécharger [Ubuntu 16.04 64bit](http://releases.ubuntu.com/16.04/ubuntu-16.04.5-desktop-amd64.iso) 
+- Installer Ubuntu dans une machine virtuelle (ou sur une machine physique). [VMWare Fusion](https://www.vmware.com/products/fusion.html) est conseillé pour un host MAC et [VMWare Workstation Player](https://www.vmware.com/ca/products/workstation-player.html) est conseillé pour un host PC.
+- Faire l'installation normale de Ubuntu
 - Une fois l'installation terminé, ouvrir un terminal et entrer la commande:
 ``` shell
     sudo apt-get install make git
 ```
-- Télécharger le cross-compiler: [movit-cross-compiler](https://1drv.ms/u/s!AjyPHvJRDLOMrhWOt6g2g4qBiGZn)
+- Dans Ubuntu télécharger le cross-compiler: [movit-cross-compiler](https://1drv.ms/u/s!AjyPHvJRDLOMrhWOt6g2g4qBiGZn) (Il est situé dans le drive)
 - L'extraire dans votre Ubuntu:
 ``` shell
     cd /usr/local
     sudo tar -xzvf /path/to/file/movit-cross-compiler.tar.gz
 ```
-- Déplacez vous où vous voulez travailler (Ex: dossier partagé avec votre host OS)
+- Déplacez vous où vous voulez travailler (Ex: dossier partagé avec votre host OS. Dépendemment du logiciel de VM que vous utilisez, la procédure pour un dossier partagé varie. Il est donc conseillé de faire une recherche [google](www.google.ca) pour savoir comment faire un dossier partagé entre votre host OS et votre guest OS par rapport à votre logiciel de VM)
 - Cloner le repo git sur la machine Ubuntu ou dans votre dossier partagé avec le host OS:
 ```shell
     git clone https://github.com/AustinDidierTran/MOvIT-Detect.git
