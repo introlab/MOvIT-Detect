@@ -357,7 +357,6 @@ void ChairManager::CheckIfRequiredBackSeatAngleIsMaintained()
     if (_currentChairAngle >= (_tiltSettings.requiredBackRestAngle - DELTA_ANGLE_THRESHOLD))
     {
         _secondsCounter++;
-
         printf("State STAY\t_secondsCounter: %f\n", _secondsCounter.Value());
 
         if (_secondsCounter >= _tiltSettings.requiredDuration)

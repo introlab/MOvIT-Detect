@@ -519,9 +519,9 @@ bool DeviceManager::TestDevices()
                 printf("IMU Angles validation\n");
                 while (loopTest != 27)
                 {
-                    for (int i = 0; i < 5; i++)
+                    for (int i = 0; i < 8; i++)
                     {
-                        int angleTest = 10 * (i + 1);
+                        int angleTest = 15 * i;
                         printf("\nReading %i : INCLINE mobileIMU AT %i deg\n", (i + 1), angleTest);
                         printf("ENTER when IMU is at desired angle");
                         getchar();

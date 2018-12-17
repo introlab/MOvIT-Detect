@@ -115,7 +115,7 @@ bool MotionSensor::IsMoving()
     printf("Total moving travel: %d\n", _isMovingTravel);
     if (_timer.Elapsed() >= WHEELCHAIR_MOVING_TIMEOUT.count())
     {
-        const uint16_t wheelchairMovingThreshold = 100;
+        const uint16_t wheelchairMovingThreshold = 500;
         if (_isMovingTravel >= wheelchairMovingThreshold)
         {
             _lastState = true;
