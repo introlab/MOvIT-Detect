@@ -10,14 +10,14 @@ using namespace std;
 int main(int argc, char *argv[])
 {
     MosquittoClient client("control");
-    Process procEmbedded("movit-pi", "/home/pi/embedded/Movit-Pi/release");
+    Process procEmbedded("movit-pi", "/home/pi/MOvIT-Detect/Movit-Pi/Executables");
     Process procBackend("sh", "/bin");
     ProcessControl proc_ctrl;
 
     proc_ctrl.AddProcess(ProcessType::EMBEDDED, &procEmbedded);
     proc_ctrl.AddProcess(ProcessType::BACKEND, &procBackend);
 
-    procBackend.AddArgument("/home/pi/embedded/start_backend.sh");
+    procBackend.AddArgument("/home/pi/MOvIT-Detect/start_backend.sh");
 
     // Set le callback qui sera callé quand un heartbeat sera recu
     client.SetCallback(std::bind(&ProcessControl::UpdateHeartbeat, std::ref(proc_ctrl), std::placeholders::_1));

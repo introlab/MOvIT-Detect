@@ -49,37 +49,26 @@ int main(int argc, char *argv[])
     // Aussi ca ne devrais pas être un thread car ca cause des problemes avec le port i2c
     // chairManager.ReadVibrationsThread().detach();
 
-    if (argc > 1 && std::string(argv[1]) == "-t")
+    while (true)
     {
-        bool done = false;
-        while (!done)
+        start = std::chrono::system_clock::now();
+
+        chairManager.ReadFromServer();
+        chairManager.UpdateDevices();
+        chairManager.CheckNotification();
+
+        end = std::chrono::system_clock::now();
+        auto elapse_time = std::chrono::duration_cast<milliseconds>(end - start);
+
+        if (elapse_time.count() >= period.count())
         {
-            done = deviceManager->TestDevices();
-        }
-    }
-    else
-    {
-        while (true)
-        {
-            start = std::chrono::system_clock::now();
-
-            chairManager.ReadFromServer();
-            chairManager.UpdateDevices();
-            chairManager.CheckNotification();
-
-            end = std::chrono::system_clock::now();
-            auto elapse_time = std::chrono::duration_cast<milliseconds>(end - start);
-
-            if (elapse_time.count() >= period.count())
-            {
-                printf("MAIN LOOP OVERRUN. It took: %lli\n", elapse_time.count());
-                elapse_time = period;
-            }
-
-            sleep_for_milliseconds(period.count() - elapse_time.count());
+            printf("MAIN LOOP OVERRUN. It took: %lli\n", elapse_time.count());
+            elapse_time = period;
         }
 
-        chairManager.SetVibrationsActivated(false);
-        return 0;
+        sleep_for_milliseconds(period.count() - elapse_time.count());
     }
+
+    chairManager.SetVibrationsActivated(false);
+    return 0;
 }

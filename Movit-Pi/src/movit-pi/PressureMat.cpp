@@ -39,7 +39,7 @@ bool PressureMat::InitializeForcePlate()
             _sensorMatrix.SetAnalogData(0, i);
         }
 
-        printf("SUCCESS\n");
+        printf("success\n");
         return true;
     }
     else

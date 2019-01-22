@@ -2,7 +2,6 @@
 #include <math.h>
 #include "Utils.h"
 #include "SysTime.h"
-#include "DataType.h"
 
 #define MOVING_AVG_WINDOW_SIZE 10
 
@@ -37,7 +36,7 @@ bool MotionSensor::IsConnected()
 bool MotionSensor::InitializeRangeSensor()
 {
     const uint16_t timeout = 500;         // In milliseconds
-    const uint32_t timingBudget = 50000; // In microseconds
+    const uint32_t timingBudget = 200000; // In milliseconds, high accuracy mode
 
     printf("VL53L0X (Range sensor) initializing ... ");
     if (!_rangeSensor.Initialize(false))
@@ -65,6 +64,11 @@ bool MotionSensor::InitializeOpticalFlowSensor()
     return true;
 }
 
+std::thread MotionSensor::GetDeltaXYThread()
+{
+    return std::thread([=] { GetDeltaXY(); });
+}
+
 void MotionSensor::GetDeltaXY()
 {
     ReadRangeSensor();
@@ -74,7 +78,7 @@ void MotionSensor::GetDeltaXY()
 void MotionSensor::ReadRangeSensor()
 {
     uint16_t range = _rangeSensor.ReadRangeSingleMillimeters();
-    if (range <= 2000) //2 meters
+    if (range != 8190)
     {
         _rangeAverage.AddSample(range);
     }
@@ -115,7 +119,7 @@ bool MotionSensor::IsMoving()
     printf("Total moving travel: %d\n", _isMovingTravel);
     if (_timer.Elapsed() >= WHEELCHAIR_MOVING_TIMEOUT.count())
     {
-        const uint16_t wheelchairMovingThreshold = 500;
+        const uint16_t wheelchairMovingThreshold = 100;
         if (_isMovingTravel >= wheelchairMovingThreshold)
         {
             _lastState = true;
@@ -142,19 +146,4 @@ uint16_t MotionSensor::PixelsToMillimeter(double pixels)
     const double numberOfPixels = 30.0f;
     const double fieldOfView = 0.733038285f;
     return static_cast<uint32_t>(((pixels * fieldOfView * GetAverageRange()) / numberOfPixels));
-}
-
-//For test menu only
-uint16_t MotionSensor::GetRangeSensorValue()
-{
-    return _rangeSensor.ReadRangeSingleMillimeters();
-}
-
-//For test menu only
-Coord_t MotionSensor::GetFlowSensorValues()
-{
-    int16_t deltaX = 0;
-    int16_t deltaY = 0;
-    _opticalFLowSensor.ReadMotionCount(&deltaX, &deltaY);
-    return {static_cast<float>(deltaX), static_cast<float>(deltaY)};
 }

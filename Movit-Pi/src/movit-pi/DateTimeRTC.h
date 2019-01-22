@@ -11,8 +11,6 @@ class DateTimeRTC
     void SetCurrentDateTime();
     void SetDefaultDateTime();
     int GetTimeSinceEpoch();
-    int GetRTCCurrentTime();
-    int GetSystemCurrentTime();
 
     static DateTimeRTC *GetInstance()
     {
@@ -29,6 +27,8 @@ class DateTimeRTC
     int BCDDateTimeToEpoch(uint8_t *dateTime);
     void EpochToBCDDateTime(int epoch, uint8_t *bcdDateTime);
 
+    int GetSystemCurrentTime();
+    int GetRTCCurrentTime();
     void SetCurrentDateTimeIfConnected();
 
     bool _isDatetimeSet = false;

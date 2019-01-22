@@ -1,66 +1,40 @@
-include component_common.mk
+export TARGET_PREFIX=arm-linux-gnueabihf-
+export CXX = $(TARGET_PREFIX)g++
 
-#System dependencies
-LDFLAGS += -lpthread
-LDFLAGS += -lrt
-LDFLAGS += -lm
+CXXFLAGS = -g -Wall -std=c++11 -O3
+LDLIBS = -lpthread -lrt -lm -lmosquitto -lbcm2835 -lmosquittopp
+LDFLAGS = -I/usr/include -I/usr/local/include -Iexternal/include -Lexternal/lib -lmosquitto -lbcm2835 -lmosquittopp
+DIRECTORIES := Obj/movit-pi Obj/movit-control Executables
 
-MODULE_DIR := $(shell pwd)
+.PHONY: default all clean
 
-#Common
-OBJ_DIR = $(MODULE_DIR)/obj
-EXTERNAL_DEP_DIR = $(MODULE_DIR)/external
-LIB_DIR = $(EXTERNAL_DEP_DIR)/lib
-INC_DIR = $(EXTERNAL_DEP_DIR)/include
-OUTPUT_DIR := $(MODULE_DIR)/output
+default: all
 
-#movit-pi
-export OBJ_DIR_MOVIT_PI = $(OBJ_DIR)/movit-pi
-SRC_DIR_MOVIT_PI = $(MODULE_DIR)/src/movit-pi
+OBJECTS-PI = $(patsubst src/movit-pi/%.cpp,Obj/movit-pi/%.o,$(wildcard src/movit-pi/*.cpp))
+HEADERS-PI = $(wildcard src/movit-pi/*.h)
 
-#movit-control
-export OBJ_DIR_MOVIT_CONTROL = $(OBJ_DIR)/movit-control
-SRC_DIR_MOVIT_CONTROL = $(MODULE_DIR)/src/movit-control
+OBJECTS-CONTROL = $(patsubst src/movit-control/%.cpp,Obj/movit-control/%.o,$(wildcard src/movit-control/*.cpp))
+HEADERS-CONTROL = $(wildcard src/movit-control/*.h)
 
-CPPFLAGS += -c
-CPPFLAGS += -Wall
-CXXFLAGS += -std=c++11
-CXXFLAGS += -O3
-# Uncomment for debug capabilities using GDB on target
-# CXXFLAGS += -g
-CXXFLAGS += -I$(INC_DIR)
-export CPPFLAGS
-export CXXFLAGS
+Obj/movit-pi/%.o: src/movit-pi/%.cpp $(HEADERS-PI)
+	$(CXX) $(CXXFLAGS) -c $< -o Obj/movit-pi/$(notdir $@) $(LDFLAGS)
 
-# Our lib dependencies
-LDFLAGS += $(LIB_DIR)/libmosquittopp.so.1
-LDFLAGS += $(LIB_DIR)/libmosquitto.so.1
-LDFLAGS += $(LIB_DIR)/libbcm2835.a
+Obj/movit-control/%.o: src/movit-control/%.cpp $(HEADERS-CONTROL)
+	$(CXX) $(CXXFLAGS) -c $< -o Obj/movit-control/$(notdir $@) $(LDFLAGS)
 
-# Std lib dependencies
-LDFLAGS += $(ROOTFS_PATH)/usr/lib/arm-linux-gnueabihf/libcares.so.2
-LDFLAGS += $(ROOTFS_PATH)/usr/lib/arm-linux-gnueabihf/libcrypto.so.1.1
-LDFLAGS += $(ROOTFS_PATH)/usr/lib/arm-linux-gnueabihf/libssl.so.1.1
-LDFLAGS += $(SYSROOT_PATH)/usr/lib/libdl.so
+.PRECIOUS: movit-pi movit-control Obj/movit-pi/$(notdir OBJECTS-PI) Obj/movit-control/$(notdir OBJECTS-CONTROL)
 
-export TARGET_MOVIT_PI = movit-pi
-export TARGET_MOVIT_CONTROL = movit-control
+movit-pi: $(DIRECTORIES) $(OBJECTS-PI) $(HEADERS-PI)
+	$(CXX) $(CXXFLAGS) $(wildcard Obj/movit-pi/*.o) -Wall $(LDLIBS) -o Executables/$@ $(LDFLAGS)
 
-DIRECTORIES := $(OBJ_DIR_MOVIT_PI) $(OBJ_DIR_MOVIT_CONTROL) $(OUTPUT_DIR)
+movit-control: $(DIRECTORIES) $(OBJECTS-CONTROL) $(HEADERS-CONTROL)
+	$(CXX) $(CXXFLAGS) $(wildcard Obj/movit-control/*.o) -Wall $(LDLIBS) -o Executables/$@ $(LDFLAGS)
 
-pi: | $(DIRECTORIES)
-	cd $(SRC_DIR_MOVIT_PI) && $(MAKE) $(TARGET_MOVIT_PI)
-	$(CPP) $^ -o $(OUTPUT_DIR)/$(TARGET_MOVIT_PI) $(OBJ_DIR_MOVIT_PI)/*.o $(LDFLAGS)
-
-control: | $(DIRECTORIES)
-	cd $(SRC_DIR_MOVIT_CONTROL) && $(MAKE) $(TARGET_MOVIT_CONTROL)
-	$(CPP) $^ -o $(OUTPUT_DIR)/$(TARGET_MOVIT_CONTROL) $(OBJ_DIR_MOVIT_CONTROL)/*.o $(LDFLAGS)
-
-all: pi control
-
-clean:
-	rm -rf $(OUTPUT_DIR)
-	rm -rf $(OBJ_DIR)
+all: movit-pi movit-control
 
 $(DIRECTORIES):
 	mkdir -p $@
+
+clean:
+	-rm -f Obj/movit-pi/*.o Obj/movit-control/*.o
+	-rm -f Executables/movit-pi Executables/movit-control

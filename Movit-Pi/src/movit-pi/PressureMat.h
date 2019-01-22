@@ -33,9 +33,6 @@ class PressureMat : public Sensor
 		return &instance;
 	}
 
-	void DetectCenterOfPressure();
-	void UpdateForcePlateData();
-
   private:
 	//Singleton
 	PressureMat();
@@ -51,6 +48,9 @@ class PressureMat : public Sensor
 
 	bool IsPressureMatOffsetValid(pressure_mat_offset_t offset);
 	bool InitializeForcePlate();
+
+	void DetectCenterOfPressure();
+	void UpdateForcePlateData();
 
 	bool _isSomeoneThere = false;
 	bool _isForcePlateInitialized = false;
