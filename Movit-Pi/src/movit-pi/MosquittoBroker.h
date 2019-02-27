@@ -6,6 +6,9 @@
 #include "DataType.h"
 #include <stdint.h>
 #include <string>
+#include "SeatingFSM.h"
+#include "TravelFSM.h"
+#include "AngleFSM.h"
 
 class MosquittoBroker : public mosqpp::mosquittopp
 {
@@ -18,18 +21,23 @@ class MosquittoBroker : public mosqpp::mosquittopp
     void on_subcribe(int mid, int qos_count, const int *granted_qos);
     void on_message(const mosquitto_message *message);
 
-    void SendBackRestAngle(const int angle, const std::string datetime);
-    void SendPressureMatData(const pressure_mat_data_t data, const std::string datetime);
-    void SendIsSomeoneThere(const bool state, const std::string datetime);
-    void SendIsPressureMatCalib(const bool state, const std::string datetime);
-    void SendIsIMUCalib(const bool state, const std::string datetime);
-    void SendSpeed(const float speed, const std::string datetime);
+    //void SendBackRestAngle(const int angle, const std::string datetime);
+    //void SendPressureMatData(const pressure_mat_data_t data, const std::string datetime);
+    //void SendIsSomeoneThere(const bool state, const std::string datetime);
+    //void SendIsPressureMatCalib(const bool state, const std::string datetime);
+    //void SendIsIMUCalib(const bool state, const std::string datetime);
+    //void SendSpeed(const float speed, const std::string datetime);
     void SendHeartbeat(const std::string datetime);
-    void SendVibration(double acceleration, const std::string datetime);
-    void SendIsMoving(const bool state, const std::string datetime);
-    void SendTiltInfo(const int info, const std::string datetime);
+    //void SendVibration(double acceleration, const std::string datetime);
+    //void SendIsMoving(const bool state, const std::string datetime);
+    //void SendTiltInfo(const int info, const std::string datetime);
 
-    void SendSensorsState(sensor_state_t sensorState, const std::string datetime);
+    //void SendSensorsState(sensor_state_t sensorState, const std::string datetime);
+    void SendSensorsData(SensorData sd);
+    void SendChairState(ChairState cs);
+    void SendAngleFSM(AngleFSM angleFSM);
+    void SendTravelFSM(TravelFSM travelFSM);
+    void SendSeatingFSM(SeatingFSM seatingFSM);
     void SendIsWifiConnected(const bool state, const std::string datetime);
 
     bool GetSetAlarmOn();
@@ -41,11 +49,12 @@ class MosquittoBroker : public mosqpp::mosquittopp
     bool IsTiltSettingsChanged() { return _isTiltSettingsChanged; }
     bool IsWifiChanged() { return _wifiChanged; }
 
-    bool CalibPressureMatRequired();
-    bool CalibIMURequired();
+    //bool CalibPressureMatRequired();
+    //bool CalibIMURequired();
 
     bool IsNotificationsSettingsChanged() { return _isNotificationsSettingsChanged; }
     notifications_settings_t GetNotificationsSettings();
+    void splitStringWithDelemiter(std::string toSplit, std::string delimiter, std::string *elements, int *numElem);
 
   private:
     void PublishMessage(const char *topic, const std::string message);

@@ -19,7 +19,6 @@ Alarm::Alarm(double blinkFrequency) : _blinkFrequency(blinkFrequency)
 
 bool Alarm::Initialize()
 {
-    printf("PC9536 (Alarm) initializing ... ");
     _pca9536.SetMode(DC_MOTOR, IO_OUTPUT);
     _pca9536.SetMode(GREEN_LED, IO_OUTPUT);
     _pca9536.SetMode(RED_LED, IO_OUTPUT);
@@ -29,15 +28,17 @@ bool Alarm::Initialize()
 
     if (!IsConnected())
     {
-        printf("FAIL\n");
         return false;
     }
 
-    printf("SUCCESS\n");
     TurnOffRedLed();
     TurnOffGreenLed();
     TurnOffDCMotor();
     return true;
+}
+
+Alarm::~Alarm() {
+    TurnOffAlarm();
 }
 
 bool Alarm::IsConnected()
@@ -52,18 +53,18 @@ uint8_t Alarm::GetPinState(pin_t pin)
 
 void Alarm::TurnOnDCMotor()
 {
-    if (GetPinState(DC_MOTOR) == IO_LOW)
-    {
+    //if (GetPinState(DC_MOTOR) == IO_LOW)
+    //{
         _pca9536.SetState(DC_MOTOR, IO_HIGH);
-    }
+    //}
 }
 
 void Alarm::TurnOffDCMotor()
 {
-    if (GetPinState(DC_MOTOR) == IO_HIGH)
-    {
+    //if (GetPinState(DC_MOTOR) == IO_HIGH)
+    //{
         _pca9536.SetState(DC_MOTOR, IO_LOW);
-    }
+    //}
 }
 
 void Alarm::TurnOnRedLed()
@@ -88,9 +89,9 @@ void Alarm::TurnOffGreenLed()
 
 void Alarm::TurnOffAlarm()
 {
-    StopBlinkRedAlarm();
-    StopBlinkLedsAlarm();
-    StopBlinkGreenAlarm();
+    TurnOffBlinkRedAlarm();
+    TurnOffBlinkLedsAlarm();
+    TurnOffBlinkGreenAlarm();
     TurnOffRedLed();
     TurnOffGreenLed();
     TurnOffDCMotor();
@@ -107,7 +108,7 @@ void Alarm::TurnOnBlinkLedsAlarm()
 {
     _isBlinkLedsAlarmOn = true;
 
-    std::lock_guard<std::mutex> lock(alarmMutex);
+    //std::lock_guard<std::mutex> lock(alarmMutex);
 
     while (_isBlinkLedsAlarmOn)
     {
@@ -124,7 +125,7 @@ void Alarm::TurnOnBlinkRedAlarm()
 {
     _isBlinkRedAlarmOn = true;
 
-    std::lock_guard<std::mutex> lock(alarmMutex);
+    //std::lock_guard<std::mutex> lock(alarmMutex);
 
     if (!_deactivateVibration)
     {
@@ -149,7 +150,7 @@ void Alarm::TurnOnBlinkGreenAlarm()
 {
     _isBlinkGreenAlarmOn = true;
 
-    std::lock_guard<std::mutex> lock(alarmMutex);
+    //std::lock_guard<std::mutex> lock(alarmMutex);
 
     while (_isBlinkGreenAlarmOn)
     {
@@ -160,38 +161,54 @@ void Alarm::TurnOnBlinkGreenAlarm()
     TurnOffGreenLed();
 }
 
-void Alarm::StopBlinkLedsAlarm()
+void Alarm::TurnOffBlinkLedsAlarm()
 {
     _isBlinkLedsAlarmOn = false;
 }
 
-void Alarm::StopBlinkRedAlarm()
+void Alarm::TurnOffBlinkRedAlarm()
 {
     _isBlinkRedAlarmOn = false;
 }
 
-void Alarm::StopBlinkGreenAlarm()
+void Alarm::TurnOffBlinkGreenAlarm()
 {
     _isBlinkGreenAlarmOn = false;
 }
 
-std::thread Alarm::TurnOnBlinkRedAlarmThread()
+void Alarm::TurnOnBlinkRedAlarmThread()
 {
-    return std::thread([=] {
+    if(_isBlinkRedAlarmOn) {
+        return;
+    }
+
+    blinkRedLedThread = std::thread([=] {
         TurnOnBlinkRedAlarm();
     });
+    blinkRedLedThread.detach();
 }
 
-std::thread Alarm::TurnOnBlinkLedsAlarmThread()
-{
-    return std::thread([=] {
+void Alarm::TurnOnBlinkLedsAlarmThread()
+{   
+    if(_isBlinkLedsAlarmOn) {
+        return;
+    }
+
+    blinkLedsThread = std::thread([=] {
         TurnOnBlinkLedsAlarm();
     });
+    blinkLedsThread.detach();
 }
 
-std::thread Alarm::TurnOnBlinkGreenAlarmThread()
+void Alarm::TurnOnBlinkGreenAlarmThread()
 {
-    return std::thread([=] {
+    if(_isBlinkGreenAlarmOn) {
+        return;
+    }
+
+    blinkGreenLedThread = std::thread([=] {
         TurnOnBlinkGreenAlarm();
     });
+    blinkRedLedThread.detach();
+    
 }

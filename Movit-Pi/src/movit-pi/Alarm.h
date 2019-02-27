@@ -12,7 +12,7 @@ class Alarm : public Sensor
   public:
     Alarm();
     Alarm(double blinkFrequency);
-    ~Alarm() = default;
+    ~Alarm();
 
     bool Initialize();
     bool IsConnected();
@@ -35,17 +35,17 @@ class Alarm : public Sensor
     void TurnOnGreenAlarm();
     void TurnOnBlinkGreenAlarm();
 
-    void StopBlinkGreenAlarm();
-    void StopBlinkRedAlarm();
-    void StopBlinkLedsAlarm();
+    void TurnOffBlinkGreenAlarm();
+    void TurnOffBlinkRedAlarm();
+    void TurnOffBlinkLedsAlarm();
 
     bool IsRedAlarmOn() { return _isBlinkRedAlarmOn; }
     bool IsBlinkLedsAlarmOn() { return _isBlinkLedsAlarmOn; }
     bool IsBlinkGreenAlarmOn() { return _isBlinkGreenAlarmOn; }
 
-    std::thread TurnOnBlinkRedAlarmThread();
-    std::thread TurnOnBlinkLedsAlarmThread();
-    std::thread TurnOnBlinkGreenAlarmThread();
+    void TurnOnBlinkRedAlarmThread();
+    void TurnOnBlinkLedsAlarmThread();
+    void TurnOnBlinkGreenAlarmThread();
 
   private:
     PCA9536 _pca9536;
@@ -54,7 +54,11 @@ class Alarm : public Sensor
     bool _isBlinkLedsAlarmOn = false;
     bool _isBlinkGreenAlarmOn = false;
 
-    bool _deactivateVibration = false;
+    std::thread blinkRedLedThread;
+    std::thread blinkLedsThread;
+    std::thread blinkGreenLedThread;
+
+    bool _deactivateVibration = true;
     bool _deactivateBlinking = false;
 
     double _blinkFrequency;

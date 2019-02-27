@@ -24,27 +24,42 @@ bool PressureMat::Initialize()
     return true;
 }
 
+void PressureMat::GetRawAnalogData(uint16_t *array) {
+    array[0] = _max11611Data[1];
+    array[1] = _max11611Data[0];
+    array[2] = _max11611Data[8];
+    array[3] = _max11611Data[2];
+    array[4] = _max11611Data[4];
+    array[5] = _max11611Data[3];
+    array[6] = _max11611Data[5];
+    array[7] = _max11611Data[7];
+    array[8] = _max11611Data[6];
+}
+
 bool PressureMat::IsConnected()
 {
-    return _max11611.Initialize();
+    bool state = _max11611.Initialize();
+    if(state == false){
+        isInitialized = false;
+    }
+    return state && isInitialized;
 }
 
 bool PressureMat::InitializeForcePlate()
 {
-    printf("MAX11611 (ADC) initializing ... ");
+    isInitialized = true;
     if (IsConnected())
     {
         for (uint8_t i = 0; i < PRESSURE_SENSOR_COUNT; i++)
         {
             _sensorMatrix.SetAnalogData(0, i);
         }
-
-        printf("success\n");
+        isInitialized = true;
         return true;
     }
     else
     {
-        printf("FAIL\n");
+        isInitialized = false;
         return false;
     }
 }
@@ -59,7 +74,7 @@ void PressureMat::Calibrate()
 
 void PressureMat::Update()
 {
-    if (_isForcePlateInitialized && _isCalibrated)
+    if (_isForcePlateInitialized && !_isCalibrated)
     {
         // Data: Capteur de force
         UpdateForcePlateData();

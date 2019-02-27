@@ -80,7 +80,7 @@ void ForceSensor::CalibrateForceSensor(MAX11611 &max11611, uint16_t *max11611Dat
     for (uint8_t i = 0; i < maxIterations; i++)
     {
         //Update sensor analog data readings
-        printf("\n%i ", (maxIterations - i));
+        //printf("\n%i ", (maxIterations - i));
         _max11611.GetData(PRESSURE_SENSOR_COUNT, _max11611Data);
         for (uint8_t i = 0; i < PRESSURE_SENSOR_COUNT; i++)
         {
@@ -95,6 +95,7 @@ void ForceSensor::CalibrateForceSensor(MAX11611 &max11611, uint16_t *max11611Dat
             {
                 sensorMean[j] /= maxIterations;
             }
+            printf(".");
         }
         delay(1000);
     }

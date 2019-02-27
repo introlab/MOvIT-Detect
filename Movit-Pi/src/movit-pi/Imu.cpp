@@ -12,28 +12,37 @@ Imu::Imu()
 
 bool Imu::Initialize()
 {
-    printf("MPU6050 %s initializing ... ", _imuName.c_str());
-    fflush(stdout);
+    //printf("MPU6050 %s initializing ... ", _imuName.c_str());
+    //fflush(stdout);
 
-    if (!IsConnected())
+    IsConnected();
+
+    isInitialized = true;
+    
+    _imu.Initialize();
+
+
+    if (IsConnected() == false || isInitialized == false)
     {
-        printf("FAIL\n");
+        isInitialized = false;
         return false;
     }
 
-    _imu.Initialize();
-
-    printf("SUCCESS\n");
     return true;
 }
 
 bool Imu::IsConnected()
 {
-    return _imu.TestConnection();
+    bool state = _imu.TestConnection();
+    if(state == false){
+        isInitialized = false;
+    }
+    return state && isInitialized;
 }
 
 bool Imu::IsImuOffsetValid(imu_offset_t offset)
 {
+    return true;
     return offset.accelerometerOffsets[AXIS::x] != 0 && offset.accelerometerOffsets[AXIS::y] != 0 && offset.accelerometerOffsets[AXIS::z] != 0 &&
            offset.gyroscopeOffsets[AXIS::x] != 0 && offset.gyroscopeOffsets[AXIS::y] != 0 && offset.gyroscopeOffsets[AXIS::z] != 0;
 }
@@ -170,7 +179,7 @@ void Imu::CalibrateAccelerometer(MPU6050 &mpu)
 
         for (uint8_t i = 0; i < NUMBER_OF_AXIS; i++)
         {
-            printf("%i\n", abs(_calibrationArray[i] - accelerometerMeans[i]));
+            printf(".");
 
             if (abs(_calibrationArray[i] - accelerometerMeans[i]) <= ACCELEROMETER_DEADZONE)
             {
@@ -202,6 +211,7 @@ void Imu::CalibrateGyroscope(MPU6050 &mpu)
 
         for (uint8_t i = 0; i < NUMBER_OF_AXIS; i++)
         {
+            printf(".");
             if (abs(gyroscopeMeans[i]) <= GYROSCOPE_DEADZONE)
             {
                 ready++;
@@ -220,11 +230,20 @@ void Imu::GetAccelerations(double *accelerations)
 
     _imu.GetAcceleration(&ax, &ay, &az);
 
-    // TODO: Add low-pass filter
+    accelerations[AXIS::x] = static_cast<double>(ax) / (32768.0f / 2.0f);
+    accelerations[AXIS::y] = static_cast<double>(ay) / (32768.0f / 2.0f);
+    accelerations[AXIS::z] = static_cast<double>(az) / (32768.0f / 2.0f);
+}
 
-    accelerations[AXIS::x] = static_cast<double>(ax) * 2 / 32768.0f;
-    accelerations[AXIS::y] = static_cast<double>(ay) * 2 / 32768.0f;
-    accelerations[AXIS::z] = static_cast<double>(az) * 2 / 32768.0f;
+void Imu::GetRotations(double *rotations)
+{
+    int16_t gx, gy, gz;
+
+    _imu.GetRotation(&gx, &gy, &gz);
+
+    rotations[AXIS::x] = static_cast<double>(gx) / (262.0f / 2.0f);
+    rotations[AXIS::y] = static_cast<double>(gy) / (262.0f / 2.0f);
+    rotations[AXIS::z] = static_cast<double>(gz) / (262.0f / 2.0f);
 }
 
 double Imu::GetPitch()

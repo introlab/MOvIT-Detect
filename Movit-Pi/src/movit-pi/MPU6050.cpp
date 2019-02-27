@@ -64,10 +64,11 @@ MPU6050::MPU6050(uint8_t address)
  */
 void MPU6050::Initialize()
 {
-    SetClockSource(MPU6050_CLOCK_INTERNAL);
-    SetFullScaleGyroRange(MPU6050_GYRO_FS_250);
-    SetFullScaleAccelRange(MPU6050_ACCEL_FS_2);
-    SetSleepEnabled(false); // thanks to Jack Elston for pointing this one out!
+    I2Cdev::WriteByte(_devAddr, MPU6050_RA_PWR_MGMT_1, 0x01);
+    //SetClockSource(MPU6050_CLOCK_INTERNAL);
+    //SetFullScaleGyroRange(MPU6050_GYRO_FS_250);
+    //SetFullScaleAccelRange(MPU6050_ACCEL_FS_2);
+    //SetSleepEnabled(false); // thanks to Jack Elston for pointing this one out!
 }
 
 /** Verify the I2C connection.

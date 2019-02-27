@@ -1,38 +1,21 @@
 #ifndef DATETIME_RTC_H
 #define DATETIME_RTC_H
 
-#include "MCP79410.h"
-#include <thread>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <unistd.h>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
 
 class DateTimeRTC
 {
   public:
-    std::thread SetCurrentDateTimeThread();
-    void SetCurrentDateTime();
-    void SetDefaultDateTime();
-    int GetTimeSinceEpoch();
-
-    static DateTimeRTC *GetInstance()
-    {
-        static DateTimeRTC instance;
-        return &instance;
-    }
+    static long GetTimeSinceEpoch();
 
   private:
-    //Singleton
-    DateTimeRTC();
-    DateTimeRTC(DateTimeRTC const &);    // Don't Implement.
-    void operator=(DateTimeRTC const &); // Don't implement.
-
-    int BCDDateTimeToEpoch(uint8_t *dateTime);
-    void EpochToBCDDateTime(int epoch, uint8_t *bcdDateTime);
-
-    int GetSystemCurrentTime();
-    int GetRTCCurrentTime();
-    void SetCurrentDateTimeIfConnected();
-
-    bool _isDatetimeSet = false;
-    MCP79410 _mcp79410;
+    DateTimeRTC() {};
 };
 
 #endif // DATETIME_RTC_H

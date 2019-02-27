@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <chrono>
+#include <unistd.h>
 
 #ifndef VL53L0X_H
 #define VL53L0X_H
@@ -101,6 +102,8 @@ class VL53L0X
     inline uint8_t GetAddress() { return address; }
 
     bool Initialize(bool io_2v8 = true);
+    bool IsConnected();
+    bool IsConnectedOnly();
 
     bool SetSignalRateLimit(float limit_Mcps);
     float GetSignalRateLimit();
@@ -162,6 +165,8 @@ class VL53L0X
 
     bool WriteMulti(uint8_t reg, uint8_t * src, uint8_t count);
     bool ReadMulti(uint8_t reg, uint8_t * dst, uint8_t count);
+
+    bool isInitialized = false;
     
     static uint16_t DecodeTimeout(uint16_t value);
     static uint16_t EncodeTimeout(uint16_t timeout_mclks);

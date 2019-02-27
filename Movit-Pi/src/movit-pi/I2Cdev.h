@@ -44,7 +44,7 @@ THE SOFTWARE.
 /* used to boolean for setting RPi I2C pins P1-03 (SDA) and P1-05 (SCL) to alternate function ALT0, which enables those pins for I2C interface. 
    setI2Cpin should be false, if the I2C are already configured in alt mode ... */
 
-#define i2c_baudrate 400000
+#define i2c_baudrate 400000             //100kHz
 //uint32_t i2c_baudrate = 400000 ; //400 kHz, 
 
 class I2Cdev {
@@ -61,7 +61,7 @@ class I2Cdev {
         static int8_t ReadByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data);
         static int8_t ReadWord(uint8_t devAddr, uint8_t regAddr, uint16_t *data);
         static int8_t ReadBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
-	static bool   ReadBytes(uint8_t devAddr, uint8_t length, uint8_t *data);
+	    static bool   ReadBytes(uint8_t devAddr, uint8_t length, uint8_t *data);
         static int8_t ReadWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data);
 
         static bool WriteBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data);
@@ -69,7 +69,7 @@ class I2Cdev {
         static bool WriteBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data);
         //TODO static bool writeBitsW(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint16_t data);
         static bool WriteByte(uint8_t devAddr, uint8_t regAddr, uint8_t data);
-	static bool WriteByte(uint8_t devAddr, uint8_t data);
+	    static bool WriteByte(uint8_t devAddr, uint8_t data);
         static bool WriteWord(uint8_t devAddr, uint8_t regAddr, uint16_t data);
         static bool WriteBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
         static bool WriteWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data);
