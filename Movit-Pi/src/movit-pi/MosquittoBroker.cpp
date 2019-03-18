@@ -21,6 +21,7 @@ const char *ALARM_TOPIC = "data/set_alarm";
 const char *GOAL_CHANGED_TOPIC = "goal/update_data";
 const char *CALIB_PRESSURE_MAT_TOPIC = "config/calib_pressure_mat";
 const char *CALIB_IMU_TOPIC = "config/calib_imu";
+const char *CALIB_IMU_WITH_OFFSET_TOPIC = "config/calib_imu_offset";
 const char *NOTIFICATIONS_SETTINGS_TOPIC = "config/notifications_settings";
 const char *SELECT_WIFI_TOPIC = "config/wifi";
 
@@ -33,20 +34,8 @@ const char *SENSOR_CHAIR_STATE_TOPIC = "sensors/chairState";
 const char *FSM_ANGLE_TOPIC = "fsm/angle";
 const char *FSM_SEATING_TOPIC = "fsm/seating";
 const char *FSM_TRAVEL_TOPIC = "fsm/travel";
-
-
-
-/* //Ancien message
-const char *SENSORS_STATUS_TOPIC = "status/sensors";
-const char *CURRENT_BACK_REST_ANGLE_TOPIC = "data/current_back_rest_angle";
-const char *CURRENT_PRESSURE_MAT_DATA_TOPIC = "data/current_pressure_mat_data";
-const char *CURRENT_IS_SOMEONE_THERE_TOPIC = "data/current_is_someone_there";
-const char *CURRENT_CHAIR_SPEED_TOPIC = "data/current_chair_speed";
-const char *VIBRATION_TOPIC = "data/vibration";
-const char *IS_MOVING_TOPIC = "data/is_moving";
-const char *TILT_INFO_TOPIC = "data/tilt_info";
-*/
-
+const char *FSM_NOTIFICATION_TOPIC = "fsm/notification";
+const char *ANGLE_NEW_OFFSET_TOPIC = "config/angle_new_offset";
 
 const char *EXCEPTION_MESSAGE = "Exception thrown by %s()\n";
 
@@ -94,14 +83,13 @@ void MosquittoBroker::on_connect(int rc)
     if (rc == 0)
     {
         subscribe(NULL, ALARM_TOPIC);
-        //subscribe(NULL, REQUIRED_ANGLE_TOPIC);
-        //subscribe(NULL, REQUIRED_PERIOD_TOPIC);
-        //subscribe(NULL, REQUIRED_DURATION_TOPIC);
+        subscribe(NULL, CALIB_IMU_WITH_OFFSET_TOPIC);
         subscribe(NULL, GOAL_CHANGED_TOPIC);
         subscribe(NULL, CALIB_PRESSURE_MAT_TOPIC);
         subscribe(NULL, CALIB_IMU_TOPIC);
         subscribe(NULL, NOTIFICATIONS_SETTINGS_TOPIC);
         subscribe(NULL, SELECT_WIFI_TOPIC);
+        PublishMessage("status", "1", 1, true);
     }
 }
 
@@ -131,24 +119,7 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
     }
     topic = msg->topic;
 
-    if (topic == ALARM_TOPIC)
-    {
-        printf("ALARM_TOPIC message: %d\n", std::stoi(message));
-        /*
-        try
-        {
-            _setAlarmOn = std::stoi(message);
-            _setAlarmOnNew = true;
-        }
-        catch (const std::exception &e)
-        {
-            printf(EXCEPTION_MESSAGE, e.what());
-            printf("Setting _setAlarmOn and _setAlarmOnNew to false\n");
-            _setAlarmOn = false;
-            _setAlarmOnNew = false;
-        }*/
-    }
-    else if (topic == SELECT_WIFI_TOPIC)
+    if (topic == SELECT_WIFI_TOPIC)
     {
         _wifiChanged = true;
         _wifiInformation = message;
@@ -157,67 +128,41 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
 
         try
         {
+            printf("%s\n\n",message.c_str());
             int num = 0;
             std::string arr[5] = {"","","","",""};
             splitStringWithDelemiter(message,":",arr,&num);
             if(num == 3) {
-                int frequency = 0;
-                int duration = 0;
-                int angle = 0;
+                _frequency = std::stoi(arr[0]);
+                _duration = std::stoi(arr[1]);
+                _angle = std::stoi(arr[2]);
+                _GoalChanged = true;
             }
-            //TODO: Mettre a jour la FSM
         }
         catch (const std::exception &e)
         {
             printf(EXCEPTION_MESSAGE, e.what());
         }
     }
-    /*
-    else if (topic == REQUIRED_ANGLE_TOPIC)
+    
+    else if (topic == CALIB_IMU_WITH_OFFSET_TOPIC)
     {
         try
         {
-            _tiltSettings.requiredBackRestAngle = std::stoi(message);
-            _isTiltSettingsChanged = true;
+            int num = 0;
+            std::string arr[5] = {"","","","",""};
+            splitStringWithDelemiter(message,":",arr,&num);
+            if(num == 2) {
+                _mIMUOffset = std::stoi(arr[0]);
+                _fIMUOffset = std::stoi(arr[1]);
+                _OffsetChanged = true;
+            }
         }
         catch (const std::exception &e)
         {
             printf(EXCEPTION_MESSAGE, e.what());
-            printf("Setting _requiredBackRestAngle to 0 and _requiredBackRestAngleNew to false\n");
-            _tiltSettings.requiredBackRestAngle = 0;
-            _isTiltSettingsChanged = false;
         }
     }
-    else if (topic == REQUIRED_PERIOD_TOPIC)
-    {
-        try
-        {
-            _tiltSettings.requiredPeriod = std::stoi(message);
-            _isTiltSettingsChanged = true;
-        }
-        catch (const std::exception &e)
-        {
-            printf(EXCEPTION_MESSAGE, e.what());
-            printf("Setting _requiredPeriod to 0 and _requiredPeriodNew to false\n");
-            _tiltSettings.requiredPeriod = 0;
-            _isTiltSettingsChanged = false;
-        }
-    }
-    else if (topic == REQUIRED_DURATION_TOPIC)
-    {
-        try
-        {
-            _tiltSettings.requiredDuration = std::stoi(message);
-            _isTiltSettingsChanged = true;
-        }
-        catch (const std::exception &e)
-        {
-            printf(EXCEPTION_MESSAGE, e.what());
-            printf("Setting _requiredDuration to 0 and _requiredDurationNew to false\n");
-            _tiltSettings.requiredDuration = 0;
-            _isTiltSettingsChanged = false;
-        }
-    }*/
     else if (topic == CALIB_PRESSURE_MAT_TOPIC)
     {
         try
@@ -246,162 +191,32 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
     }
     else if (topic == NOTIFICATIONS_SETTINGS_TOPIC)
     {
-        Document document;
-        document.Parse(message.c_str());
-
-        // Pour une certaine raison obscure, je ne suis pas capable de gerer le cas
-        // ou il n'y a pas d'object notifications_settings. Pas cool rapidjson
-        if (document["notifications_settings"].IsObject())
+        try
         {
-            Value &object = document["notifications_settings"];
-            _notificationsSettings.isLedBlinkingEnabled = object["isLedBlinkingEnabled"].GetBool();
-            _notificationsSettings.isVibrationEnabled = object["isVibrationEnabled"].GetBool();
-            _notificationsSettings.snoozeTime = object["snoozeTime"].GetFloat();
+            int num = 0;
+            std::string arr[5] = {"","","","",""};
+            splitStringWithDelemiter(message,":",arr,&num);
+            if(num == 3) {
+                _shouldBlink = std::stoi(arr[0]);
+                _shouldVibrate = std::stoi(arr[1]);
+                _snoozeTime = std::stoi(arr[2]);
+                _isNotificationsSettingsChanged = true;
+            }
         }
-
-        _isNotificationsSettingsChanged = true;
+        catch (const std::exception &e)
+        {
+            printf(EXCEPTION_MESSAGE, e.what());
+        }
     }
 }
-/*
-void MosquittoBroker::SendBackRestAngle(const int angle, const std::string datetime)
-{
-    std::string strAngle = std::to_string(angle);
-    std::string strMsg = "{\"datetime\":" + datetime + ",\"angle\":" + strAngle + "}";
 
-    PublishMessage(CURRENT_BACK_REST_ANGLE_TOPIC, strMsg);
-}
-
-void MosquittoBroker::SendPressureMatData(const pressure_mat_data_t data, const std::string datetime)
-{
-    StringBuffer strBuff;
-    Writer<StringBuffer> writer(strBuff);
-
-    writer.StartObject();
-    writer.Key("datetime");
-    writer.String(datetime.c_str());
-    writer.Key("center");
-    writer.StartObject();
-    writer.Key("x");
-    writer.Double(data.centerOfPressure.x);
-    writer.Key("y");
-    writer.Double(data.centerOfPressure.y);
-    writer.EndObject();
-    writer.Key("quadrants");
-    writer.StartArray();
-    for (int i = 0; i < 4; i++)
-    {
-        writer.StartObject();
-        writer.Key("x");
-        writer.Double(data.quadrantPressure[i].x);
-        writer.Key("y");
-        writer.Double(data.quadrantPressure[i].y);
-        writer.EndObject();
-    }
-    writer.EndArray();
-
-    writer.EndObject();
-
-    PublishMessage(CURRENT_PRESSURE_MAT_DATA_TOPIC, strBuff.GetString());
-}
-
-void MosquittoBroker::SendIsSomeoneThere(const bool state, const std::string datetime)
-{
-    std::string strState = std::to_string(state);
-    std::string strMsg = "{\"datetime\":" + datetime + ",\"IsSomeoneThere\":" + strState + "}";
-
-    PublishMessage(CURRENT_IS_SOMEONE_THERE_TOPIC, strMsg);
-}
-*/
-void MosquittoBroker::SendIsWifiConnected(const bool state, const std::string datetime)
-{
-    std::string strState = std::to_string(state);
-    std::string strMsg = "{\"datetime\":" + datetime + ",\"IsWifiConnected\":" + strState + "}";
-
-    PublishMessage(CURRENT_IS_WIFI_CONNECTED_TOPIC, strMsg);
-}
-/*
-void MosquittoBroker::SendIsPressureMatCalib(const bool state, const std::string datetime)
-{
-    std::string strState = std::to_string(state);
-    std::string strMsg = "{\"datetime\":" + datetime + ",\"IsPressureMatCalib\":" + strState + "}";
-
-    PublishMessage(CALIB_PRESSURE_MAT_TOPIC, strMsg);
-}
-
-void MosquittoBroker::SendIsIMUCalib(const bool state, const std::string datetime)
-{
-    std::string strState = std::to_string(state);
-    std::string strMsg = "{\"datetime\":" + datetime + ",\"IsIMUCalib\":" + strState + "}";
-
-    PublishMessage(CALIB_IMU_TOPIC, strMsg);
-}
-
-void MosquittoBroker::SendSpeed(const float speed, const std::string datetime)
-{
-    std::string strSpeed = std::to_string(speed);
-    std::string strMsg = "{\"datetime\":" + datetime + ",\"vitesse\":" + strSpeed + "}";
-
-    PublishMessage(CURRENT_CHAIR_SPEED_TOPIC, strMsg);
-}
-
-void MosquittoBroker::SendVibration(double acceleration, const std::string datetime)
-{
-    std::string strAcceleration = std::to_string(acceleration);
-    std::string strMsg = "{\"datetime\":" + datetime + ",\"vibration\":" + strAcceleration + "}";
-
-    PublishMessage(VIBRATION_TOPIC, strMsg);
-}
-
-void MosquittoBroker::SendIsMoving(const bool state, const std::string datetime)
-{
-    std::string strState = std::to_string(state);
-    std::string strMsg = "{\"datetime\":" + datetime + ",\"isMoving\":" + strState + "}";
-
-    PublishMessage(IS_MOVING_TOPIC, strMsg);
-}
-
-void MosquittoBroker::SendTiltInfo(const int info, const std::string datetime)
-{
-    std::string strInfo = std::to_string(info);
-    std::string strMsg = "{\"datetime\":" + datetime + ",\"info\":" + strInfo + "}";
-
-    PublishMessage(TILT_INFO_TOPIC, strMsg);
-}
-*/
 void MosquittoBroker::SendHeartbeat(const std::string datetime)
 {
     std::string strMsg = "{\"datetime\":" + datetime + "}";
 
     PublishMessage(HEARTBEAT_TOPIC, strMsg);
 }
-/*
-void MosquittoBroker::SendSensorsState(sensor_state_t sensorState, const std::string datetime)
-{
-    StringBuffer strBuff;
-    Writer<StringBuffer> writer(strBuff);
-    writer.StartObject();
 
-    writer.Key("notificationModule");
-    writer.Bool(sensorState.notificationModuleValid);
-    writer.Key("fixedAccelerometer");
-    writer.Bool(sensorState.fixedAccelerometerValid);
-    writer.Key("mobileAccelerometer");
-    writer.Bool(sensorState.mobileAccelerometerValid);
-    writer.Key("pressureMat");
-    writer.Bool(sensorState.pressureMatValid);
-    writer.Key("datetime");
-    writer.String(datetime.c_str());
-
-    writer.EndObject();
-
-    PublishMessage(SENSORS_STATUS_TOPIC, strBuff.GetString());
-}*/
-/*
-*
-*
-*
-*
-*/
 void MosquittoBroker::SendSensorsData(SensorData sd)
 {
     std::string strMsg = "";
@@ -475,6 +290,29 @@ void MosquittoBroker::SendChairState(ChairState cs)
     PublishMessage(SENSOR_CHAIR_STATE_TOPIC, strMsg);
 }
 
+void MosquittoBroker::SendAngleOffset(int mIMUOffset, int fIMUOffset)
+{
+    std::string strMsg = "";
+    strMsg ="{\
+                \"mIMUOffset\" : "+std::to_string(mIMUOffset)+",\
+                \"fIMUOffset\" : "+std::to_string(fIMUOffset)+"\
+            }";
+    PublishMessage(ANGLE_NEW_OFFSET_TOPIC, strMsg);
+}
+
+void MosquittoBroker::SendNotificationFSM(NotificationFSM notificationFSM)
+{
+    std::string strMsg = "";
+    strMsg ="{\
+                \"time\" : "+std::to_string(notificationFSM.getCurrentTime())+",\
+                \"elapsed\" : "+std::to_string(notificationFSM.getElapsed())+",\
+                \"event\" : \""+notificationFSM.getReason()+"\",\
+                \"stateNum\" : "+std::to_string(notificationFSM.getCurrentState())+",\
+                \"stateName\" : \""+notificationFSM.getCurrentStateName()+"\"\
+            }";
+    PublishMessage(FSM_NOTIFICATION_TOPIC, strMsg);
+}
+
 void MosquittoBroker::SendAngleFSM(AngleFSM angleFSM) {
     std::string eventState = "";
     std::string strMsg = "";
@@ -502,8 +340,8 @@ void MosquittoBroker::SendAngleFSM(AngleFSM angleFSM) {
                 \"thirtyToFourtyfive\" : "+std::to_string(result[3])+",\
                 \"fourtyfiveAndMore\" : "+std::to_string(result[4])+",\
                 \"average\" : "+std::to_string(angleFSM.getAngleAverage())+",\
-                \"requiredDuration\" : "+std::to_string(angleFSM.getAngleDuration())+",\
-                \"requiredAngle\" : "+std::to_string(angleFSM.getAngleTarget())+",\
+                \"requiredDuration\" : "+std::to_string(angleFSM.getTargetDuration())+",\
+                \"requiredAngle\" : "+std::to_string(angleFSM.getTargetAngle())+",\
                 \"stateName\" : \""+angleFSM.getCurrentStateName()+"\"\
             }";
     } else {
@@ -560,68 +398,13 @@ void MosquittoBroker::SendSeatingFSM(SeatingFSM seatingFSM) {
     PublishMessage(FSM_SEATING_TOPIC, strMsg);
 }
 
-
-
-
-
-bool MosquittoBroker::GetSetAlarmOn()
-{
-    _setAlarmOnNew = false;
-    return _setAlarmOn;
-}
-
-tilt_settings_t MosquittoBroker::GetTiltSettings()
-{
-    _isTiltSettingsChanged = false;
-    return _tiltSettings;
-}
-
-std::string MosquittoBroker::GetWifiInformation()
-{
-    _wifiChanged = false;
-    return _wifiInformation;
-}
-
-notifications_settings_t MosquittoBroker::GetNotificationsSettings()
-{
-    _isNotificationsSettingsChanged = false;
-    return _notificationsSettings;
-}
-/*
-bool MosquittoBroker::CalibPressureMatRequired()
-{
-    if (_calibPressureMatRequired)
-    {
-        _calibPressureMatRequired = false;
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-bool MosquittoBroker::CalibIMURequired()
-{
-    if (_calibIMURequired)
-    {
-        _calibIMURequired = false;
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-*/
-void MosquittoBroker::PublishMessage(const char *topic, const std::string message)
+void MosquittoBroker::PublishMessage(const char *topic, const std::string message, int qos, bool retain)
 {
     if (message.empty())
     {
-        //printf("Error: Empty mosquitto message\n");
         return;
     }
-    publish(NULL, topic, message.length(), message.c_str());
+    publish(NULL, topic, message.length(), message.c_str(), qos, retain);
 }
 
 void MosquittoBroker::splitStringWithDelemiter(std::string toSplit, std::string delimiter, std::string *elements, int *numElem) {
@@ -638,3 +421,54 @@ void MosquittoBroker::splitStringWithDelemiter(std::string toSplit, std::string 
         *numElem = i+1;
 }
 
+
+
+    bool MosquittoBroker::CalibIMURequired() {
+      return _calibIMURequired;
+    }
+
+    void MosquittoBroker::SetCalibIMURequired(bool required) {
+      _calibIMURequired = required;
+    }
+
+    bool MosquittoBroker::GoalHasChanged() {
+      return _GoalChanged;
+    }
+
+    void MosquittoBroker::SetGoalHasChanged(bool changed) {
+      _GoalChanged = changed;
+    }
+
+    void MosquittoBroker::getGoal(int *frequency, int *duration, int *angle) {
+      *frequency = _frequency;
+      *duration = _duration;
+      *angle = _angle;
+    }
+
+    bool MosquittoBroker::NotificationHasChanged() {
+      return _isNotificationsSettingsChanged;
+    }
+
+    void MosquittoBroker::SetNotificationHasChanged(bool changed) {
+      _isNotificationsSettingsChanged = changed;
+    }
+
+    void MosquittoBroker::getNotificationSettings(bool *ledBlinkingEnable, bool *vibrationEnabled, int *snoozeTime) {
+      *ledBlinkingEnable = _shouldBlink;
+      *vibrationEnabled = _shouldVibrate;
+      *snoozeTime = _snoozeTime;
+    }
+
+
+    bool MosquittoBroker::offsetChanged() {
+      return _OffsetChanged;
+    }
+
+    void MosquittoBroker::setOffsetChanged(bool changed) {
+      _OffsetChanged = changed;
+    }
+
+    void MosquittoBroker::getOffsets(int *mIMUOffset, int *fIMUOffset) {
+      *mIMUOffset = _mIMUOffset;
+      *fIMUOffset = _fIMUOffset;
+    }

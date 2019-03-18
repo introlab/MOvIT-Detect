@@ -29,16 +29,22 @@ class AngleFSM
         return AngleStateName[getCurrentState()];
     }
 
-    void setAngleThreshold(int threshold) {
-        ANGLE_THRESHOLD = threshold;
+    void setParameter(int frequency, int duration, int angle) {
+        ANGLE_TARGET = angle;
+        ANGLE_DURATION = duration;
+        ANGLE_FREQUENCY = frequency;
     }
 
-    void setAngleTarget(int target) {
-        ANGLE_TARGET = target;
+    int getTargetAngle() {
+        return ANGLE_TARGET;
     }
 
-    void setAngleTimeout(int timeout) {
-        ANGLE_TIMEOUT = timeout;
+    int getTargetDuration() {
+        return ANGLE_DURATION;
+    }
+
+    int getTargetFrequency() {
+        return ANGLE_FREQUENCY;
     }
 
     long getCurrentTime() {
@@ -57,21 +63,14 @@ class AngleFSM
         return sum/dataPoints;
     }
 
-    int getAngleTarget() {
-        return ANGLE_TARGET;
-    }
-
-    int getAngleDuration() {
-        return ANGLE_DURATION;
-    }
-
     AngleFSM(int threshold = 12, int target = 30, int timeout = 2, int duration = 10);
 
     private:
         int ANGLE_TIMEOUT = 2;
         int ANGLE_THRESHOLD = 12;
         int ANGLE_TARGET = 30;
-        int ANGLE_DURATION= 10;
+        int ANGLE_DURATION = 10;
+        int ANGLE_FREQUENCY = 10;
         AngleState currentState = AngleState::INIT;
         int result[5] = {0,0,0,0,0};
         long lastTime = 0;

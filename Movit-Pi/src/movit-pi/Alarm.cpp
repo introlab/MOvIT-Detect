@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-std::mutex alarmMutex;
+std::mutex mtx;
 
 Alarm::Alarm()
 {
@@ -19,7 +19,8 @@ Alarm::Alarm(double blinkFrequency) : _blinkFrequency(blinkFrequency)
 
 bool Alarm::Initialize()
 {
-    _pca9536.SetMode(DC_MOTOR, IO_OUTPUT);
+
+    _pca9536.SetMode(DC_MOTOR, IO_INPUT);
     _pca9536.SetMode(GREEN_LED, IO_OUTPUT);
     _pca9536.SetMode(RED_LED, IO_OUTPUT);
     _pca9536.SetState(IO_LOW);
@@ -43,7 +44,7 @@ Alarm::~Alarm() {
 
 bool Alarm::IsConnected()
 {
-    return _pca9536.GetMode(DC_MOTOR) == IO_OUTPUT && _pca9536.GetMode(GREEN_LED) == IO_OUTPUT && _pca9536.GetMode(RED_LED) == IO_OUTPUT;
+    return _pca9536.isConnected();
 }
 
 uint8_t Alarm::GetPinState(pin_t pin)
@@ -53,18 +54,21 @@ uint8_t Alarm::GetPinState(pin_t pin)
 
 void Alarm::TurnOnDCMotor()
 {
-    //if (GetPinState(DC_MOTOR) == IO_LOW)
-    //{
+    _pca9536.SetMode(DC_MOTOR, IO_OUTPUT);
+    if (GetPinState(DC_MOTOR) == IO_LOW)
+    {
         _pca9536.SetState(DC_MOTOR, IO_HIGH);
-    //}
+    }
 }
 
 void Alarm::TurnOffDCMotor()
-{
-    //if (GetPinState(DC_MOTOR) == IO_HIGH)
-    //{
+{   
+    _pca9536.SetMode(DC_MOTOR, IO_OUTPUT);
+    if (GetPinState(DC_MOTOR) == IO_HIGH)
+    {
         _pca9536.SetState(DC_MOTOR, IO_LOW);
-    //}
+    }
+    _pca9536.SetMode(DC_MOTOR, IO_INPUT);
 }
 
 void Alarm::TurnOnRedLed()
@@ -92,15 +96,44 @@ void Alarm::TurnOffAlarm()
     TurnOffBlinkRedAlarm();
     TurnOffBlinkLedsAlarm();
     TurnOffBlinkGreenAlarm();
+    TurnOffAlternatingAlarm();
     TurnOffRedLed();
     TurnOffGreenLed();
     TurnOffDCMotor();
 }
 
+void Alarm::TurnOnAlternatingAlarm() {
+    _isAlternatingAlarmOn = true;
+
+    if (!_deactivateVibration)
+    {
+        TurnOnDCMotor();
+    }
+    int counter = 0;
+
+    while (_isAlternatingAlarmOn)
+    {   counter++;
+
+        if(counter % 2 == 0) {
+            _pca9536.SetState(GREEN_LED, IO_HIGH);
+            _pca9536.SetState(RED_LED, IO_LOW);
+        } else {
+            _pca9536.SetState(GREEN_LED, IO_LOW);
+            _pca9536.SetState(RED_LED, IO_HIGH);
+        }
+        sleep_for_milliseconds((1 / _blinkFrequency) * SECONDS_TO_MILLISECONDS);
+    }
+
+    TurnOffRedLed();
+    TurnOffGreenLed();
+}
+
+void Alarm::TurnOffAlternatingAlarm() {
+    _isAlternatingAlarmOn = false;
+}
+
 void Alarm::TurnOnGreenAlarm()
 {
-    std::lock_guard<std::mutex> lock(alarmMutex);
-
     TurnOnGreenLed();
 }
 
@@ -108,7 +141,11 @@ void Alarm::TurnOnBlinkLedsAlarm()
 {
     _isBlinkLedsAlarmOn = true;
 
-    //std::lock_guard<std::mutex> lock(alarmMutex);
+    if (!_deactivateVibration)
+    {
+        TurnOnDCMotor();
+    }
+
 
     while (_isBlinkLedsAlarmOn)
     {
@@ -124,8 +161,6 @@ void Alarm::TurnOnBlinkLedsAlarm()
 void Alarm::TurnOnBlinkRedAlarm()
 {
     _isBlinkRedAlarmOn = true;
-
-    //std::lock_guard<std::mutex> lock(alarmMutex);
 
     if (!_deactivateVibration)
     {
@@ -143,14 +178,12 @@ void Alarm::TurnOnBlinkRedAlarm()
     }
 
     TurnOffRedLed();
-    TurnOffDCMotor();
 }
 
 void Alarm::TurnOnBlinkGreenAlarm()
 {
-    _isBlinkGreenAlarmOn = true;
 
-    //std::lock_guard<std::mutex> lock(alarmMutex);
+    _isBlinkGreenAlarmOn = true;
 
     while (_isBlinkGreenAlarmOn)
     {
@@ -209,6 +242,16 @@ void Alarm::TurnOnBlinkGreenAlarmThread()
     blinkGreenLedThread = std::thread([=] {
         TurnOnBlinkGreenAlarm();
     });
-    blinkRedLedThread.detach();
-    
+    blinkGreenLedThread.detach();
+}
+
+void Alarm::TurnOnAlternatingBlinkAlarmThread() {
+    if(_isAlternatingAlarmOn) {
+        return;
+    }
+
+    alternatingLedThread = std::thread([=] {
+        TurnOnAlternatingAlarm();
+    });
+    alternatingLedThread.detach();
 }

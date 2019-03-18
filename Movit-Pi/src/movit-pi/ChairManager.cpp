@@ -66,18 +66,19 @@ void ChairManager::displaySensorData(SensorData sensorData) {
 void ChairManager::displayChairState(ChairState chairState) {
     printf("TimeStamp: %ld\n", chairState.time);
 
-    printf("    Angle: %22s\t%ld", angleFSM.getCurrentStateName(), angleFSM.getElapsedTime());
+    printf("       Angle: %6s\t%ld", angleFSM.getCurrentStateName(), angleFSM.getElapsedTime());
     printf("\tFixed: %d, \tMobile: %d, \tSeat:%d\n", chairState.fIMUAngle, chairState.mIMUAngle, chairState.seatAngle);
-    
-    printf("     Flow: %22s\t%ld", travelFSM.getCurrentStateName(), travelFSM.getElapsedTime());
+
+    printf("        Flow: %6s\t%ld", travelFSM.getCurrentStateName(), travelFSM.getElapsedTime());
     printf("\tDistance: %5d\n", (int)chairState.lastDistance);
 
-    
-    printf("  Seating: %22s\t%ld", seatingFSM.getCurrentStateName(), seatingFSM.getElapsedTime());
+    printf("Notification: %6s\t%ld\n", notificationFSM.getCurrentStateName(), notificationFSM.getElapsed());
+
+    printf("     Seating: %6s\t%ld", seatingFSM.getCurrentStateName(), seatingFSM.getElapsedTime());
     if (chairState.isSeated)
     {
-        printf("\t[(%4.2f, %4.2f)  (%4.2f, %4.2f)]\n%41s\t[       (%4.2f, %4.2f)       ]\n%41s\t[(%4.2f, %4.2f)  (%4.2f, %4.2f)]",chairState.centerOfGravityPerQuadrant[3].x,chairState.centerOfGravityPerQuadrant[3].y,chairState.centerOfGravityPerQuadrant[0].x,chairState.centerOfGravityPerQuadrant[0].y,"",chairState.centerOfGravity.x,chairState.centerOfGravity.y,"",chairState.centerOfGravityPerQuadrant[2].x,chairState.centerOfGravityPerQuadrant[2].y,chairState.centerOfGravityPerQuadrant[1].x,chairState.centerOfGravityPerQuadrant[1].y);
-    }
+        printf("\t[(%4.2f, %4.2f)  (%4.2f, %4.2f)]\n%33s\t[       (%4.2f, %4.2f)       ]\n%33s\t[(%4.2f, %4.2f)  (%4.2f, %4.2f)]",chairState.centerOfGravityPerQuadrant[3].x,chairState.centerOfGravityPerQuadrant[3].y,chairState.centerOfGravityPerQuadrant[0].x,chairState.centerOfGravityPerQuadrant[0].y,"",chairState.centerOfGravity.x,chairState.centerOfGravity.y,"",chairState.centerOfGravityPerQuadrant[2].x,chairState.centerOfGravityPerQuadrant[2].y,chairState.centerOfGravityPerQuadrant[1].x,chairState.centerOfGravityPerQuadrant[1].y);
+    }       
     printf("\n");
 }
 
@@ -227,29 +228,88 @@ void ChairManager::UpdateDevices()
     angleFSM.updateState(chairState);
     notificationFSM.updateState(chairState, angleFSM, seatingFSM, travelFSM);
 
+    bool blinkEnable, vibrationEnable;
+    int snoozeTime;
 
-    if (notificationFSM.getCurrentState() == static_cast<int>(NotificationState::WAITING_FOR_TILT)) {
-        _deviceManager->getAlarm()->TurnOnBlinkLedsAlarmThread();
-    } else if (notificationFSM.getCurrentState() == static_cast<int>(NotificationState::TILT_SNOOZED)) {
-        _deviceManager->getAlarm()->TurnOffBlinkLedsAlarm();
-    } else {
-        _deviceManager->getAlarm()->TurnOffAlarm();      
+    _mosquittoBroker->getNotificationSettings(&blinkEnable, &vibrationEnable, &snoozeTime);
+
+    if(notificationFSM.getSnoozeTime() != snoozeTime) {
+        notificationFSM.setSnoozeTime(snoozeTime);
     }
 
 
+
+    if (notificationFSM.getCurrentState() == static_cast<int>(NotificationState::WAITING_FOR_TILT)) {
+        // Clignotement alterné + Moteur
+        if(blinkEnable) {
+            if(!_deviceManager->getAlarm()->IsAlternatingAlarmOn()) {
+                _deviceManager->getAlarm()->TurnOffAlarm();
+            }
+            _deviceManager->getAlarm()->TurnOnAlternatingBlinkAlarmThread();
+        }
+
+        if(vibrationEnable) {
+            _deviceManager->getAlarm()->TurnOnDCMotor();
+        } else {
+            _deviceManager->getAlarm()->TurnOffDCMotor();
+        }
+
+    } else if (notificationFSM.getCurrentState() == static_cast<int>(NotificationState::IN_TILT)) {
+        if(chairState.seatAngle  < angleFSM.getTargetAngle() - 2) {
+            //Sous l'angle voulu, Allume rouge
+            if(blinkEnable) {
+                if(_deviceManager->getAlarm()->IsAlternatingAlarmOn()) {
+                    _deviceManager->getAlarm()->TurnOffAlarm();
+                }
+                _deviceManager->getAlarm()->TurnOnRedLed();
+                _deviceManager->getAlarm()->TurnOffGreenLed();
+                _deviceManager->getAlarm()->TurnOffDCMotor();
+            }
+        } else if(chairState.seatAngle  > angleFSM.getTargetAngle() + 2) {
+            //Au dessus de l'angle voulu, Allume vert
+            if(blinkEnable) {
+                if(_deviceManager->getAlarm()->IsAlternatingAlarmOn()) {
+                    _deviceManager->getAlarm()->TurnOffAlarm();
+                }
+                _deviceManager->getAlarm()->TurnOffRedLed();
+                _deviceManager->getAlarm()->TurnOnGreenLed();
+                _deviceManager->getAlarm()->TurnOffDCMotor();
+            }
+        } else {
+            // +/- deux de l'angle voulu allume rouge et vert
+            if(blinkEnable) {
+                if(_deviceManager->getAlarm()->IsAlternatingAlarmOn()) {
+                    _deviceManager->getAlarm()->TurnOffAlarm();
+                }
+                _deviceManager->getAlarm()->TurnOnRedLed();
+                _deviceManager->getAlarm()->TurnOnGreenLed();
+                _deviceManager->getAlarm()->TurnOffDCMotor();
+            }
+        }
+    } else if (notificationFSM.getCurrentState() == static_cast<int>(NotificationState::TILT_DURATION_OK)) {
+        //Durée correcte, led verte clignote + Moteur
+        if(blinkEnable) {
+            _deviceManager->getAlarm()->TurnOffRedLed();
+            _deviceManager->getAlarm()->TurnOnBlinkGreenAlarmThread();
+        }
+
+        if(vibrationEnable) {
+            _deviceManager->getAlarm()->TurnOnDCMotor();
+        } else {
+            _deviceManager->getAlarm()->TurnOffDCMotor();
+        }
+    } else {
+        _deviceManager->getAlarm()->TurnOffAlarm();
+    }
 
     _mosquittoBroker->SendSensorsData(sensorData);
     _mosquittoBroker->SendChairState(chairState);
     _mosquittoBroker->SendAngleFSM(angleFSM);
     _mosquittoBroker->SendTravelFSM(travelFSM);
     _mosquittoBroker->SendSeatingFSM(seatingFSM);
+    _mosquittoBroker->SendNotificationFSM(notificationFSM);
 
-
-
-
-
-
-
+    ReadFromServer();
 
 
 
@@ -264,50 +324,30 @@ void ChairManager::UpdateDevices()
     displaySensorData(sensorData);
     displayChairState(chairState);
     printf("\r\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K%s%s%s", (sensorData.matConnected) ? "\033[A\33[2K\033[A\33[2K\033[A\33[2K" : "", (sensorData.mIMUConnected) ? "\033[A\33[2K" : "", (sensorData.fIMUConnected) ? "\033[A\33[2K" : "");
-    printf("\r\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K\033[A%s", (chairState.isSeated) ? "\033[A\33[2K\033[A\33[2K" : "");
+    printf("\r\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K\033[A%s", (chairState.isSeated) ? "\033[A\33[2K\033[A\33[2K" : "");
     
 }
 
 void ChairManager::ReadFromServer()
 {
-    if (_mosquittoBroker->IsSetAlarmOnNew())
-    {
-        /*
-        _setAlarmOn = _mosquittoBroker->GetSetAlarmOn();
-        _overrideNotification = true;
-        printf("Something new for setAlarmOn = %i\n", _setAlarmOn);
-        */
+        if (_mosquittoBroker->CalibIMURequired()) {
+        setAngleOffset(chairState.fIMUAngle, chairState.mIMUAngle);
+        _mosquittoBroker->SendAngleOffset(mIMUOffset, fIMUOffset);
+        _mosquittoBroker->SetCalibIMURequired(false);
     }
 
-    if (_mosquittoBroker->IsTiltSettingsChanged())
-    {
-        /*
-        _tiltSettings = _mosquittoBroker->GetTiltSettings();
-        _deviceManager->UpdateTiltSettings(_tiltSettings);
-        _secondsCounter = 0;
-        _state = State::INITIAL;
-        printf("Something new for tilt settings\n");
-        */
-    }
-    if (_mosquittoBroker->IsWifiChanged())
-    {
-        /*
-        NetworkManager::ChangeNetwork(_mosquittoBroker->GetWifiInformation());
-        _isWifiChanged = true;
-        _wifiChangedTimer.Reset();
-        */
+    if (_mosquittoBroker->GoalHasChanged()) {
+        int a, b, c;
+        _mosquittoBroker->getGoal(&a,&b,&c);
+        angleFSM.setParameter(a,b,c);
+        _mosquittoBroker->SetGoalHasChanged(false);
     }
 
-    if (_mosquittoBroker->IsNotificationsSettingsChanged())
-    {
-        /*
-        printf("Something new for notifications settings\n");
-        _deviceManager->UpdateNotificationsSettings(_mosquittoBroker->GetNotificationsSettings());
-
-        _snoozeTime = _deviceManager->GetSnoozeTime();
-        _deviceManager->GetAlarm()->DeactivateVibration(!_deviceManager->IsVibrationEnabled());
-        _deviceManager->GetAlarm()->DeactivateLedBlinking(!_deviceManager->IsLedBlinkingEnabled());
-        */
+    if(_mosquittoBroker->offsetChanged()) {
+        int m, f;
+        _mosquittoBroker->getOffsets(&m, &f);
+        setAngleOffset(f, m);
+        _mosquittoBroker->setOffsetChanged(false);
     }
 }
 

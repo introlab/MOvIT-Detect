@@ -34,6 +34,8 @@
 
 #include "PCA9536.h"
 #include "I2Cdev.h"
+#include <stdlib.h>
+#include <stdio.h>
 
 /*==============================================================================================================*
     CONSTRUCTOR
@@ -53,6 +55,13 @@ PCA9536::~PCA9536() {}
 uint8_t PCA9536::GetMode(pin_t pin)
 {
     return GetPin(pin, REG_CONFIG);
+}
+
+bool PCA9536::isConnected() {
+    uint8_t regData = 0;
+    uint8_t response = I2Cdev::ReadByte(DEV_ADDR, 0x02, &regData);
+    uint8_t response2 = I2Cdev::ReadByte(DEV_ADDR, 0x03, &regData);
+    return response == 1 && response2 == 1;
 }
 
 /*==============================================================================================================*

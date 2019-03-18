@@ -201,7 +201,7 @@ void DeviceManager::Update() {
         sensorData.tofRange = _VL53L0XSensor->ReadRangeSingleMillimeters();
     } else {
         sensorData.tofConnected = false;
-        sensorData.tofRange = 0;
+        sensorData.tofRange = 450;                  //Default value to get a distance when no tof
         _VL53L0XSensor->Initialize(true);
     }
 

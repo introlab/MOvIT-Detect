@@ -1,9 +1,18 @@
-export TARGET_PREFIX=arm-linux-gnueabihf-
-export CXX = $(TARGET_PREFIX)g++
+export ROOT := /home/alexmorin/Desktop/movit-cross-compiler
+
+export CROSS_ROOT := $(ROOT)/tools/arm-bcm2708
+export COMPILER_ROOT := $(CROSS_ROOT)/arm-linux-gnueabihf
+export PATH := $(PATH):$(COMPILER_ROOT)/bin
+export SYSROOT_PATH := $(COMPILER_ROOT)/arm-linux-gnueabihf/sysroot
+export ROOTFS_PATH := $(ROOT)/rootfs
+
+
+export TARGET_PREFIX=$(ROOT)/tools/arm-bcm2708/arm-linux-gnueabihf-
+export CXX = '/home/alexmorin/Desktop/movit-cross-compiler/tools/arm-bcm2708/arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++'
 
 CXXFLAGS = -g -Wall -std=c++11 -O3
-LDLIBS = -lpthread -lrt -lm -lmosquitto -lbcm2835 -lmosquittopp
-LDFLAGS = -I/usr/include -I/usr/local/include -Iexternal/include -Lexternal/lib -lmosquitto -lbcm2835 -lmosquittopp
+LDLIBS = -lpthread -lrt -lm -L/home/alexmorin/Desktop/movit-cross-compiler/rootfs/usr/local/lib -I/home/alexmorin/Desktop/movit-cross-compiler/rootfs/usr/local/include -lbcm2835 -lmosquitto -lmosquittopp
+LDFLAGS = -I/home/alexmorin/Desktop/movit-cross-compiler/rootfs/usr/include/arm-linux-gnueabihf -I/home/alexmorin/Desktop/movit-cross-compiler/rootfs/usr/include -I/home/alexmorin/Desktop/movit-cross-compiler/rootfs/usr/local/include -Iexternal/include -Lbcm2835
 DIRECTORIES := Obj/movit-pi Obj/movit-control Executables
 
 .PHONY: default all clean
