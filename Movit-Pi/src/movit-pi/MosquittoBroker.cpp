@@ -17,7 +17,7 @@ using rapidjson::Writer;
 const char *ALARM_TOPIC = "data/set_alarm";
 //const char *REQUIRED_ANGLE_TOPIC = "data/required_back_rest_angle";
 //const char *REQUIRED_PERIOD_TOPIC = "data/required_period";
-//const char *REQUIRED_DURATION_TOPIC = "data/required_duration";
+const char *REQUIRED_DURATION_TOPIC = "data/required_duration";
 const char *GOAL_CHANGED_TOPIC = "goal/update_data";
 const char *CALIB_PRESSURE_MAT_TOPIC = "config/calib_pressure_mat";
 const char *CALIB_IMU_TOPIC = "config/calib_imu";
@@ -128,7 +128,6 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
 
         try
         {
-            printf("%s\n\n",message.c_str());
             int num = 0;
             std::string arr[5] = {"","","","",""};
             splitStringWithDelemiter(message,":",arr,&num);
@@ -196,10 +195,11 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
             int num = 0;
             std::string arr[5] = {"","","","",""};
             splitStringWithDelemiter(message,":",arr,&num);
-            if(num == 3) {
+            if(num == 4) {
                 _shouldBlink = std::stoi(arr[0]);
                 _shouldVibrate = std::stoi(arr[1]);
                 _snoozeTime = std::stoi(arr[2]);
+                _isEnabled = std::stoi(arr[3]);
                 _isNotificationsSettingsChanged = true;
             }
         }
@@ -453,10 +453,11 @@ void MosquittoBroker::splitStringWithDelemiter(std::string toSplit, std::string 
       _isNotificationsSettingsChanged = changed;
     }
 
-    void MosquittoBroker::getNotificationSettings(bool *ledBlinkingEnable, bool *vibrationEnabled, int *snoozeTime) {
+    void MosquittoBroker::getNotificationSettings(bool *ledBlinkingEnable, bool *vibrationEnabled, int *snoozeTime, bool *enabled) {
       *ledBlinkingEnable = _shouldBlink;
       *vibrationEnabled = _shouldVibrate;
       *snoozeTime = _snoozeTime;
+      *enabled = _isEnabled;
     }
 
 

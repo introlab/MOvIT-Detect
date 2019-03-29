@@ -35,7 +35,7 @@ class MosquittoBroker : public mosqpp::mosquittopp
     void getGoal(int *frequency, int *duration, int *angle);
     bool NotificationHasChanged();
     void SetNotificationHasChanged(bool changed);
-    void getNotificationSettings(bool *ledBlinkingEnable, bool *vibrationEnabled, int *snoozeTime);
+    void getNotificationSettings(bool *ledBlinkingEnable, bool *vibrationEnabled, int *snoozeTime, bool *isEnabled);
     bool offsetChanged();
     void setOffsetChanged(bool changed);
     void getOffsets(int *mIMUOffset, int *fIMUOffset);
@@ -59,6 +59,7 @@ class MosquittoBroker : public mosqpp::mosquittopp
     int _angle = 30;
     bool _shouldBlink = 1;
     bool _shouldVibrate = 0;
+    bool _isEnabled = 1;
     int _snoozeTime = 60;
     int _mIMUOffset = 0;
     int _fIMUOffset = 0;

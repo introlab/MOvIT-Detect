@@ -68,6 +68,7 @@ class AngleFSM
     private:
         int ANGLE_TIMEOUT = 2;
         int ANGLE_THRESHOLD = 12;
+        int REVERSE_ANGLE_THRESHOLD = -5;
         int ANGLE_TARGET = 30;
         int ANGLE_DURATION = 10;
         int ANGLE_FREQUENCY = 10;

@@ -234,6 +234,9 @@ void DeviceManager::Update() {
     } else {
         sensorData.matConnected = false;
         _pressureMat->Initialize();
+        for(int i = 0; i < 10; i++) {
+            sensorData.matData[i] = 0;
+        }
     }
 
     sensorData.time = DateTimeRTC::GetTimeSinceEpoch();

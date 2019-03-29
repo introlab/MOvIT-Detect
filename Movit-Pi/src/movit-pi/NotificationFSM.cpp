@@ -1,7 +1,7 @@
 
 #include "NotificationFSM.h"
 
-void NotificationFSM::updateState(ChairState cs, AngleFSM aFSM, SeatingFSM sFSM, TravelFSM tFSM)
+void NotificationFSM::updateState(ChairState cs, AngleFSM aFSM, SeatingFSM sFSM, TravelFSM tFSM, bool isEnable)
 {
     switch (currentState) {
         case NotificationState::INIT:
@@ -17,10 +17,18 @@ void NotificationFSM::updateState(ChairState cs, AngleFSM aFSM, SeatingFSM sFSM,
 
             if(!isEnable) {
                 currentState = NotificationState::INIT;
-                stopReason = "USER_DISABLED";
+                stopReason = "Other";
             }
 
         break;
+        case NotificationState::IN_TRAVEL_ELAPSED:
+            if (tFSM.getCurrentState() == static_cast<int>(TravelState::ON_THE_MOVE)) {
+                currentState = NotificationState::IN_TRAVEL_ELAPSED;
+            } else {
+                currentState = NotificationState::WAITING_FOR_TILT;
+            }
+        break;
+
         case NotificationState::WAIT_PERIOD:
             stopReason = "Other";
             //La personne est en mouvement
@@ -71,9 +79,19 @@ void NotificationFSM::updateState(ChairState cs, AngleFSM aFSM, SeatingFSM sFSM,
             stopReason = "Other";
             secondsCounter = 0;
             if(cs.button) {
-                currentState = NotificationState::TILT_SNOOZED;
-                stopReason = "SNOOZED_REQUESTED";
-                secondsCounter = 0;
+                snoozeCount++;
+                if(snoozeCount >= 4) {
+                    currentState = NotificationState::TILT_SNOOZED;
+                    stopReason = "SNOOZED_REQUESTED";
+                    secondsCounter = 0;
+                }
+            } else {
+                snoozeCount = 0;
+            }
+
+            if (tFSM.getCurrentState() == static_cast<int>(TravelState::ON_THE_MOVE)) {
+                currentState = NotificationState::IN_TRAVEL_ELAPSED;
+                break;
             }
 
             //La personne n'est plus assise

@@ -67,7 +67,7 @@ void ChairManager::displayChairState(ChairState chairState) {
     printf("TimeStamp: %ld\n", chairState.time);
 
     printf("       Angle: %6s\t%ld", angleFSM.getCurrentStateName(), angleFSM.getElapsedTime());
-    printf("\tFixed: %d, \tMobile: %d, \tSeat:%d\n", chairState.fIMUAngle, chairState.mIMUAngle, chairState.seatAngle);
+    printf("\tFixed: %03d, \tMobile: %03d, \tSeat:%d\n", chairState.fIMUAngle, chairState.mIMUAngle, chairState.seatAngle);
 
     printf("        Flow: %6s\t%ld", travelFSM.getCurrentStateName(), travelFSM.getElapsedTime());
     printf("\tDistance: %5d\n", (int)chairState.lastDistance);
@@ -80,47 +80,76 @@ void ChairManager::displayChairState(ChairState chairState) {
         printf("\t[(%4.2f, %4.2f)  (%4.2f, %4.2f)]\n%33s\t[       (%4.2f, %4.2f)       ]\n%33s\t[(%4.2f, %4.2f)  (%4.2f, %4.2f)]",chairState.centerOfGravityPerQuadrant[3].x,chairState.centerOfGravityPerQuadrant[3].y,chairState.centerOfGravityPerQuadrant[0].x,chairState.centerOfGravityPerQuadrant[0].y,"",chairState.centerOfGravity.x,chairState.centerOfGravity.y,"",chairState.centerOfGravityPerQuadrant[2].x,chairState.centerOfGravityPerQuadrant[2].y,chairState.centerOfGravityPerQuadrant[1].x,chairState.centerOfGravityPerQuadrant[1].y);
     }       
     printf("\n");
+
 }
 
 int ChairManager::calculatemIMUAngle(SensorData sd) {
+    mIMUFinish = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = mIMUFinish - mIMUStart;
+    double dt = elapsed.count();
+    float alpha = 0.98;
     float angle = 0;
+    
+    //On détermine le cadran
     if(sd.mIMUAccX < 0 && sd.mIMUAccZ >= 0) {
-        angle = (atan2(sd.mIMUAccX, sqrt(sd.mIMUAccY*sd.mIMUAccY + sd.mIMUAccZ*sd.mIMUAccZ))*180.0)/-M_PI;
+        mobileAngleUncorrected = (atan2(sd.mIMUAccX, sqrt(sd.mIMUAccY*sd.mIMUAccY + sd.mIMUAccZ*sd.mIMUAccZ))*180.0f)/-M_PI;
     } else if(sd.mIMUAccX < 0 && sd.mIMUAccZ < 0) {
-        angle = (90 - (atan2(sd.mIMUAccX, sqrt(sd.mIMUAccY*sd.mIMUAccY + sd.mIMUAccZ*sd.mIMUAccZ))*180.0)/-M_PI) + 90;
+        mobileAngleUncorrected = (90.0f - (atan2(sd.mIMUAccX, sqrt(sd.mIMUAccY*sd.mIMUAccY + sd.mIMUAccZ*sd.mIMUAccZ))*180.0f)/-M_PI) + 90.0f;
     } else if(sd.mIMUAccX >= 0 && sd.mIMUAccZ < 0) {
-        angle = ((atan2(sd.mIMUAccX, sqrt(sd.mIMUAccY*sd.mIMUAccY + sd.mIMUAccZ*sd.mIMUAccZ))*180.0)/M_PI) + 180;
+        mobileAngleUncorrected = ((atan2(sd.mIMUAccX, sqrt(sd.mIMUAccY*sd.mIMUAccY + sd.mIMUAccZ*sd.mIMUAccZ))*180.0f)/M_PI) + 180.0f;
     } else if(sd.mIMUAccX >= 0 && sd.mIMUAccZ >= 0) {
-        angle = (90 - (atan2(sd.mIMUAccX, sqrt(sd.mIMUAccY*sd.mIMUAccY + sd.mIMUAccZ*sd.mIMUAccZ))*180.0)/M_PI) + 270;
+        mobileAngleUncorrected = (90.0f - (atan2(sd.mIMUAccX, sqrt(sd.mIMUAccY*sd.mIMUAccY + sd.mIMUAccZ*sd.mIMUAccZ))*180.0f)/M_PI) + 270.0f;
     }
 
+    mIMUStart = std::chrono::high_resolution_clock::now();
+
+    //On applique un filtre complémentaire
+    mobileAngleUncorrected = alpha * (mobileAngleUncorrected + sd.mIMUGyroX * dt) + (1.0f - alpha) * mobileAngleUncorrected;
+
+    //On ajout l'offset et on wrap
+    angle = mobileAngleUncorrected;
     angle -= mIMUOffset;
     if(angle >= 0) {
-        angle = fmod(angle, 360.0);
+        angle = fmod(angle, 360.0f);
     } else {
-        angle = 360 - fmod(abs(angle), 360.0);
+        angle = 360.0f - fmod(abs(angle), 360.0f);
     }
+
     return static_cast<int>(angle);
 }
 
 int ChairManager::calculatefIMUAngle(SensorData sd) {
+    fIMUFinish = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = fIMUFinish - fIMUStart;
+    double dt = elapsed.count();
+    float alpha = 0.98;
     float angle = 0;
+
+    //On détermine le cadran
     if(sd.fIMUAccX < 0 && sd.fIMUAccZ >= 0) {
-        angle = (atan2(sd.fIMUAccX, sqrt(sd.fIMUAccY*sd.fIMUAccY + sd.fIMUAccZ*sd.fIMUAccZ))*180.0)/-M_PI;
+        fixedAngleUncorrected = (atan2(sd.fIMUAccX, sqrt(sd.fIMUAccY*sd.fIMUAccY + sd.fIMUAccZ*sd.fIMUAccZ))*180.0f)/-M_PI;
     } else if(sd.fIMUAccX < 0 && sd.fIMUAccZ < 0) {
-        angle = (90 - (atan2(sd.fIMUAccX, sqrt(sd.fIMUAccY*sd.fIMUAccY + sd.fIMUAccZ*sd.fIMUAccZ))*180.0)/-M_PI) + 90;
+        fixedAngleUncorrected = (90.0f - (atan2(sd.fIMUAccX, sqrt(sd.fIMUAccY*sd.fIMUAccY + sd.fIMUAccZ*sd.fIMUAccZ))*180.0f)/-M_PI) + 90.0f;
     } else if(sd.fIMUAccX >= 0 && sd.fIMUAccZ < 0) {
-        angle = ((atan2(sd.fIMUAccX, sqrt(sd.fIMUAccY*sd.fIMUAccY + sd.fIMUAccZ*sd.fIMUAccZ))*180.0)/M_PI) + 180;
+        fixedAngleUncorrected = ((atan2(sd.fIMUAccX, sqrt(sd.fIMUAccY*sd.fIMUAccY + sd.fIMUAccZ*sd.fIMUAccZ))*180.0f)/M_PI) + 180.0f;
     } else if(sd.fIMUAccX >= 0 && sd.fIMUAccZ >= 0) {
-        angle = (90 - (atan2(sd.fIMUAccX, sqrt(sd.fIMUAccY*sd.fIMUAccY + sd.fIMUAccZ*sd.fIMUAccZ))*180.0)/M_PI) + 270;
+        fixedAngleUncorrected = (90.0f - (atan2(sd.fIMUAccX, sqrt(sd.fIMUAccY*sd.fIMUAccY + sd.fIMUAccZ*sd.fIMUAccZ))*180.0f)/M_PI) + 270.0f;
     }
 
+    fIMUStart = std::chrono::high_resolution_clock::now();
+
+    //On applique un filtre complémentaire
+    fixedAngleUncorrected = alpha * (fixedAngleUncorrected + sd.fIMUGyroX * dt) + (1.0 - alpha) * fixedAngleUncorrected;
+
+    //On ajout l'offset et on wrap
+    angle = fixedAngleUncorrected;
     angle -= fIMUOffset;
     if(angle >= 0) {
-        angle = fmod(angle, 360.0);
+        angle = fmod(angle, 360.0f);
     } else {
-        angle = 360 - fmod(abs(angle), 360.0);
+        angle = 360.0f - fmod(abs(angle), 360.0f);
     }
+
     return static_cast<int>(angle);
 }
 
@@ -222,16 +251,11 @@ void ChairManager::UpdateDevices()
     chairState.fIMUAngle = calculatefIMUAngle(sensorData);
     chairState.seatAngle = calculateSeatAngle(chairState);
     chairState.button = sensorData.alarmButtonPressed;
-    
-    seatingFSM.updateState(chairState);
-    travelFSM.updateState(chairState);
-    angleFSM.updateState(chairState);
-    notificationFSM.updateState(chairState, angleFSM, seatingFSM, travelFSM);
 
-    bool blinkEnable, vibrationEnable;
+    bool blinkEnable, vibrationEnable, enabled;
     int snoozeTime;
 
-    _mosquittoBroker->getNotificationSettings(&blinkEnable, &vibrationEnable, &snoozeTime);
+    _mosquittoBroker->getNotificationSettings(&blinkEnable, &vibrationEnable, &snoozeTime, &enabled);
 
     if(notificationFSM.getSnoozeTime() != snoozeTime) {
         notificationFSM.setSnoozeTime(snoozeTime);
@@ -239,12 +263,22 @@ void ChairManager::UpdateDevices()
 
 
 
+    seatingFSM.updateState(chairState);
+    travelFSM.updateState(chairState);
+    angleFSM.updateState(chairState);
+    notificationFSM.updateState(chairState, angleFSM, seatingFSM, travelFSM, enabled);
+
+
+
     if (notificationFSM.getCurrentState() == static_cast<int>(NotificationState::WAITING_FOR_TILT)) {
         // Clignotement alterné + Moteur
+        if(lastNotificationState != notificationFSM.getCurrentState()) {
+            //On vient de changer d'état
+            lastNotificationState = notificationFSM.getCurrentState();
+            _deviceManager->getAlarm()->TurnOffAlarm();
+        }
+
         if(blinkEnable) {
-            if(!_deviceManager->getAlarm()->IsAlternatingAlarmOn()) {
-                _deviceManager->getAlarm()->TurnOffAlarm();
-            }
             _deviceManager->getAlarm()->TurnOnAlternatingBlinkAlarmThread();
         }
 
@@ -255,12 +289,14 @@ void ChairManager::UpdateDevices()
         }
 
     } else if (notificationFSM.getCurrentState() == static_cast<int>(NotificationState::IN_TILT)) {
+        if(lastNotificationState != notificationFSM.getCurrentState()) {
+            //On vient de changer d'état
+            lastNotificationState = notificationFSM.getCurrentState();
+            _deviceManager->getAlarm()->TurnOffAlarm();
+        }
         if(chairState.seatAngle  < angleFSM.getTargetAngle() - 2) {
             //Sous l'angle voulu, Allume rouge
             if(blinkEnable) {
-                if(_deviceManager->getAlarm()->IsAlternatingAlarmOn()) {
-                    _deviceManager->getAlarm()->TurnOffAlarm();
-                }
                 _deviceManager->getAlarm()->TurnOnRedLed();
                 _deviceManager->getAlarm()->TurnOffGreenLed();
                 _deviceManager->getAlarm()->TurnOffDCMotor();
@@ -268,9 +304,6 @@ void ChairManager::UpdateDevices()
         } else if(chairState.seatAngle  > angleFSM.getTargetAngle() + 2) {
             //Au dessus de l'angle voulu, Allume vert
             if(blinkEnable) {
-                if(_deviceManager->getAlarm()->IsAlternatingAlarmOn()) {
-                    _deviceManager->getAlarm()->TurnOffAlarm();
-                }
                 _deviceManager->getAlarm()->TurnOffRedLed();
                 _deviceManager->getAlarm()->TurnOnGreenLed();
                 _deviceManager->getAlarm()->TurnOffDCMotor();
@@ -278,9 +311,6 @@ void ChairManager::UpdateDevices()
         } else {
             // +/- deux de l'angle voulu allume rouge et vert
             if(blinkEnable) {
-                if(_deviceManager->getAlarm()->IsAlternatingAlarmOn()) {
-                    _deviceManager->getAlarm()->TurnOffAlarm();
-                }
                 _deviceManager->getAlarm()->TurnOnRedLed();
                 _deviceManager->getAlarm()->TurnOnGreenLed();
                 _deviceManager->getAlarm()->TurnOffDCMotor();
@@ -288,8 +318,12 @@ void ChairManager::UpdateDevices()
         }
     } else if (notificationFSM.getCurrentState() == static_cast<int>(NotificationState::TILT_DURATION_OK)) {
         //Durée correcte, led verte clignote + Moteur
+        if(lastNotificationState != notificationFSM.getCurrentState()) {
+            //On vient de changer d'état
+            lastNotificationState = notificationFSM.getCurrentState();
+            _deviceManager->getAlarm()->TurnOffAlarm();
+        }
         if(blinkEnable) {
-            _deviceManager->getAlarm()->TurnOffRedLed();
             _deviceManager->getAlarm()->TurnOnBlinkGreenAlarmThread();
         }
 
@@ -311,16 +345,6 @@ void ChairManager::UpdateDevices()
 
     ReadFromServer();
 
-
-
-
-
-
-
-
-
-
-    
     displaySensorData(sensorData);
     displayChairState(chairState);
     printf("\r\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K%s%s%s", (sensorData.matConnected) ? "\033[A\33[2K\033[A\33[2K\033[A\33[2K" : "", (sensorData.mIMUConnected) ? "\033[A\33[2K" : "", (sensorData.fIMUConnected) ? "\033[A\33[2K" : "");

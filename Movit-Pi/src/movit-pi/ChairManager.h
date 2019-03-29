@@ -59,6 +59,13 @@ class ChairManager
     TravelFSM travelFSM = TravelFSM();
     AngleFSM angleFSM = AngleFSM();
     NotificationFSM notificationFSM = NotificationFSM();
+    int lastNotificationState = -1;
+    std::chrono::high_resolution_clock::time_point mIMUStart = std::chrono::high_resolution_clock::now();
+    std::chrono::high_resolution_clock::time_point mIMUFinish = std::chrono::high_resolution_clock::now();
+    std::chrono::high_resolution_clock::time_point fIMUStart = std::chrono::high_resolution_clock::now();
+    std::chrono::high_resolution_clock::time_point fIMUFinish = std::chrono::high_resolution_clock::now();
+    float mobileAngleUncorrected = 0;
+    float fixedAngleUncorrected = 0;
 
 };
 

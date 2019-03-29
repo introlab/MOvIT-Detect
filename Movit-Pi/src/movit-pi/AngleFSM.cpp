@@ -5,7 +5,7 @@ void AngleFSM::updateState(ChairState cs)
 {
     switch (currentState) {
         case AngleState::INIT:
-            if (cs.seatAngle >= ANGLE_THRESHOLD)
+            if (cs.seatAngle >= ANGLE_THRESHOLD || cs.seatAngle <= REVERSE_ANGLE_THRESHOLD)
             {
                 currentState = AngleState::CONFIRM_ANGLE;
                 angleStarted = cs.time;
@@ -16,6 +16,7 @@ void AngleFSM::updateState(ChairState cs)
                 result[3] = 0;
                 result[4] = 0;
                 sum = 0;
+                dataPoints = 0;
             } else {
                 angleStarted = 0;
                 angleStopped = 0;
@@ -23,7 +24,7 @@ void AngleFSM::updateState(ChairState cs)
         break;
         
         case AngleState::CONFIRM_ANGLE:
-            if (cs.seatAngle < ANGLE_THRESHOLD)
+            if (cs.seatAngle < ANGLE_THRESHOLD && cs.seatAngle > REVERSE_ANGLE_THRESHOLD)
             {
                 currentState = AngleState::INIT;
                 angleStarted = 0;
@@ -68,7 +69,7 @@ void AngleFSM::updateState(ChairState cs)
             dataPoints++;
             sum += cs.seatAngle;
 
-            if(cs.seatAngle < ANGLE_THRESHOLD) {
+            if(cs.seatAngle < ANGLE_THRESHOLD && cs.seatAngle > REVERSE_ANGLE_THRESHOLD) {
                 angleStopped = cs.time;
                 currentState = AngleState::CONFIRM_STOP_ANGLE;
             }
@@ -76,7 +77,7 @@ void AngleFSM::updateState(ChairState cs)
         break;
        
         case AngleState::CONFIRM_STOP_ANGLE:
-            if(cs.seatAngle >= ANGLE_THRESHOLD) {
+            if(cs.seatAngle >= ANGLE_THRESHOLD || cs.seatAngle <= REVERSE_ANGLE_THRESHOLD) {
                 currentState = AngleState::IN_TILT;
                 angleStopped = 0;
             } else {

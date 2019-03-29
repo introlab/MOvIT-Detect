@@ -19,13 +19,14 @@ enum class NotificationState
     NOTIFICATION_TILT_STARTED,
     IN_TILT,
     TILT_DURATION_OK,
-    NOTIFICATION_TILT_STOPPED
+    NOTIFICATION_TILT_STOPPED,
+    IN_TRAVEL_ELAPSED
 };
 
 class NotificationFSM
 {
   public:
-    void updateState(ChairState cs, AngleFSM aFSM, SeatingFSM sFSM, TravelFSM tFSM);
+    void updateState(ChairState cs, AngleFSM aFSM, SeatingFSM sFSM, TravelFSM tFSM, bool isEnable);
     long getStartTime();
     long getStopTime();
     int getCurrentState();
@@ -65,8 +66,7 @@ class NotificationFSM
         int stopTime = 0;
         int secondsCounter = 0;
         long currentTime = 0;
-        bool isEnable = true;
-        char notificationStateName[9][26]  = {"INIT", "WAIT_PERIOD", "IN_TRAVEL", "WAITING_FOR_TILT", "TILT_SNOOZED", "NOTIFICATION_TILT_STARTED", "IN_TILT", "TILT_DURATION_OK", "NOTIFICATION_TILT_STOPPED"};
+        char notificationStateName[10][26]  = {"INIT", "WAIT_PERIOD", "IN_TRAVEL", "WAITING_FOR_TILT", "TILT_SNOOZED", "NOTIFICATION_TILT_STARTED", "IN_TILT", "TILT_DURATION_OK", "NOTIFICATION_TILT_STOPPED", "IN_TRAVEL_ELAPSED"};
 };
 
 #endif //NOTIFICATION_FSM_H

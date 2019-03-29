@@ -31,14 +31,11 @@ void SeatingFSM::updateState(ChairState cs)
 
         case SeatingState::SEATING_STARTED:
             currentState = SeatingState::CURRENTLY_SEATING;
-            //printf("Started seating at: %ld\n", seatingStarted);
         break;
 
         case SeatingState::CURRENTLY_SEATING:
             if(!cs.isSeated) {
                 currentState = SeatingState::CONFIRM_STOP_SEATING;
-            } else {
-                //printf("Now seating\n");
             }
             seatingStopped = cs.time;
         break;
@@ -55,8 +52,6 @@ void SeatingFSM::updateState(ChairState cs)
         break;
         
         case SeatingState::SEATING_STOPPED:
-            //printf("Stopped seating at: %ld\n", seatingStopped);
-            //printf("Total time: %ld\n", seatingStopped - seatingStarted);
             currentState = SeatingState::INIT;
         break;
     }

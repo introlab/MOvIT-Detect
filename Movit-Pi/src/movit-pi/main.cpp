@@ -35,6 +35,12 @@ void printHeader() {
 
 int main(int argc, char *argv[])
 {
+
+    if (getuid()) {
+        printf("Please run as root exitting...\n");
+        return 0;    
+    }
+
     struct sigaction sigIntHandler;
 
     sigIntHandler.sa_handler = exit_program_handler;
@@ -57,7 +63,7 @@ int main(int argc, char *argv[])
         chairManager.ReadFromServer();
         chairManager.UpdateDevices();
         chairManager.CheckNotification();
-        usleep(0.25 * 1000000);
+        usleep(0.05 * 1000000);
     }
 
     return 0;
