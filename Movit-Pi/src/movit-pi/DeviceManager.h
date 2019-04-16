@@ -74,6 +74,10 @@ class DeviceManager
     bool _isMoving = false;
     bool _isChairInclined = false;
     int _backSeatAngle = 0;
+    int mobileFail = 0;
+    int fixedFail = 0;
+    long lastmIMUReset = 0;
+    long lastfIMUReset = 0;
 
     FileManager *_fileManager;
 

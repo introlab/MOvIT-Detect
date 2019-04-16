@@ -71,6 +71,7 @@ bool DeviceManager::InitializePressureMat() {
 
 bool DeviceManager::InitializeMobileImu() {
     _mobileImu->Initialize();
+    lastmIMUReset = sensorData.time;
     sensorData.mIMUConnected = _mobileImu->IsConnected();
 
     if (!sensorData.mIMUConnected)
@@ -89,13 +90,12 @@ bool DeviceManager::InitializeMobileImu() {
         //_mobileImu->SetOffset(mobileOffset);
         sensorData.mIMUCalibrated = true;
     }
-
     return sensorData.mIMUConnected;
 }
 
 bool DeviceManager::InitializeFixedImu() {
     _fixedImu->Initialize();
-
+    lastfIMUReset = sensorData.time;
     sensorData.fIMUConnected = _fixedImu->IsConnected();
 
     if (!sensorData.fIMUConnected)
@@ -151,49 +151,83 @@ void DeviceManager::CalibrateMobileIMU() {
 
 void DeviceManager::Update() {
     double arr[3];
+
     //Reception données mobileIMU
+    
+    if(sensorData.time - lastmIMUReset > 10) {
+        lastmIMUReset = sensorData.time;
+        _mobileImu->ResetDevice();
+        //printf("Reset mobile IMU\n");
+    }
+
+    if(sensorData.time - lastfIMUReset > 10) {
+        lastfIMUReset = sensorData.time;
+        _fixedImu->ResetDevice();
+        //printf("Reset fixed IMU\n");
+    }
+
     if(_mobileImu->IsConnected()) {
-        _mobileImu->GetAccelerations(arr);
-        sensorData.mIMUConnected = true;
-        sensorData.mIMUAccX = arr[0];
-        sensorData.mIMUAccY = arr[1];
-        sensorData.mIMUAccZ = arr[2];
-        
-        _mobileImu->GetRotations(arr);
-        sensorData.mIMUGyroX = arr[0];
-        sensorData.mIMUGyroY = arr[1];
-        sensorData.mIMUGyroZ = arr[2];
+        double d[6];
+        int8_t count = _mobileImu->GetMotion6(d);
+
+        double sum = 0;
+        for(int i = 0; i < 6; i++) {;
+            sum += d[i];
+        }
+
+        if(count && sum != 0) {
+            sensorData.mIMUConnected = true;
+            sensorData.mIMUAccX = d[0];
+            sensorData.mIMUAccY = d[1];
+            sensorData.mIMUAccZ = d[2];
+            sensorData.mIMUGyroX = d[3];
+            sensorData.mIMUGyroY = d[4];
+            sensorData.mIMUGyroZ = d[5];
+        } else {
+            mobileFail++;
+            printf("Fixed: %d, mobile: %d\n", fixedFail, mobileFail);
+        }
     } else {
         _mobileImu->Initialize();
         sensorData.mIMUConnected = false;
-        sensorData.mIMUAccX = 0;
-        sensorData.mIMUAccY = 0;
-        sensorData.mIMUAccZ = 0;
-        sensorData.mIMUGyroX = 0;
-        sensorData.mIMUGyroY = 0;
-        sensorData.mIMUGyroZ = 0;
+        //sensorData.mIMUAccX = 0;
+        //sensorData.mIMUAccY = 0;
+        //sensorData.mIMUAccZ = 0;
+        //sensorData.mIMUGyroX = 0;
+        //sensorData.mIMUGyroY = 0;
+        //sensorData.mIMUGyroZ = 0;
     }
 
     if(_fixedImu->IsConnected()) {
-        _fixedImu->GetAccelerations(arr);
-        sensorData.fIMUConnected = true;
-        sensorData.fIMUAccX = arr[0];
-        sensorData.fIMUAccY = arr[1];
-        sensorData.fIMUAccZ = arr[2];
+        double d[6];
+        int8_t count = _fixedImu->GetMotion6(d);
+        
+        double sum = 0;
+        for(int i = 0; i < 6; i++) {
+            sum += d[i];
+        }
 
-        _fixedImu->GetRotations(arr);
-        sensorData.fIMUGyroX = arr[0];
-        sensorData.fIMUGyroY = arr[1];
-        sensorData.fIMUGyroZ = arr[2];
+        if(count && sum != 0) {
+            sensorData.fIMUConnected = true;
+            sensorData.fIMUAccX = d[0];
+            sensorData.fIMUAccY = d[1];
+            sensorData.fIMUAccZ = d[2];
+            sensorData.fIMUGyroX = d[3];
+            sensorData.fIMUGyroY = d[4];
+            sensorData.fIMUGyroZ = d[5];
+        } else {
+            fixedFail++;
+            printf("Fixed: %d, mobile: %d\n", fixedFail, mobileFail);
+        }
     } else {
         _fixedImu->Initialize();
         sensorData.fIMUConnected = false;
-        sensorData.fIMUAccX = 0;
-        sensorData.fIMUAccY = 0;
-        sensorData.fIMUAccZ = 0;
-        sensorData.fIMUGyroX = 0;
-        sensorData.fIMUGyroY = 0;
-        sensorData.fIMUGyroZ = 0;
+        //sensorData.fIMUAccX = 0;
+        //sensorData.fIMUAccY = 0;
+        //sensorData.fIMUAccZ = 0;
+        //sensorData.fIMUGyroX = 0;
+        //sensorData.fIMUGyroY = 0;
+        //sensorData.fIMUGyroZ = 0;
     }
 
     if(_VL53L0XSensor->IsConnected()) {

@@ -84,87 +84,44 @@ void ChairManager::displayChairState(ChairState chairState) {
 }
 
 int ChairManager::calculatemIMUAngle(SensorData sd) {
-    mIMUFinish = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = mIMUFinish - mIMUStart;
-    double dt = elapsed.count();
-    float alpha = 0.98;
-    float angle = 0;
-    
-    //On détermine le cadran
-    if(sd.mIMUAccX < 0 && sd.mIMUAccZ >= 0) {
-        mobileAngleUncorrected = (atan2(sd.mIMUAccX, sqrt(sd.mIMUAccY*sd.mIMUAccY + sd.mIMUAccZ*sd.mIMUAccZ))*180.0f)/-M_PI;
-    } else if(sd.mIMUAccX < 0 && sd.mIMUAccZ < 0) {
-        mobileAngleUncorrected = (90.0f - (atan2(sd.mIMUAccX, sqrt(sd.mIMUAccY*sd.mIMUAccY + sd.mIMUAccZ*sd.mIMUAccZ))*180.0f)/-M_PI) + 90.0f;
-    } else if(sd.mIMUAccX >= 0 && sd.mIMUAccZ < 0) {
-        mobileAngleUncorrected = ((atan2(sd.mIMUAccX, sqrt(sd.mIMUAccY*sd.mIMUAccY + sd.mIMUAccZ*sd.mIMUAccZ))*180.0f)/M_PI) + 180.0f;
-    } else if(sd.mIMUAccX >= 0 && sd.mIMUAccZ >= 0) {
-        mobileAngleUncorrected = (90.0f - (atan2(sd.mIMUAccX, sqrt(sd.mIMUAccY*sd.mIMUAccY + sd.mIMUAccZ*sd.mIMUAccZ))*180.0f)/M_PI) + 270.0f;
-    }
-
-    mIMUStart = std::chrono::high_resolution_clock::now();
-
-    //On applique un filtre complémentaire
-    mobileAngleUncorrected = alpha * (mobileAngleUncorrected + sd.mIMUGyroX * dt) + (1.0f - alpha) * mobileAngleUncorrected;
-
-    //On ajout l'offset et on wrap
-    angle = mobileAngleUncorrected;
-    angle -= mIMUOffset;
-    if(angle >= 0) {
-        angle = fmod(angle, 360.0f);
+    float y = -sd.mIMUAccX;
+    float x = sqrtf(sd.mIMUAccY*sd.mIMUAccY + sd.mIMUAccZ*sd.mIMUAccZ);
+    float angleRad = atan2f(y, x);
+    float angleDeg = angleRad*(180.0f/M_PI);
+    /*   
+    angleDeg -= mIMUOffset;
+    if(angleDeg >= 0) {
+        angleDeg = fmod(angleDeg, 90.0f);
     } else {
-        angle = 360.0f - fmod(abs(angle), 360.0f);
+        angleDeg = 90.0f - fmod(abs(angleDeg), 90.0f);
     }
-
-    return static_cast<int>(angle);
+    */
+    return static_cast<int>(angleDeg);    
 }
 
 int ChairManager::calculatefIMUAngle(SensorData sd) {
-    fIMUFinish = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = fIMUFinish - fIMUStart;
-    double dt = elapsed.count();
-    float alpha = 0.98;
-    float angle = 0;
+    /*
+        https://www.dfrobot.com/wiki/index.php/How_to_Use_a_Three-Axis_Accelerometer_for_Tilt_Sensing
+    */
+    float y = -sd.fIMUAccX;
+    float x = sqrtf(sd.fIMUAccY*sd.fIMUAccY + sd.fIMUAccZ*sd.fIMUAccZ);
+    float angleRad = atan2f(y, x);
+    float angleDeg = angleRad*(180.0f/M_PI);
 
-    //On détermine le cadran
-    if(sd.fIMUAccX < 0 && sd.fIMUAccZ >= 0) {
-        fixedAngleUncorrected = (atan2(sd.fIMUAccX, sqrt(sd.fIMUAccY*sd.fIMUAccY + sd.fIMUAccZ*sd.fIMUAccZ))*180.0f)/-M_PI;
-    } else if(sd.fIMUAccX < 0 && sd.fIMUAccZ < 0) {
-        fixedAngleUncorrected = (90.0f - (atan2(sd.fIMUAccX, sqrt(sd.fIMUAccY*sd.fIMUAccY + sd.fIMUAccZ*sd.fIMUAccZ))*180.0f)/-M_PI) + 90.0f;
-    } else if(sd.fIMUAccX >= 0 && sd.fIMUAccZ < 0) {
-        fixedAngleUncorrected = ((atan2(sd.fIMUAccX, sqrt(sd.fIMUAccY*sd.fIMUAccY + sd.fIMUAccZ*sd.fIMUAccZ))*180.0f)/M_PI) + 180.0f;
-    } else if(sd.fIMUAccX >= 0 && sd.fIMUAccZ >= 0) {
-        fixedAngleUncorrected = (90.0f - (atan2(sd.fIMUAccX, sqrt(sd.fIMUAccY*sd.fIMUAccY + sd.fIMUAccZ*sd.fIMUAccZ))*180.0f)/M_PI) + 270.0f;
-    }
-
-    fIMUStart = std::chrono::high_resolution_clock::now();
-
-    //On applique un filtre complémentaire
-    fixedAngleUncorrected = alpha * (fixedAngleUncorrected + sd.fIMUGyroX * dt) + (1.0 - alpha) * fixedAngleUncorrected;
-
-    //On ajout l'offset et on wrap
-    angle = fixedAngleUncorrected;
-    angle -= fIMUOffset;
-    if(angle >= 0) {
-        angle = fmod(angle, 360.0f);
-    } else {
-        angle = 360.0f - fmod(abs(angle), 360.0f);
-    }
-
-    return static_cast<int>(angle);
+    return static_cast<int>(angleDeg);    
 }
 
 int ChairManager::calculateSeatAngle(ChairState cs) {
-    float seatAngle = (180.0f - abs(abs(chairState.fIMUAngle - chairState.mIMUAngle) - 180.0f));
-    if ((fmod(chairState.mIMUAngle+seatAngle, 360) - chairState.fIMUAngle) != 0) {
-        return static_cast<int>(seatAngle * 1);
-    } else {
-        return static_cast<int>(seatAngle * -1);
-    }
+    int a = chairState.fIMUAngle - chairState.mIMUAngle;
+    a = (a + 90) % 180 - 90;
+    seatAngleUncorrected = a;
+    a -= mIMUOffset;
+    return -a;
 }
 
 void ChairManager::setAngleOffset(int fixedOffset, int mobileOffset) {
     fIMUOffset += fixedOffset;
-    mIMUOffset += mobileOffset;
+    mIMUOffset = mobileOffset;
 }
 
 Coord_t ChairManager::calculateCenterOfGravity(SensorData sd) {
@@ -355,7 +312,7 @@ void ChairManager::UpdateDevices()
 void ChairManager::ReadFromServer()
 {
         if (_mosquittoBroker->CalibIMURequired()) {
-        setAngleOffset(chairState.fIMUAngle, chairState.mIMUAngle);
+        setAngleOffset(chairState.fIMUAngle, seatAngleUncorrected);
         _mosquittoBroker->SendAngleOffset(mIMUOffset, fIMUOffset);
         _mosquittoBroker->SetCalibIMURequired(false);
     }

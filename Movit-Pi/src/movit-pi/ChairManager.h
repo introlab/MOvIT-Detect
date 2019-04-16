@@ -32,6 +32,7 @@ class ChairManager
     void displaySensorData(SensorData sensorData);
     void displayChairState(ChairState chairState);
     void setAngleOffset(int fixedOffset, int mobileOffset);
+    int getQuadrant(float y, float x);
 
   private:
     int calculatemIMUAngle(SensorData sd);
@@ -66,6 +67,7 @@ class ChairManager
     std::chrono::high_resolution_clock::time_point fIMUFinish = std::chrono::high_resolution_clock::now();
     float mobileAngleUncorrected = 0;
     float fixedAngleUncorrected = 0;
+    int seatAngleUncorrected = 0;
 
 };
 

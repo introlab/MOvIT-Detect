@@ -22,6 +22,7 @@ bool Imu::Initialize()
     _imu.Initialize();
 
 
+
     if (IsConnected() == false || isInitialized == false)
     {
         isInitialized = false;
@@ -224,26 +225,45 @@ void Imu::CalibrateGyroscope(MPU6050 &mpu)
     }
 }
 
-void Imu::GetAccelerations(double *accelerations)
+int8_t Imu::GetAccelerations(double *accelerations)
 {
     int16_t ax, ay, az;
 
-    _imu.GetAcceleration(&ax, &ay, &az);
+    int8_t count = _imu.GetAcceleration(&ax, &ay, &az);
 
     accelerations[AXIS::x] = static_cast<double>(ax) / (32768.0f / 2.0f);
     accelerations[AXIS::y] = static_cast<double>(ay) / (32768.0f / 2.0f);
     accelerations[AXIS::z] = static_cast<double>(az) / (32768.0f / 2.0f);
+    return count;
 }
 
-void Imu::GetRotations(double *rotations)
+int8_t Imu::GetMotion6(double *motion)
+{
+    
+    int16_t ax, ay, az, gx, gy, gz;
+    int8_t count = _imu.GetMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+
+    motion[0] = static_cast<double>(ax) / (32768.0f / 2.0f);
+    motion[1] = static_cast<double>(ay) / (32768.0f / 2.0f);
+    motion[2] = static_cast<double>(az) / (32768.0f / 2.0f);
+    motion[3] = static_cast<double>(gx) / (262.0f / 2.0f);
+    motion[4] = static_cast<double>(gy) / (262.0f / 2.0f);
+    motion[5] = static_cast<double>(gz) / (262.0f / 2.0f);
+    return count;
+}
+
+bool Imu::dataReady() {
+    return _imu.GetIntDataReadyStatus();
+}
+
+int8_t Imu::GetRotations(double *rotations)
 {
     int16_t gx, gy, gz;
-
-    _imu.GetRotation(&gx, &gy, &gz);
-
+    int8_t count = _imu.GetRotation(&gx, &gy, &gz);
     rotations[AXIS::x] = static_cast<double>(gx) / (262.0f / 2.0f);
     rotations[AXIS::y] = static_cast<double>(gy) / (262.0f / 2.0f);
     rotations[AXIS::z] = static_cast<double>(gz) / (262.0f / 2.0f);
+    return count;
 }
 
 double Imu::GetPitch()
@@ -262,4 +282,9 @@ double Imu::GetRoll()
     this->GetAccelerations(accelerations);
 
     return atan2(accelerations[AXIS::x], accelerations[AXIS::y]) * RADIANS_TO_DEGREES + 90;
+}
+
+void Imu::ResetDevice()
+{
+    _imu.ResetDevice();
 }

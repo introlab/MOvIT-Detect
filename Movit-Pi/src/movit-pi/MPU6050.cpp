@@ -64,11 +64,29 @@ MPU6050::MPU6050(uint8_t address)
  */
 void MPU6050::Initialize()
 {
-    I2Cdev::WriteByte(_devAddr, MPU6050_RA_PWR_MGMT_1, 0x01);
-    //SetClockSource(MPU6050_CLOCK_INTERNAL);
-    //SetFullScaleGyroRange(MPU6050_GYRO_FS_250);
-    //SetFullScaleAccelRange(MPU6050_ACCEL_FS_2);
-    //SetSleepEnabled(false); // thanks to Jack Elston for pointing this one out!
+    I2Cdev::WriteByte(_devAddr, MPU6050_RA_PWR_MGMT_1, 0b10000000);           //Reset device
+    usleep(100000);                                                           //Sleep 100 ms
+    I2Cdev::WriteByte(_devAddr, MPU6050_RA_SIGNAL_PATH_RESET, 0b00000111);    //Reset data path
+    usleep(100000);                                                           //Sleep 100 ms
+    I2Cdev::WriteByte(_devAddr, MPU6050_RA_PWR_MGMT_1, 0b00000001);           //Enable device
+    usleep(10000);
+
+    SetIntDataReadyEnabled(true);
+    SetClockSource(MPU6050_CLOCK_INTERNAL);
+    SetFullScaleGyroRange(MPU6050_GYRO_FS_250);
+    SetFullScaleAccelRange(MPU6050_ACCEL_FS_2);
+    SetSleepEnabled(false);
+    SetIntDataReadyEnabled(true);
+    SetDLPFMode(MPU6050_DLPF_BW_20);
+}
+
+void MPU6050::ResetDevice() {
+    I2Cdev::WriteByte(_devAddr, MPU6050_RA_PWR_MGMT_1, 0b10000000);           //Reset device
+    usleep(100000);                                                           //Sleep 100 ms
+    I2Cdev::WriteByte(_devAddr, MPU6050_RA_SIGNAL_PATH_RESET, 0b00000111);    //Reset data path
+    usleep(100000);                                                           //Sleep 100 ms
+    I2Cdev::WriteByte(_devAddr, MPU6050_RA_PWR_MGMT_1, 0b00000001);           //Enable device
+    usleep(10000);  
 }
 
 /** Verify the I2C connection.
@@ -1910,15 +1928,16 @@ void MPU6050::GetMotion9(int16_t *ax, int16_t *ay, int16_t *az, int16_t *gx, int
  * @see getRotation()
  * @see MPU6050_RA_ACCEL_XOUT_H
  */
-void MPU6050::GetMotion6(int16_t *ax, int16_t *ay, int16_t *az, int16_t *gx, int16_t *gy, int16_t *gz)
+int8_t MPU6050::GetMotion6(int16_t *ax, int16_t *ay, int16_t *az, int16_t *gx, int16_t *gy, int16_t *gz)
 {
-    I2Cdev::ReadBytes(_devAddr, MPU6050_RA_ACCEL_XOUT_H, 14, _buffer);
+    int8_t count = I2Cdev::ReadBytes(_devAddr, MPU6050_RA_ACCEL_XOUT_H, 14, _buffer);
     *ax = (((int16_t)_buffer[0]) << 8) | _buffer[1];
     *ay = (((int16_t)_buffer[2]) << 8) | _buffer[3];
     *az = (((int16_t)_buffer[4]) << 8) | _buffer[5];
     *gx = (((int16_t)_buffer[8]) << 8) | _buffer[9];
     *gy = (((int16_t)_buffer[10]) << 8) | _buffer[11];
     *gz = (((int16_t)_buffer[12]) << 8) | _buffer[13];
+    return count;
 }
 /** Get 3-axis accelerometer readings.
  * These registers store the most recent accelerometer measurements.
@@ -1956,12 +1975,13 @@ void MPU6050::GetMotion6(int16_t *ax, int16_t *ay, int16_t *az, int16_t *gx, int
  * @param z 16-bit signed integer container for Z-axis acceleration
  * @see MPU6050_RA_GYRO_XOUT_H
  */
-void MPU6050::GetAcceleration(int16_t *x, int16_t *y, int16_t *z)
+ int8_t MPU6050::GetAcceleration(int16_t *x, int16_t *y, int16_t *z)
 {
-    I2Cdev::ReadBytes(_devAddr, MPU6050_RA_ACCEL_XOUT_H, 6, _buffer);
+    int8_t count = I2Cdev::ReadBytes(_devAddr, MPU6050_RA_ACCEL_XOUT_H, 6, _buffer);
     *x = (((int16_t)_buffer[0]) << 8) | _buffer[1];
     *y = (((int16_t)_buffer[2]) << 8) | _buffer[3];
     *z = (((int16_t)_buffer[4]) << 8) | _buffer[5];
+    return count;
 }
 /** Get X-axis accelerometer reading.
  * @return X-axis acceleration measurement in 16-bit 2's complement format
@@ -2040,12 +2060,13 @@ int16_t MPU6050::GetTemperature()
  * @see GetMotion6()
  * @see MPU6050_RA_GYRO_XOUT_H
  */
-void MPU6050::GetRotation(int16_t *x, int16_t *y, int16_t *z)
+int8_t MPU6050::GetRotation(int16_t *x, int16_t *y, int16_t *z)
 {
-    I2Cdev::ReadBytes(_devAddr, MPU6050_RA_GYRO_XOUT_H, 6, _buffer);
+    int8_t count = I2Cdev::ReadBytes(_devAddr, MPU6050_RA_GYRO_XOUT_H, 6, _buffer);
     *x = (((int16_t)_buffer[0]) << 8) | _buffer[1];
     *y = (((int16_t)_buffer[2]) << 8) | _buffer[3];
     *z = (((int16_t)_buffer[4]) << 8) | _buffer[5];
+    return count;
 }
 /** Get X-axis gyroscope reading.
  * @return X-axis rotation measurement in 16-bit 2's complement format

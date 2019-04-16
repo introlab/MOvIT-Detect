@@ -46,6 +46,11 @@ int main(int argc, char *argv[])
     sigIntHandler.sa_handler = exit_program_handler;
     sigemptyset(&sigIntHandler.sa_mask);
     sigIntHandler.sa_flags = 0;
+    
+    std::chrono::high_resolution_clock::time_point start;
+    std::chrono::high_resolution_clock::time_point stop;
+    std::chrono::duration<double> elapsed;
+    int sleepTime = 0;
 
     sigaction(SIGINT, &sigIntHandler, NULL);
 
@@ -60,11 +65,14 @@ int main(int argc, char *argv[])
 
     while (1)
     {
+        start = std::chrono::high_resolution_clock::now();
         chairManager.ReadFromServer();
         chairManager.UpdateDevices();
         chairManager.CheckNotification();
-        usleep(0.05 * 1000000);
+        stop = std::chrono::high_resolution_clock::now();
+        elapsed = stop - start;
+        sleepTime = ((0.10 * 1000000) - (elapsed.count() * 1000000));
+        usleep((sleepTime >= 0) ? sleepTime : 0);
     }
-
     return 0;
 }
