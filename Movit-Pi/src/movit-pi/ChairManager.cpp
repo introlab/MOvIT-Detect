@@ -113,7 +113,6 @@ int ChairManager::calculatefIMUAngle(SensorData sd) {
 
 int ChairManager::calculateSeatAngle(ChairState cs) {
     int a = chairState.fIMUAngle - chairState.mIMUAngle;
-    a = (a + 90) % 180 - 90;
     seatAngleUncorrected = a;
     a -= mIMUOffset;
     return -a;
