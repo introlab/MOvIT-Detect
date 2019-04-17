@@ -35,6 +35,7 @@ bool Imu::Initialize()
 bool Imu::IsConnected()
 {
     bool state = _imu.TestConnection();
+    
     if(state == false){
         isInitialized = false;
     }

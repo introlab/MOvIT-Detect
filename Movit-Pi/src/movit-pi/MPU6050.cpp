@@ -69,7 +69,7 @@ void MPU6050::Initialize()
     I2Cdev::WriteByte(_devAddr, MPU6050_RA_SIGNAL_PATH_RESET, 0b00000111);    //Reset data path
     usleep(100000);                                                           //Sleep 100 ms
     I2Cdev::WriteByte(_devAddr, MPU6050_RA_PWR_MGMT_1, 0b00000001);           //Enable device
-    usleep(10000);
+    usleep(100000);
 
     SetIntDataReadyEnabled(true);
     SetClockSource(MPU6050_CLOCK_INTERNAL);
@@ -95,7 +95,8 @@ void MPU6050::ResetDevice() {
  */
 bool MPU6050::TestConnection()
 {
-    return GetDeviceID() == 0x34 || GetDeviceID() == 0x38 || GetDeviceID() == 0x39;
+    bool res = GetDeviceID() == 0x34 || GetDeviceID() == 0x38 || GetDeviceID() == 0x39;
+    return res;
 }
 
 // AUX_VDDIO register (InvenSense demo code calls this RA_*G_OFFS_TC)

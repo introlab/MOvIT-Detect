@@ -32,7 +32,9 @@ class DeviceManager
     void CalibrateMobileIMU();
     void CalibratePressureMat();
 
-    SensorData getSensorData() { return sensorData; }
+    SensorData getSensorData() {
+      return sensorData; 
+    }
 
     void TurnOff();
 

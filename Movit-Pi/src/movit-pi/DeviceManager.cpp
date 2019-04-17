@@ -28,7 +28,7 @@ bool DeviceManager::IsMobileImuConnected() {
 }
 
 bool DeviceManager::IsFixedImuConnected() {
-    return sensorData.mIMUConnected;
+    return sensorData.fIMUConnected;
 }
 
 bool DeviceManager::IsRangeSensorConnected() {
@@ -73,9 +73,10 @@ bool DeviceManager::InitializeMobileImu() {
     _mobileImu->Initialize();
     lastmIMUReset = sensorData.time;
     sensorData.mIMUConnected = _mobileImu->IsConnected();
-
+    printf("mIMUConnected = %d\n", sensorData.mIMUConnected);
     if (!sensorData.mIMUConnected)
-    {
+    {   
+        printf("mIMUConnected = %d\n", sensorData.mIMUConnected);
         return sensorData.mIMUConnected;
     }
 
@@ -90,6 +91,7 @@ bool DeviceManager::InitializeMobileImu() {
         //_mobileImu->SetOffset(mobileOffset);
         sensorData.mIMUCalibrated = true;
     }
+    printf("mIMUConnected = %d\n", sensorData.mIMUConnected);
     return sensorData.mIMUConnected;
 }
 
@@ -154,13 +156,13 @@ void DeviceManager::Update() {
 
     //Reception données mobileIMU
     
-    if(sensorData.time - lastmIMUReset > 10) {
+    if(sensorData.time - lastmIMUReset > 900) {
         lastmIMUReset = sensorData.time;
         _mobileImu->ResetDevice();
         //printf("Reset mobile IMU\n");
     }
 
-    if(sensorData.time - lastfIMUReset > 10) {
+    if(sensorData.time - lastfIMUReset > 900) {
         lastfIMUReset = sensorData.time;
         _fixedImu->ResetDevice();
         //printf("Reset fixed IMU\n");
@@ -169,20 +171,18 @@ void DeviceManager::Update() {
     if(_mobileImu->IsConnected()) {
         double d[6];
         int8_t count = _mobileImu->GetMotion6(d);
-
         double sum = 0;
         for(int i = 0; i < 6; i++) {;
             sum += d[i];
         }
-
         if(count && sum != 0) {
-            sensorData.mIMUConnected = true;
             sensorData.mIMUAccX = d[0];
             sensorData.mIMUAccY = d[1];
             sensorData.mIMUAccZ = d[2];
             sensorData.mIMUGyroX = d[3];
             sensorData.mIMUGyroY = d[4];
             sensorData.mIMUGyroZ = d[5];
+            sensorData.mIMUConnected = true;
         } else {
             mobileFail++;
             printf("Fixed: %d, mobile: %d\n", fixedFail, mobileFail);
@@ -230,6 +230,7 @@ void DeviceManager::Update() {
         //sensorData.fIMUGyroZ = 0;
     }
 
+
     if(_VL53L0XSensor->IsConnected()) {
         sensorData.tofConnected = true;
         sensorData.tofRange = _VL53L0XSensor->ReadRangeSingleMillimeters();
@@ -248,6 +249,7 @@ void DeviceManager::Update() {
         sensorData.flowTravelY = 0;
         _PMW3901Sensor->Initialize();
     }
+
 
     if(_alarm.IsConnected()) {
         sensorData.alarmConnected = true;
@@ -268,12 +270,13 @@ void DeviceManager::Update() {
     } else {
         sensorData.matConnected = false;
         _pressureMat->Initialize();
-        for(int i = 0; i < 10; i++) {
+        for(int i = 0; i < 9; i++) {
             sensorData.matData[i] = 0;
         }
     }
 
     sensorData.time = DateTimeRTC::GetTimeSinceEpoch();
+    
 }
 
 void DeviceManager::UpdateNotificationsSettings(notifications_settings_t notificationsSettings) {
