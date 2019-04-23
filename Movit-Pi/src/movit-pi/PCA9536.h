@@ -184,6 +184,7 @@ class PCA9536
     void SetPolarity(pin_t pin, polarity_t newPolarity);
     void SetPolarity(polarity_t newPolarity);
     void Reset();
+    bool isConnected();
 
   private:
     uint8_t GetReg(reg_ptr_t regPtr);

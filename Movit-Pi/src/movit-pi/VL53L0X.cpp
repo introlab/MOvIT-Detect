@@ -5,6 +5,8 @@
 
 #include "VL53L0X.h"
 #include "I2Cdev.h"
+#include <stdio.h>
+
 
 // Defines /////////////////////////////////////////////////////////////////////
 
@@ -60,6 +62,12 @@ bool VL53L0X::Initialize(bool io_2v8)
 {
   // VL53L0X_DataInit() begin
   // sensor uses 1V8 mode for I/O by default; switch to 2V8 mode if necessary
+
+  if(!IsConnectedOnly()) {
+      isInitialized = false;
+      return false;
+  }
+
   if (io_2v8)
   {
     WriteReg(VHV_CONFIG_PAD_SCL_SDA__EXTSUP_HV, ReadReg(VHV_CONFIG_PAD_SCL_SDA__EXTSUP_HV) | 0x01); // set bit 0
@@ -88,6 +96,7 @@ bool VL53L0X::Initialize(bool io_2v8)
   bool spad_type_is_aperture;
   if (!GetSpadInfo(&spad_count, &spad_type_is_aperture))
   {
+    isInitialized = false;
     return false;
   }
 
@@ -97,6 +106,7 @@ bool VL53L0X::Initialize(bool io_2v8)
   uint8_t ref_spad_map[6];
   if (!ReadMulti(GLOBAL_CONFIG_SPAD_ENABLES_REF_0, ref_spad_map, 6))
   {
+    isInitialized = false;
     return false;
   }
 
@@ -126,6 +136,7 @@ bool VL53L0X::Initialize(bool io_2v8)
 
   if (!WriteMulti(GLOBAL_CONFIG_SPAD_ENABLES_REF_0, ref_spad_map, 6))
   {
+    isInitialized = false;
     return false;
   }
 
@@ -244,6 +255,7 @@ bool VL53L0X::Initialize(bool io_2v8)
   WriteReg(SYSTEM_SEQUENCE_CONFIG, 0x01);
   if (!PerformSingleRefCalibration(0x40))
   {
+    isInitialized = false;
     return false;
   }
 
@@ -251,12 +263,13 @@ bool VL53L0X::Initialize(bool io_2v8)
   WriteReg(SYSTEM_SEQUENCE_CONFIG, 0x02);
   if (!PerformSingleRefCalibration(0x00))
   {
+    isInitialized = false;
     return false;
   }
 
   // "restore the previous Sequence Config"
   WriteReg(SYSTEM_SEQUENCE_CONFIG, 0xE8);
-  
+  isInitialized = true;
   return true;
 }
 
@@ -724,10 +737,11 @@ uint16_t VL53L0X::ReadRangeContinuousMillimeters()
     if (CheckTimeoutExpired())
     {
       did_timeout = true;
+
       return 65535;
     }
+    usleep(0.033 * 1000000);
   }
-
   // assumptions: Linearity Corrective Gain is 1000 (default);
   // fractional ranging is not enabled
   uint16_t range = ReadReg16Bit(RESULT_RANGE_STATUS + 10);
@@ -754,6 +768,7 @@ uint16_t VL53L0X::ReadRangeSingleMillimeters()
 
   // "Wait until start bit has been cleared"
   StartTimeout();
+
   while (ReadReg(SYSRANGE_START) & 0x01)
   {
     if (CheckTimeoutExpired())
@@ -761,6 +776,7 @@ uint16_t VL53L0X::ReadRangeSingleMillimeters()
       did_timeout = true;
       return 65535;
     }
+    usleep(0.033 * 1000000);
   }
 
   return ReadRangeContinuousMillimeters();
@@ -804,6 +820,7 @@ bool VL53L0X::GetSpadInfo(uint8_t *count, bool *type_is_aperture)
     {
       return false;
     }
+    usleep(0.033 * 1000000);
   }
   WriteReg(0x83, 0x01);
   tmp = ReadReg(0x92);
@@ -896,6 +913,7 @@ uint16_t VL53L0X::EncodeTimeout(uint16_t timeout_mclks)
     {
       ls_byte >>= 1;
       ms_byte++;
+      usleep(0.1 * 1000000);
     }
 
     return (ms_byte << 8) | (ls_byte & 0xFF);
@@ -936,6 +954,7 @@ bool VL53L0X::PerformSingleRefCalibration(uint8_t vhv_init_byte)
     {
       return false;
     }
+    usleep(0.1 * 1000000);
   }
 
   WriteReg(SYSTEM_INTERRUPT_CLEAR, 0x01);
@@ -943,4 +962,43 @@ bool VL53L0X::PerformSingleRefCalibration(uint8_t vhv_init_byte)
   WriteReg(SYSRANGE_START, 0x00);
 
   return true;
+}
+
+bool VL53L0X::IsConnectedOnly() {
+    bool connected = true;
+    uint8_t data;
+    if(I2Cdev::ReadByte(address, 0xC0, &data)) {
+        connected = connected && (data == 0xee);
+    } else {
+        //We try a reset...
+        I2Cdev::WriteByte(address, 0xBF, 0x01);
+        usleep(100000);                        //100 ms
+        return false;
+    }
+    if(I2Cdev::ReadByte(address, 0xC1, &data)) {
+        connected = connected && (data == 0xaa);
+    } else {
+        //We try a reset...
+        I2Cdev::WriteByte(address, 0xBF, 0x01);
+        usleep(100000);                        //100 ms
+        return false;
+    }
+    if(I2Cdev::ReadByte(address, 0xC2, &data)) {
+        connected = connected && (data == 0x10);
+    } else {
+        //We try a reset...
+        I2Cdev::WriteByte(address, 0xBF, 0x01);
+        usleep(100000);                        //100 ms
+        return false;
+    }
+    return connected;
+}
+
+bool VL53L0X::IsConnected() {
+    bool connected = IsConnectedOnly();
+    
+    if(connected == false){
+        isInitialized = false;
+    }
+    return connected && isInitialized;
 }

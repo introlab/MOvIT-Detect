@@ -31,6 +31,7 @@ bool PMW3901::Initialize()
   uint8_t dIpihc = RegisterRead(0x5F);
   if (chipId != 0x49 || dIpihc != 0xB6)
   {
+    isInitialized = false;
     return false;
   }
 
@@ -43,7 +44,17 @@ bool PMW3901::Initialize()
 
   InitRegisters();
 
+  isInitialized = true;
   return true;
+}
+
+bool PMW3901::IsConnected()
+{
+  bool connected = (0x49 == RegisterRead(0x00));
+  if(connected == false) {
+      isInitialized = false;
+  }
+  return connected && isInitialized;
 }
 
 void PMW3901::ReadMotionCount(int16_t *deltaX, int16_t *deltaY)

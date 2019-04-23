@@ -5,11 +5,20 @@
 #include "Utils.h"
 #include "Timer.h"
 #include "DeviceManager.h"
+#include "NotificationFSM.h"
+#include "SeatingFSM.h"
+#include "TravelFSM.h"
+#include "AngleFSM.h"
 #include "SecondsCounter.h"
+#include <cmath>
 
 #include <string>
 #include <unistd.h>
 #include <chrono>
+
+#define WEIGHT_THRESHOLD 200
+
+const Coord_t POSITION_LOOKUP[9] = {{4.0f,4.0f}, {4.0f,0.0f}, {4.0f,-4.0f}, {0.0f,4.0f}, {0.0f,0.0f}, {0.0f,-4.0f}, {-4.0f,4.0f}, {-4.0f,0.0f}, {-4.0f,-4.0f}};
 
 class ChairManager
 {
@@ -20,58 +29,46 @@ class ChairManager
     void UpdateDevices();
     void ReadFromServer();
     void CheckNotification();
-    void SetVibrationsActivated(bool isVibrationsActivated);
-    std::thread ReadVibrationsThread();
+    void displaySensorData(SensorData sensorData);
+    void displayChairState(ChairState chairState);
+    void setAngleOffset(int fixedOffset, int mobileOffset);
+    int getQuadrant(float y, float x);
 
   private:
-    static constexpr auto CENTER_OF_PRESSURE_EMISSION_PERIOD = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::seconds(10));
-    static constexpr auto FAILED_TILT_TIME = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::minutes(2));
-    static constexpr auto CHAIR_ANGLE_EMISSION_PERIOD = std::chrono::milliseconds(1000);
-    static constexpr auto WIFI_VALIDATION_PERIOD = std::chrono::seconds(10);
-    static constexpr auto HEARTBEAT_PERIOD = std::chrono::milliseconds(1000);
+    int calculatemIMUAngle(SensorData sd);
+    int calculatefIMUAngle(SensorData sd);
+    int calculateSeatAngle(ChairState cs);
 
-    static constexpr int MINIMUM_ANGLE = 15; // degrees
+    int fIMUOffset = 0;
+    int mIMUOffset = 0;
+
+    Coord_t calculateCenterOfGravity(SensorData sd); 
+    void calculateCenterOfGravityPerQuadrant(SensorData sd, Coord_t *quad);
+    bool verifyIfUserIsSeated(SensorData sd);
+
+    uint32_t calculateDistance(SensorData sd);
 
     Alarm *_alarm;
     MosquittoBroker *_mosquittoBroker;
     DeviceManager *_deviceManager;
 
-    SecondsCounter _secondsCounter;
-    uint8_t _state = 0;
-
-    int _currentChairAngle = 0;
-    int _prevChairAngle = 0;
-    float _snoozeTime = 600.0f; // Default snoozetime = 10 minutes
-    std::string _currentDatetime = "";
-
-    bool _isSomeoneThere = false;
-    bool _prevIsSomeoneThere = false;
-    bool _isMoving = false;
-    bool _isChairInclined = false;
-    bool _isWifiChanged = false;
-    bool _setAlarmOn = false;
-    bool _isVibrationsActivated = true;
-    bool _isIMUCalibrationChanged = false;
-    bool _isPressureMatCalibrationChanged = false;
-    bool _overrideNotification = false;
-
     pressure_mat_data_t _pressureMatData;
     tilt_settings_t _tiltSettings;
+    SensorData sensorData;
+    ChairState chairState;
+    SeatingFSM seatingFSM = SeatingFSM();
+    TravelFSM travelFSM = TravelFSM();
+    AngleFSM angleFSM = AngleFSM();
+    NotificationFSM notificationFSM = NotificationFSM();
+    int lastNotificationState = -1;
+    std::chrono::high_resolution_clock::time_point mIMUStart = std::chrono::high_resolution_clock::now();
+    std::chrono::high_resolution_clock::time_point mIMUFinish = std::chrono::high_resolution_clock::now();
+    std::chrono::high_resolution_clock::time_point fIMUStart = std::chrono::high_resolution_clock::now();
+    std::chrono::high_resolution_clock::time_point fIMUFinish = std::chrono::high_resolution_clock::now();
+    float mobileAngleUncorrected = 0;
+    float fixedAngleUncorrected = 0;
+    int seatAngleUncorrected = 0;
 
-    Timer _centerOfPressureTimer;
-    Timer _wifiChangedTimer;
-    Timer _chairAngleTimer;
-    Timer _heartbeatTimer;
-    Timer _failedTiltTimer;
-
-    void CheckIfUserHasBeenSittingForRequiredTime();
-    void CheckIfBackRestIsRequired();
-    void NotificationSnoozed();
-    void CheckIfRequiredBackSeatAngleIsReached();
-    void CheckIfRequiredBackSeatAngleIsMaintained();
-    void CheckIfBackSeatIsBackToInitialPosition();
-    void OverrideNotification();
-    void ReadVibrations();
 };
 
 #endif // CHAIR_MANAGER_H

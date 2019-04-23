@@ -21,6 +21,7 @@ class PressureMat : public Sensor
 	bool IsForcePlateConnected();
 	bool IsSomeoneThere() { return _isSomeoneThere; }
 	bool IsCalibrated() { return _isCalibrated; }
+    void GetRawAnalogData(uint16_t *array);
 
 	pressure_mat_data_t GetPressureMatData() { return _pressureMatData; }
 	pressure_mat_offset_t GetOffsets() { return _sensorMatrix.GetOffsets(); }
@@ -55,6 +56,7 @@ class PressureMat : public Sensor
 	bool _isSomeoneThere = false;
 	bool _isForcePlateInitialized = false;
 	bool _isCalibrated = false;
+    bool isInitialized = false;
 
 	MAX11611 _max11611;
 	uint16_t _max11611Data[PRESSURE_SENSOR_COUNT];

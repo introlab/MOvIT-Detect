@@ -51,3 +51,60 @@ struct tilt_settings_t
     uint32_t requiredPeriod = 0;
     uint32_t requiredDuration = 0;
 };
+
+struct SensorData {
+    long time = 0;
+
+    bool tofConnected = false;
+    uint16_t tofRange = 0;
+
+    bool flowConnected = false;
+    int16_t flowTravelX = 0;
+    int16_t flowTravelY = 0;
+
+    bool alarmConnected = false;
+    bool alarmRedLedOn = false;
+    bool alarmGreenLedOn = false;
+    bool alarmDCMotorOn = false;
+    bool alarmButtonPressed = false;
+
+    bool matConnected = false;
+    uint16_t matData[9] = {0};
+
+    bool mIMUConnected = false;
+    bool mIMUCalibrated = false;
+    double mIMUAccX = 0.0f;
+    double mIMUAccY = 0.0f;
+    double mIMUAccZ = 0.0f;
+    double mIMUGyroX = 0.0f;
+    double mIMUGyroY = 0.0f;
+    double mIMUGyroZ = 0.0f;
+
+    float fIMUConnected = false;
+    bool fIMUCalibrated = false;
+    double fIMUAccX = 0.0f;
+    double fIMUAccY = 0.0f;
+    double fIMUAccZ = 0.0f;
+    double fIMUGyroX = 0.0f;
+    double fIMUGyroY = 0.0f;
+    double fIMUGyroZ = 0.0f;
+};
+
+struct ChairState {
+    long time = 0;
+
+    //En déplacement et la distance parcouru
+    bool isMoving = false;
+    uint32_t lastDistance = 0;
+
+    //L'utilisateur est assis, on peut calculer le CG
+    bool isSeated = false;                                                                          
+    Coord_t centerOfGravity = {0.0f, 0.0f};                                                         
+    Coord_t centerOfGravityPerQuadrant[4] = {{0.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f}};
+
+    int mIMUAngle = 0;
+    int fIMUAngle = 0;
+    int seatAngle = 0;
+
+    bool button = false;
+};

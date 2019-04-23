@@ -24,51 +24,55 @@ void exit_program_handler(int s)
     exit(1);
 }
 
+void printHeader() {
+    printf(" __  __  ____      _____ _______     _____       _            _   \n");
+    printf("|  \\/  |/ __ \\    |_   _|__   __|   |  __ \\     | |          | |  \n");
+    printf("| \\  / | |  | |_   _| |    | |______| |  | | ___| |_ ___  ___| |_ \n");
+    printf("| |\\/| | |  | \\ \\ / / |    | |______| |  | |/ _ \\ __/ _ \\/ __| __|\n");
+    printf("| |  | | |__| |\\ V /| |_   | |      | |__| |  __/ ||  __/ (__| |_ \n");
+    printf("|_|  |_|\\____/  \\_/_____|  |_|      |_____/ \\___|\\__\\___|\\___|\\__|\n\n");
+}
+
 int main(int argc, char *argv[])
 {
+
+    if (getuid()) {
+        printf("Please run as root exitting...\n");
+        return 0;    
+    }
+
     struct sigaction sigIntHandler;
 
     sigIntHandler.sa_handler = exit_program_handler;
     sigemptyset(&sigIntHandler.sa_mask);
     sigIntHandler.sa_flags = 0;
+    
+    std::chrono::high_resolution_clock::time_point start;
+    std::chrono::high_resolution_clock::time_point stop;
+    std::chrono::duration<double> elapsed;
+    int sleepTime = 0;
 
     sigaction(SIGINT, &sigIntHandler, NULL);
 
     MosquittoBroker mosquittoBroker("embedded");
     FileManager *fileManager = FileManager::GetInstance();
     DeviceManager *deviceManager = DeviceManager::GetInstance(fileManager);
+    deviceManager->InitializeDevices();
     ChairManager chairManager(&mosquittoBroker, deviceManager);
 
-    deviceManager->InitializeDevices();
+    system("clear");
+    printHeader();
 
-    auto start = std::chrono::system_clock::now();
-    auto end = std::chrono::system_clock::now();
-    auto period = milliseconds(static_cast<int>((1 / RUNNING_FREQUENCY) * SECONDS_TO_MILLISECONDS));
-
-    // Ce feature ne sera pas implemente pour l'instant.
-    // Aussi ca ne devrais pas être un thread car ca cause des problemes avec le port i2c
-    // chairManager.ReadVibrationsThread().detach();
-
-    while (true)
+    while (1)
     {
-        start = std::chrono::system_clock::now();
-
+        start = std::chrono::high_resolution_clock::now();
         chairManager.ReadFromServer();
         chairManager.UpdateDevices();
         chairManager.CheckNotification();
-
-        end = std::chrono::system_clock::now();
-        auto elapse_time = std::chrono::duration_cast<milliseconds>(end - start);
-
-        if (elapse_time.count() >= period.count())
-        {
-            printf("MAIN LOOP OVERRUN. It took: %lli\n", elapse_time.count());
-            elapse_time = period;
-        }
-
-        sleep_for_milliseconds(period.count() - elapse_time.count());
+        stop = std::chrono::high_resolution_clock::now();
+        elapsed = stop - start;
+        sleepTime = ((0.10 * 1000000) - (elapsed.count() * 1000000));
+        usleep((sleepTime >= 0) ? sleepTime : 0);
     }
-
-    chairManager.SetVibrationsActivated(false);
     return 0;
 }

@@ -12,7 +12,7 @@ class Alarm : public Sensor
   public:
     Alarm();
     Alarm(double blinkFrequency);
-    ~Alarm() = default;
+    ~Alarm();
 
     bool Initialize();
     bool IsConnected();
@@ -28,24 +28,32 @@ class Alarm : public Sensor
     void TurnOffGreenLed();
     void TurnOffAlarm();
 
-    bool ButtonPressed() { return !GetPinState(PUSH_BUTTON); }
+    bool ButtonPressed() { 
+      _pca9536.SetMode(PUSH_BUTTON, IO_INPUT);
+      _pca9536.SetPolarity(PUSH_BUTTON, IO_INVERTED);
+      return !GetPinState(PUSH_BUTTON); 
+    }
 
     void TurnOnBlinkLedsAlarm();
     void TurnOnBlinkRedAlarm();
     void TurnOnGreenAlarm();
     void TurnOnBlinkGreenAlarm();
+    void TurnOnAlternatingAlarm();
 
-    void StopBlinkGreenAlarm();
-    void StopBlinkRedAlarm();
-    void StopBlinkLedsAlarm();
+    void TurnOffBlinkGreenAlarm();
+    void TurnOffBlinkRedAlarm();
+    void TurnOffBlinkLedsAlarm();
+    void TurnOffAlternatingAlarm();
 
     bool IsRedAlarmOn() { return _isBlinkRedAlarmOn; }
     bool IsBlinkLedsAlarmOn() { return _isBlinkLedsAlarmOn; }
     bool IsBlinkGreenAlarmOn() { return _isBlinkGreenAlarmOn; }
+    bool IsAlternatingAlarmOn() { return _isAlternatingAlarmOn; }
 
-    std::thread TurnOnBlinkRedAlarmThread();
-    std::thread TurnOnBlinkLedsAlarmThread();
-    std::thread TurnOnBlinkGreenAlarmThread();
+    void TurnOnBlinkRedAlarmThread();
+    void TurnOnBlinkLedsAlarmThread();
+    void TurnOnBlinkGreenAlarmThread();
+    void TurnOnAlternatingBlinkAlarmThread();
 
   private:
     PCA9536 _pca9536;
@@ -53,8 +61,14 @@ class Alarm : public Sensor
     bool _isBlinkRedAlarmOn = false;
     bool _isBlinkLedsAlarmOn = false;
     bool _isBlinkGreenAlarmOn = false;
+    bool _isAlternatingAlarmOn = false;
 
-    bool _deactivateVibration = false;
+    std::thread blinkRedLedThread;
+    std::thread blinkLedsThread;
+    std::thread blinkGreenLedThread;
+    std::thread alternatingLedThread;
+
+    bool _deactivateVibration = true;
     bool _deactivateBlinking = false;
 
     double _blinkFrequency;

@@ -21,11 +21,15 @@ class Imu : public Sensor
     bool Initialize();
     bool IsConnected();
     void CalibrateAndSetOffsets();
-    void GetAccelerations(double *accelerations);
+    int8_t GetAccelerations(double *accelerations);
+    int8_t GetRotations(double *rotations);
+    int8_t GetMotion6(double *motion);
     double GetPitch();
     double GetRoll();
-
+    void ResetDevice();
     static bool IsImuOffsetValid(imu_offset_t offset);
+
+    bool dataReady();
 
     void SetOffset(imu_offset_t offsets);
     imu_offset_t GetOffset() { return _offsets; }
@@ -50,6 +54,9 @@ class Imu : public Sensor
 
     void GetAccelerometerMeans(MPU6050 &mpu, int accbuff[]);
     void GetGyroscopeMeans(MPU6050 &mpu, int gyrobuff[]);
+    
+  private:
+    bool isInitialized = false;
 };
 
 #endif // IMU_H

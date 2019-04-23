@@ -38,6 +38,7 @@ THE SOFTWARE.
 #define MPU6050_H
 
 #include "I2Cdev.h"
+#include <unistd.h>
 
 #define MPU6050_ADDRESS_AD0_LOW     0x68 // address pin low (GND), default for InvenSense evaluation board
 #define MPU6050_ADDRESS_AD0_HIGH    0x69 // address pin high (VCC)
@@ -403,6 +404,7 @@ class MPU6050
 
     void Initialize();
     bool TestConnection();
+    void ResetDevice();
 
     // AUX_VDDIO register
     uint8_t GetAuxVDDIOLevel();
@@ -575,8 +577,8 @@ class MPU6050
 
     // ACCEL_*OUT_* registers
     void GetMotion9(int16_t *ax, int16_t *ay, int16_t *az, int16_t *gx, int16_t *gy, int16_t *gz, int16_t *mx, int16_t *my, int16_t *mz);
-    void GetMotion6(int16_t *ax, int16_t *ay, int16_t *az, int16_t *gx, int16_t *gy, int16_t *gz);
-    void GetAcceleration(int16_t *x, int16_t *y, int16_t *z);
+    int8_t GetMotion6(int16_t *ax, int16_t *ay, int16_t *az, int16_t *gx, int16_t *gy, int16_t *gz);
+    int8_t GetAcceleration(int16_t *x, int16_t *y, int16_t *z);
     int16_t GetAccelerationX();
     int16_t GetAccelerationY();
     int16_t GetAccelerationZ();
@@ -585,7 +587,7 @@ class MPU6050
     int16_t GetTemperature();
 
     // GYRO_*OUT_* registers
-    void GetRotation(int16_t *x, int16_t *y, int16_t *z);
+    int8_t GetRotation(int16_t *x, int16_t *y, int16_t *z);
     int16_t GetRotationX();
     int16_t GetRotationY();
     int16_t GetRotationZ();

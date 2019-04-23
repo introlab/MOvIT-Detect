@@ -8,12 +8,16 @@
 
 #include "FixedImu.h"
 #include "MobileImu.h"
-#include "BackSeatAngleTracker.h"
+//#include "BackSeatAngleTracker.h"
 #include "DateTimeRTC.h"
-#include "MotionSensor.h"
+#include "PMW3901.h"
+#include "VL53L0X.h"
 #include "FileManager.h"
 #include "Sensor.h"
 #include "PressureMat.h"
+#include "SeatingFSM.h"
+#include "TravelFSM.h"
+#include "AngleFSM.h"
 
 class DeviceManager
 {
@@ -23,27 +27,14 @@ class DeviceManager
     // Called periodicaly to update all the data
     void Update();
 
-    Alarm *GetAlarm() { return &_alarm; }
-    MobileImu *GetMobileImu() { return _mobileImu; }
-    FixedImu *GetFixedImu() { return _fixedImu; }
-    MotionSensor *GetMotionSensor() { return _motionSensor; }
-
-    bool IsSomeoneThere() { return _pressureMat->IsSomeoneThere(); }
-    bool IsChairInclined() { return _isChairInclined; }
-    bool IsForcePlateConnected() { return _pressureMat->IsConnected(); }
-    bool IsMoving() { return _isMoving; }
-
-    pressure_mat_data_t GetPressureMatData() { return _pressureMat->GetPressureMatData(); }
-
-    int GetBackSeatAngle() { return _backSeatAngle; }
-    int GetTimeSinceEpoch() { return _timeSinceEpoch; }
-
-    double GetXAcceleration();
-
     void CalibrateIMU();
     void CalibrateFixedIMU();
     void CalibrateMobileIMU();
     void CalibratePressureMat();
+
+    SensorData getSensorData() {
+      return sensorData; 
+    }
 
     void TurnOff();
 
@@ -55,69 +46,54 @@ class DeviceManager
     bool IsAlarmConnected();
     bool IsMobileImuConnected();
     bool IsFixedImuConnected();
-    bool IsMotionSensorConnected();
+    bool IsRangeSensorConnected();
+    bool IsFlowSensorConnected();
     bool IsPressureMatConnected();
-
-    bool IsImuCalibrated() { return _isFixedImuCalibrated && _isMobileImuCalibrated; }
-    bool IsPressureMatCalibrated() { return _pressureMat->IsCalibrated(); }
 
     bool IsLedBlinkingEnabled() { return _notificationsSettings.isLedBlinkingEnabled; }
     bool IsVibrationEnabled() { return _notificationsSettings.isVibrationEnabled; }
     float GetSnoozeTime() { return _notificationsSettings.snoozeTime; }
 
-    sensor_state_t GetSensorState() { return _sensorState; }
-
-    // Singleton
     static DeviceManager *GetInstance(FileManager *fileManager)
     {
         static DeviceManager instance(fileManager);
         return &instance;
     }
 
+    Alarm *getAlarm() {
+      return &_alarm;
+    }
+
   private:
-    //Singleton
     DeviceManager(FileManager *fileManager);
-    DeviceManager(DeviceManager const &);  // Don't Implement.
-    void operator=(DeviceManager const &); // Don't implement.
 
     const int32_t DEFAULT_BACK_SEAT_ANGLE = 0;
-
-    Sensor *GetSensor(const int device);
-    bool GetSensorValidity(const int device, const bool isConnected);
-    bool IsSensorStateChanged(const int device);
 
     bool InitializeFixedImu();
     bool InitializeMobileImu();
     bool InitializePressureMat();
 
-    bool _isAlarmInitialized = false;
-    bool _isFixedImuInitialized = false;
-    bool _isMobileImuInitialized = false;
-    bool _isMotionSensorInitialized = false;
-    bool _isPressureMatInitialized = false;
-
-    bool _isFixedImuCalibrated = false;
-    bool _isMobileImuCalibrated = false;
-
     bool _isMoving = false;
     bool _isChairInclined = false;
-
-    int _timeSinceEpoch = 0;
     int _backSeatAngle = 0;
+    int mobileFail = 0;
+    int fixedFail = 0;
+    long lastmIMUReset = 0;
+    long lastfIMUReset = 0;
 
     FileManager *_fileManager;
 
-    DateTimeRTC *_datetimeRTC;
     Alarm _alarm;
     MobileImu *_mobileImu;
     FixedImu *_fixedImu;
-    BackSeatAngleTracker _backSeatAngleTracker;
     PressureMat *_pressureMat;
-    MotionSensor *_motionSensor;
+    VL53L0X *_VL53L0XSensor;
+    PMW3901 *_PMW3901Sensor;
 
     notifications_settings_t _notificationsSettings;
-    sensor_state_t _sensorState;
     tilt_settings_t _tiltSettings;
+
+    SensorData sensorData = SensorData();
 };
 
 #endif // DEVICE_MANAGER_H

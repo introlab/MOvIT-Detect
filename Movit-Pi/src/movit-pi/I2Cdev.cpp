@@ -29,39 +29,30 @@ THE SOFTWARE.
 
 #include "I2Cdev.h"
 #include <stdio.h>
-#include <mutex>
 
-std::mutex mutex;
+I2Cdev::I2Cdev() { }
 
-I2Cdev::I2Cdev() {}
-
-void I2Cdev::Initialize()
-{
-    bcm2835_init();
-    bcm2835_i2c_set_baudrate(I2C_BAUDRATE);
+void I2Cdev::Initialize() {
+  bcm2835_init();
+  bcm2835_i2c_set_baudrate( i2c_baudrate  );
 }
 
-/** Enable or disable I2C,
+/** Enable or disable I2C, 
  * @param isEnabled true = enable, false = disable
  */
-void I2Cdev::Enable(bool isEnabled)
-{
-    if (SET_I2C_PINS)
-    {
-        if (isEnabled)
-        {
-            bcm2835_i2c_end();
-        }
-
-        else
-        {
-            bcm2835_i2c_begin();
-        }
-    }
+void I2Cdev::Enable(bool isEnabled) {
+  if ( set_I2C_pins ){
+    if (isEnabled)
+      bcm2835_i2c_end();
+    else
+      bcm2835_i2c_begin() ;
+  }
 }
 
 char sendBuf[256];
 char recvBuf[256];
+
+
 
 /** Read a single bit from an 8-bit device register.
  * @param devAddr I2C slave device address
@@ -70,15 +61,12 @@ char recvBuf[256];
  * @param data Container for single bit value
  * @return Status of read operation (true = success)
  */
-bool I2Cdev::ReadBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data)
-{
-    std::lock_guard<std::mutex> lock(mutex);
-
-    bcm2835_i2c_setSlaveAddress(devAddr);
-    sendBuf[0] = regAddr;
-    uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, 1);
-    *data = recvBuf[1] & (1 << bitNum);
-    return response == BCM2835_I2C_REASON_OK;
+int8_t I2Cdev::ReadBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data) {
+  bcm2835_i2c_setSlaveAddress(devAddr);
+  sendBuf[0] = regAddr;
+  uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, 1);
+  *data = recvBuf[1] & (1 << bitNum);
+  return response == BCM2835_I2C_REASON_OK ;
 }
 
 /** Read multiple bits from an 8-bit device register.
@@ -89,27 +77,23 @@ bool I2Cdev::ReadBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *
  * @param data Container for right-aligned value (i.e. '101' read from any bitStart position will equal 0x05)
  * @return Status of read operation (true = success)
  */
-bool I2Cdev::ReadBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data)
-{
-    std::lock_guard<std::mutex> lock(mutex);
-
-    // 01101001 read byte
-    // 76543210 bit numbers
-    //    xxx   args: bitStart=4, length=3
-    //    010   masked
-    //   -> 010 shifted
-    bcm2835_i2c_setSlaveAddress(devAddr);
-    sendBuf[0] = regAddr;
-    uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, 1);
-    uint8_t b = (uint8_t)recvBuf[0];
-    if (response == BCM2835_I2C_REASON_OK)
-    {
-        uint8_t mask = ((1 << length) - 1) << (bitStart - length + 1);
-        b &= mask;
-        b >>= (bitStart - length + 1);
-        *data = b;
-    }
-    return response == BCM2835_I2C_REASON_OK;
+int8_t I2Cdev::ReadBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data) {
+  // 01101001 read byte
+  // 76543210 bit numbers
+  //    xxx   args: bitStart=4, length=3
+  //    010   masked
+  //   -> 010 shifted
+  bcm2835_i2c_setSlaveAddress(devAddr);
+  sendBuf[0] = regAddr;
+  uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, 1);
+  uint8_t b = (uint8_t) recvBuf[0];
+  if (response == BCM2835_I2C_REASON_OK) {
+    uint8_t mask = ((1 << length) - 1) << (bitStart - length + 1);
+    b &= mask;
+    b >>= (bitStart - length + 1);
+    *data = b;
+  }
+  return response == BCM2835_I2C_REASON_OK;
 }
 
 /** Read single byte from an 8-bit device register.
@@ -118,15 +102,12 @@ bool I2Cdev::ReadBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_
  * @param data Container for byte value read from device
  * @return Status of read operation (true = success)
  */
-bool I2Cdev::ReadByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data)
-{
-    std::lock_guard<std::mutex> lock(mutex);
-
-    bcm2835_i2c_setSlaveAddress(devAddr);
-    sendBuf[0] = regAddr;
-    uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, 1);
-    data[0] = (uint8_t)recvBuf[0];
-    return response == BCM2835_I2C_REASON_OK;
+int8_t I2Cdev::ReadByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data) {
+  bcm2835_i2c_setSlaveAddress(devAddr);
+  sendBuf[0] = regAddr;
+  uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, 1);
+  data[0] = (uint8_t) recvBuf[0];
+  return response == BCM2835_I2C_REASON_OK;
 }
 
 /** Read multiple bytes from an 8-bit device register.
@@ -136,34 +117,15 @@ bool I2Cdev::ReadByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data)
  * @param data Buffer to store read data in
  * @return I2C_TransferReturn_TypeDef http://downloads.energymicro.com/documentation/doxygen/group__I2C.html
  */
-bool I2Cdev::ReadBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data)
-{
-    std::lock_guard<std::mutex> lock(mutex);
-
-    bcm2835_i2c_setSlaveAddress(devAddr);
-    sendBuf[0] = regAddr;
-    uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, length);
-
-    for (uint8_t i = 0; i < length; i++)
-    {
-        data[i] = (uint8_t)recvBuf[i];
-    }
-    return response == BCM2835_I2C_REASON_OK;
-}
-
-bool I2Cdev::ReadBytes(uint8_t devAddr, uint8_t length, uint8_t *data)
-{
-    std::lock_guard<std::mutex> lock(mutex);
-
-    bcm2835_i2c_setSlaveAddress(devAddr);
-    // sendBuf[0] = regAddr;
-    uint8_t response = bcm2835_i2c_read(recvBuf, length);
-
-    for (uint8_t i = 0; i < length; i++)
-    {
-        data[i] = (uint8_t)recvBuf[i];
-    }
-    return response == BCM2835_I2C_REASON_OK;
+int8_t I2Cdev::ReadBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data) {
+  bcm2835_i2c_setSlaveAddress(devAddr);
+  sendBuf[0] = regAddr;
+  uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, length);
+  int i ;
+  for (i = 0; i < length ; i++) {
+    data[i] = (uint8_t) recvBuf[i];
+  }
+  return response == BCM2835_I2C_REASON_OK;
 }
 
 /** write a single bit in an 8-bit device register.
@@ -173,22 +135,18 @@ bool I2Cdev::ReadBytes(uint8_t devAddr, uint8_t length, uint8_t *data)
  * @param value New bit value to write
  * @return Status of operation (true = success)
  */
-bool I2Cdev::WriteBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data)
-{
-    std::lock_guard<std::mutex> lock(mutex);
-
-    bcm2835_i2c_setSlaveAddress(devAddr);
-    //first reading registery value
-    sendBuf[0] = regAddr;
-    uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, 1);
-    if (response == BCM2835_I2C_REASON_OK)
-    {
-        uint8_t b = recvBuf[0];
-        b = (data != 0) ? (b | (1 << bitNum)) : (b & ~(1 << bitNum));
-        sendBuf[1] = b;
-        response = bcm2835_i2c_write(sendBuf, 2);
-    }
-    return response == BCM2835_I2C_REASON_OK;
+bool I2Cdev::WriteBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data) {
+  bcm2835_i2c_setSlaveAddress(devAddr);
+  //first reading registery value
+  sendBuf[0] = regAddr;
+  uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, 1 );
+  if ( response == BCM2835_I2C_REASON_OK ) {
+    uint8_t b = recvBuf[0] ;
+    b = (data != 0) ? (b | (1 << bitNum)) : (b & ~(1 << bitNum));
+    sendBuf[1] = b ;
+    response = bcm2835_i2c_write(sendBuf, 2);
+  }
+  return response == BCM2835_I2C_REASON_OK;
 }
 
 /** Write multiple bits in an 8-bit device register.
@@ -199,33 +157,29 @@ bool I2Cdev::WriteBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t 
  * @param data Right-aligned value to write
  * @return Status of operation (true = success)
  */
-bool I2Cdev::WriteBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data)
-{
-    std::lock_guard<std::mutex> lock(mutex);
-
-    // 010 value to write
-    // 76543210 bit numbers
-    // xxx args: bitStart=4, length=3
-    // 00011100 mask byte
-    // 10101111 original value (sample)
-    // 10100011 original & ~mask
-    // 10101011 masked | value
-    bcm2835_i2c_setSlaveAddress(devAddr);
-    //first reading registery value
-    sendBuf[0] = regAddr;
-    uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, 1);
-    if (response == BCM2835_I2C_REASON_OK)
-    {
-        uint8_t b = recvBuf[0];
-        uint8_t mask = ((1 << length) - 1) << (bitStart - length + 1);
-        data <<= (bitStart - length + 1); // shift data into correct position
-        data &= mask;                     // zero all non-important bits in data
-        b &= ~(mask);                     // zero all important bits in existing byte
-        b |= data;                        // combine data with existing byte
-        sendBuf[1] = b;
-        response = bcm2835_i2c_write(sendBuf, 2);
+bool I2Cdev::WriteBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data) {
+  //      010 value to write
+  // 76543210 bit numbers
+  //    xxx   args: bitStart=4, length=3
+  // 00011100 mask byte
+  // 10101111 original value (sample)
+  // 10100011 original & ~mask
+  // 10101011 masked | value
+  bcm2835_i2c_setSlaveAddress(devAddr);
+  //first reading registery value
+  sendBuf[0] = regAddr;
+  uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, 1 );
+  if ( response == BCM2835_I2C_REASON_OK ) {
+    uint8_t b = recvBuf[0];
+    uint8_t mask = ((1 << length) - 1) << (bitStart - length + 1);
+    data <<= (bitStart - length + 1); // shift data into correct position
+    data &= mask; // zero all non-important bits in data
+    b &= ~(mask); // zero all important bits in existing byte
+    b |= data; // combine data with existing byte
+    sendBuf[1] = b ;
+    response = bcm2835_i2c_write(sendBuf, 2);
     }
-    return response == BCM2835_I2C_REASON_OK;
+  return response == BCM2835_I2C_REASON_OK;
 }
 
 /** Write single byte to an 8-bit device register.
@@ -234,15 +188,12 @@ bool I2Cdev::WriteBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8
  * @param data New byte value to write
  * @return Status of operation (true = success)
  */
-bool I2Cdev::WriteByte(uint8_t devAddr, uint8_t regAddr, uint8_t data)
-{
-    std::lock_guard<std::mutex> lock(mutex);
-
-    bcm2835_i2c_setSlaveAddress(devAddr);
-    sendBuf[0] = regAddr;
-    sendBuf[1] = data;
-    uint8_t response = bcm2835_i2c_write(sendBuf, 2);
-    return response == BCM2835_I2C_REASON_OK;
+bool I2Cdev::WriteByte(uint8_t devAddr, uint8_t regAddr, uint8_t data) {
+  bcm2835_i2c_setSlaveAddress(devAddr);
+  sendBuf[0] = regAddr;
+  sendBuf[1] = data;
+  uint8_t response = bcm2835_i2c_write(sendBuf, 2);
+  return response == BCM2835_I2C_REASON_OK ;
 }
 
 /** Read single word from a 16-bit device register.
@@ -251,15 +202,12 @@ bool I2Cdev::WriteByte(uint8_t devAddr, uint8_t regAddr, uint8_t data)
  * @param data Container for word value read from device
  * @return Status of read operation (true = success)
  */
-bool I2Cdev::ReadWord(uint8_t devAddr, uint8_t regAddr, uint16_t *data)
-{
-    std::lock_guard<std::mutex> lock(mutex);
-
-    bcm2835_i2c_setSlaveAddress(devAddr);
-    sendBuf[0] = regAddr;
-    uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, 2);
-    data[0] = (recvBuf[0] << 8) | recvBuf[1];
-    return response == BCM2835_I2C_REASON_OK;
+int8_t I2Cdev::ReadWord(uint8_t devAddr, uint8_t regAddr, uint16_t *data) {
+  bcm2835_i2c_setSlaveAddress(devAddr);
+  sendBuf[0] = regAddr;
+  uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, 2 );
+  data[0] = (recvBuf[0] << 8) | recvBuf[1] ;
+  return  response == BCM2835_I2C_REASON_OK ;
 }
 
 /** Read multiple words from a 16-bit device register.
@@ -269,71 +217,65 @@ bool I2Cdev::ReadWord(uint8_t devAddr, uint8_t regAddr, uint16_t *data)
  * @param data Buffer to store read data in
  * @return Number of words read (-1 indicates failure)
  */
-bool I2Cdev::ReadWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data)
-{
-    std::lock_guard<std::mutex> lock(mutex);
-
-    bcm2835_i2c_setSlaveAddress(devAddr);
-    sendBuf[0] = regAddr;
-    uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, length * 2);
-
-    for (uint8_t i = 0; i < length; i++)
-    {
-        data[i] = (recvBuf[i * 2] << 8) | recvBuf[i * 2 + 1];
-    }
-    return response == BCM2835_I2C_REASON_OK;
+int8_t I2Cdev::ReadWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data) {
+  bcm2835_i2c_setSlaveAddress(devAddr);
+  sendBuf[0] = regAddr;
+  uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, length*2 );
+  uint8_t i;
+  for (i = 0; i < length; i++) {
+    data[i] = (recvBuf[i*2] << 8) | recvBuf[i*2+1] ;
+  }
+  return  response == BCM2835_I2C_REASON_OK ;
 }
 
-bool I2Cdev::WriteWord(uint8_t devAddr, uint8_t regAddr, uint16_t data)
-{
-    std::lock_guard<std::mutex> lock(mutex);
-
-    bcm2835_i2c_setSlaveAddress(devAddr);
-    sendBuf[0] = regAddr;
-    sendBuf[1] = (uint8_t)(data >> 8); //MSByte
-    sendBuf[2] = (uint8_t)(data >> 0); //LSByte
-    uint8_t response = bcm2835_i2c_write(sendBuf, 3);
-    return response == BCM2835_I2C_REASON_OK;
+bool I2Cdev::WriteWord(uint8_t devAddr, uint8_t regAddr, uint16_t data){
+  bcm2835_i2c_setSlaveAddress(devAddr);
+  sendBuf[0] = regAddr;
+  sendBuf[1] = (uint8_t) (data >> 8); //MSByte
+  sendBuf[2] = (uint8_t) (data >> 0); //LSByte
+  uint8_t response = bcm2835_i2c_write(sendBuf, 3);
+  return response == BCM2835_I2C_REASON_OK ;
 }
 
-bool I2Cdev::WriteBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data)
-{
-    std::lock_guard<std::mutex> lock(mutex);
+bool I2Cdev::WriteBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data){
+  bcm2835_i2c_setSlaveAddress(devAddr);
+  sendBuf[0] = regAddr;
+  uint8_t i;
+  for (i = 0; i < length; i++) {
+    sendBuf[i+1] = data[i] ;
+  }
+  uint8_t response = bcm2835_i2c_write(sendBuf, 1+length);
+  return response == BCM2835_I2C_REASON_OK ;
+}
 
-    bcm2835_i2c_setSlaveAddress(devAddr);
-    sendBuf[0] = regAddr;
-
-    for (uint8_t i = 0; i < length; i++)
-    {
-        sendBuf[i + 1] = data[i];
-    }
-    uint8_t response = bcm2835_i2c_write(sendBuf, 1 + length);
-    return response == BCM2835_I2C_REASON_OK;
+bool I2Cdev::WriteWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data){
+  bcm2835_i2c_setSlaveAddress(devAddr);
+  sendBuf[0] = regAddr;
+  uint8_t i;
+  for (i = 0; i < length; i++) {
+    sendBuf[1+2*i] = (uint8_t) (data[i] >> 8); //MSByte
+    sendBuf[2+2*i] = (uint8_t) (data[i] >> 0); //LSByte
+  }
+  uint8_t response = bcm2835_i2c_write(sendBuf, 1+2*length);
+  return response == BCM2835_I2C_REASON_OK ;
 }
 
 bool I2Cdev::WriteByte(uint8_t devAddr, uint8_t data)
 {
-    std::lock_guard<std::mutex> lock(mutex);
-
     bcm2835_i2c_setSlaveAddress(devAddr);
-    // sendBuf[0] = regAddr;
     sendBuf[0] = data;
     uint8_t response = bcm2835_i2c_write(sendBuf, 1);
     return response == BCM2835_I2C_REASON_OK;
 }
 
-bool I2Cdev::WriteWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data)
+bool I2Cdev::ReadBytes(uint8_t devAddr, uint8_t length, uint8_t *data)
 {
-    std::lock_guard<std::mutex> lock(mutex);
-
     bcm2835_i2c_setSlaveAddress(devAddr);
-    sendBuf[0] = regAddr;
+    uint8_t response = bcm2835_i2c_read(recvBuf, length);
 
     for (uint8_t i = 0; i < length; i++)
     {
-        sendBuf[1 + 2 * i] = (uint8_t)(data[i] >> 8); //MSByte
-        sendBuf[2 + 2 * i] = (uint8_t)(data[i] >> 0); //LSByte
+        data[i] = (uint8_t)recvBuf[i];
     }
-    uint8_t response = bcm2835_i2c_write(sendBuf, 1 + 2 * length);
     return response == BCM2835_I2C_REASON_OK;
 }
