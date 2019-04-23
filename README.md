@@ -1,7 +1,8 @@
 # MOvIT-Detect
 MOvIT-Detect est la partie capteur du projet MOvIT+, elle prend en charge différents capteurs i2c, ces capteurs servent à déterminer l'état du fauteuil et de son passager. Le code d'acquisitions des capteurs est en C++ et communique via MQTT au backend. Les capteurs pris en charge actuellement sont les suivants:
+
 | Capteur | Utilité | Communication | Adresse |
-| :------: | :------ | :------: | :------: |
+| --- | --- | --- | --- |
 | Accéléromètre MPU6050 | À l'aide de deux accéléromètres, il est possible de connaitre l'angle de la chaise selon le fauteuil en entier, et ainsi connaitre la position du patient | I²C | 0x68-0x69 |
 | I/O Extender PCA9536 | Utilisé pour la télécommande, permet le contrôle de deux LED, une rouge et une verte, d'un moteur pour des vibrations et la lecture d'un bouton poussoir | I²C | 0x41 |
 | ADC MAX11611 | ADC de 10-bit a 12 canaux, les 9 premiers sont utilisés pour la lecture de 9 capteurs à pression, sous le siège du patient, permet alors de connaitre le centre de gravité du patient, et la détection du patient sur le fauteuil | I²C | 0x35 |
@@ -9,10 +10,11 @@ MOvIT-Detect est la partie capteur du projet MOvIT+, elle prend en charge diffé
 | ToF Ranging VL53L0X | Permet de calculer la distance entre le sol et le fauteuil, utiliser avec le capteur de Flow PWM3901, cela permet de calculer la vitesse du fauteuil | I²C | 0x29 |
 | Optical Flow SensorPMW3901 | Calcul la distance en deltaX et deltaY de son changement de position, permet de savoir si le fauteuil est en mouvement, et de quelle distance celui-ci c'est déplacé | SPI | X |
 
+
 # Configuration des capteurs
 Il faut pour commencé activé le port I²C et le port SPI du Raspberry Pipour ce faire on utilise l'utilitaire `raspa-config`
 ```bash
-sudo raspa-config
+sudo raspi-config
 ```
 ##### Activation I²C
 Activation du I²C avec raspa-config
