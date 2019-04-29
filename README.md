@@ -147,3 +147,22 @@ La sortie en console affiche l'état de chacun des capteurs, et des machines à 
 
 # Les Makefiles
 Le projet contient deux Makefiles, soit MakefilePI, le fichier utiliser pour compiler le projet directement sur le Raspberry Pi Zero W, ainsi qu'un autre nommé Makefile. Ce second Makefile est utilisé pour la Cross-Compilation. Ce MakeFile contient des fichiers avec un lien absolu qu'il faut remplacer avant de pouvoir l'utiliser.
+
+# Machines à états finis
+Le système embarqué est régi par différente machine à états finis voici le détail de chacune d'elle
+
+## Machine à états des bascules
+La machine à état fini de détection de bascule permet de générer des événements de bascules lorsque le fauteuil quitte la zone de détection de -5° à 10°. Voici le schéma de cette machine a état fini.
+![images](images/AngleFSM.png)
+
+## Machine à états des déplacements
+La machine à état fini de détection de déplacement détecte lorsque le fauteuil a subi un déplacement sur une certaine distance et généré un événement de déplacement. Voici le schéma de cette machine à état fini.
+![images](images/TravelFSM.png)
+
+## Machine à états de détection de présence
+La machine a états finis de détection de présence, détecte lorsqu'une personne est assise sur le fauteuil. Elle permet d'éviter au possible les fausses détections. Voici le schéma de cette machine à état fini.
+![images](images/SeatingFSM.png)
+
+## Machine à états des notifications
+La machine à état fini des notifications permet de générer des notifications de bascule après un certain temps que la personne est assise sur le fauteuil, elle gère aussi les mises en veille de bascule. Voici le schéma de cette machine à états fini.
+![images](images/NotificationFSM.png)
