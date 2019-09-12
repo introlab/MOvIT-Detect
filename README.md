@@ -116,7 +116,7 @@ sudo apt-key add mosquitto-repo.gpg.key
 cd /etc/apt/sources.list.d/
 sudo wget http://repo.mosquitto.org/debian/mosquitto-stretch.list
 sudo apt-get update
-sudo apt-get install -y libmosquitto-dev libmosquittopp-dev libssl-dev
+sudo apt-get install -y libmosquitto-dev libmosquittopp-dev libssl-dev automake 
 ```
 
 Il faut ensuite cloner ce Repo et y accéder:
