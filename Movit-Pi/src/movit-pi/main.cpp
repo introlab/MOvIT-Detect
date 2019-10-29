@@ -71,8 +71,9 @@ int main(int argc, char *argv[])
         chairManager.CheckNotification();
         stop = std::chrono::high_resolution_clock::now();
         elapsed = stop - start;
-        sleepTime = ((0.10 * 1000000) - (elapsed.count() * 1000000));
+        sleepTime = ((1.00 * 1000000) - (elapsed.count() * 1000000));
         usleep((sleepTime >= 0) ? sleepTime : 0);
+ 	printf("sleep ----------------------------------------- %i\n",(sleepTime >= 0) ? sleepTime: 0);
     }
     return 0;
 }

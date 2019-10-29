@@ -34,7 +34,9 @@ THE SOFTWARE.
 #error A C++ compiler is required!
 #endif 
 
+
 #include <bcm2835.h>
+//#include <wiringPiI2C.h>
 #include <math.h> // required for BMP180
 #include <stdlib.h> // required for MPU6060
 #include <string.h> // required for MPU6060

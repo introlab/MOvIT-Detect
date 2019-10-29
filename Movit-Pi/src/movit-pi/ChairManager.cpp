@@ -301,10 +301,12 @@ void ChairManager::UpdateDevices()
 
     ReadFromServer();
 
-    displaySensorData(sensorData);
-    displayChairState(chairState);
-    printf("\r\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K%s%s%s", (sensorData.matConnected) ? "\033[A\33[2K\033[A\33[2K\033[A\33[2K" : "", (sensorData.mIMUConnected) ? "\033[A\33[2K" : "", (sensorData.fIMUConnected) ? "\033[A\33[2K" : "");
-    printf("\r\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K\033[A%s", (chairState.isSeated) ? "\033[A\33[2K\033[A\33[2K" : "");
+    //DL
+
+    //displaySensorData(sensorData);
+    //displayChairState(chairState);
+    //printf("\r\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K%s%s%s", (sensorData.matConnected) ? "\033[A\33[2K\033[A\33[2K\033[A\33[2K" : "", (sensorData.mIMUConnected) ? "\033[A\33[2K" : "", (sensorData.fIMUConnected) ? "\033[A\33[2K" : "");
+    //printf("\r\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K\033[A%s", (chairState.isSeated) ? "\033[A\33[2K\033[A\33[2K" : "");
     
 }
 
