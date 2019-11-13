@@ -1,7 +1,7 @@
 export TARGET_PREFIX=arm-linux-gnueabihf-
 export CXX = $(TARGET_PREFIX)g++
 
-CXXFLAGS = -g -Wall -std=c++11 -O3
+CXXFLAGS = -g -Wall -std=c++11
 LDLIBS = -lpthread -lrt -lm -lmosquitto -lbcm2835 -lmosquittopp
 LDFLAGS = -I/usr/include -I/usr/local/include -Iexternal/include -Lexternal/lib -lmosquitto -lbcm2835 -lmosquittopp
 DIRECTORIES := Obj/movit-pi Executables

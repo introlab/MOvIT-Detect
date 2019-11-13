@@ -30,6 +30,8 @@ THE SOFTWARE.
 #include "I2Cdev.h"
 #include <stdio.h>
 
+//int i2c_fd = 0;
+
 I2Cdev::I2Cdev() { }
 
 void I2Cdev::Initialize() {
@@ -125,6 +127,10 @@ int8_t I2Cdev::ReadBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8
   for (i = 0; i < length ; i++) {
     data[i] = (uint8_t) recvBuf[i];
   }
+
+  if (response != BCM2835_I2C_REASON_OK)
+	printf("Cannot read length: %i, addr: %2.2x, reg: %2.2x \n",(int) length, (int) devAddr, (int) regAddr);	  
+
   return response == BCM2835_I2C_REASON_OK;
 }
 

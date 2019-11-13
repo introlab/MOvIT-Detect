@@ -152,20 +152,21 @@ void DeviceManager::CalibrateMobileIMU() {
 }
 
 void DeviceManager::Update() {
-    double arr[3];
+    //double arr[3];
 
     //Reception données mobileIMU
-    
+  
+
     if(sensorData.time - lastmIMUReset > 900) {
         lastmIMUReset = sensorData.time;
         _mobileImu->ResetDevice();
-        //printf("Reset mobile IMU\n");
+        printf("Reset mobile IMU\n");
     }
 
     if(sensorData.time - lastfIMUReset > 900) {
         lastfIMUReset = sensorData.time;
         _fixedImu->ResetDevice();
-        //printf("Reset fixed IMU\n");
+        printf("Reset fixed IMU\n");
     }
 
     if(_mobileImu->IsConnected()) {
@@ -185,9 +186,10 @@ void DeviceManager::Update() {
             sensorData.mIMUConnected = true;
         } else {
             mobileFail++;
-            printf("Fixed: %d, mobile: %d\n", fixedFail, mobileFail);
+            printf("Fixed: %d, mobile: %d count: %d\n", fixedFail, mobileFail, (int) count);
         }
     } else {
+	printf("Mobile not connected\n");
         _mobileImu->Initialize();
         sensorData.mIMUConnected = false;
         //sensorData.mIMUAccX = 0;
@@ -220,6 +222,7 @@ void DeviceManager::Update() {
             printf("Fixed: %d, mobile: %d\n", fixedFail, mobileFail);
         }
     } else {
+	printf("Fixed not connected \n");
         _fixedImu->Initialize();
         sensorData.fIMUConnected = false;
         //sensorData.fIMUAccX = 0;
@@ -235,6 +238,7 @@ void DeviceManager::Update() {
         sensorData.tofConnected = true;
         sensorData.tofRange = _VL53L0XSensor->ReadRangeSingleMillimeters();
     } else {
+	printf("VL53 not connected\n");
         sensorData.tofConnected = false;
         sensorData.tofRange = 450;                  //Default value to get a distance when no tof
         _VL53L0XSensor->Initialize(true);
@@ -244,6 +248,7 @@ void DeviceManager::Update() {
         sensorData.flowConnected = true;
         _PMW3901Sensor->ReadMotionCount(&sensorData.flowTravelX, &sensorData.flowTravelY);
     } else {
+	printf("PMW3901 not connected \n");
         sensorData.flowConnected = false;
         sensorData.flowTravelX = 0;
         sensorData.flowTravelY = 0;
@@ -255,6 +260,7 @@ void DeviceManager::Update() {
         sensorData.alarmConnected = true;
         sensorData.alarmButtonPressed = _alarm.ButtonPressed();
     } else {
+	printf("Alarm is not connected\n");
         sensorData.alarmConnected = false;
         sensorData.alarmRedLedOn = false;
         sensorData.alarmGreenLedOn = false;
@@ -268,6 +274,7 @@ void DeviceManager::Update() {
         _pressureMat->Update();
         _pressureMat->GetRawAnalogData(sensorData.matData);
     } else {
+	printf("Pressure mat not connected\n");
         sensorData.matConnected = false;
         _pressureMat->Initialize();
         for(int i = 0; i < 9; i++) {

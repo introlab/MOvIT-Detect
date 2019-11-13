@@ -18,10 +18,26 @@ using std::chrono::milliseconds;
 
 void exit_program_handler(int s)
 {
-    FileManager *fileManager = FileManager::GetInstance();
-    DeviceManager *deviceManager = DeviceManager::GetInstance(fileManager);
-    deviceManager->TurnOff();
-    exit(1);
+
+    if (s == SIGINT)
+    {
+    	printf("SIGINT, exiting...\n");			
+    	FileManager *fileManager = FileManager::GetInstance();
+    	DeviceManager *deviceManager = DeviceManager::GetInstance(fileManager);
+    	deviceManager->TurnOff();
+    	exit(1);
+    }
+    else if (s == SIGALRM)
+    {
+	//Watchdog    
+	printf("Watchdog timer, exiting\n");
+	exit(2);
+    }
+    else 
+    {
+	printf("Unknown signal received: %i \n",s);
+	exit(3);
+    }
 }
 
 void printHeader() {
@@ -53,6 +69,7 @@ int main(int argc, char *argv[])
     int sleepTime = 0;
 
     sigaction(SIGINT, &sigIntHandler, NULL);
+    sigaction(SIGALRM, &sigIntHandler, NULL);
 
     MosquittoBroker mosquittoBroker("embedded");
     FileManager *fileManager = FileManager::GetInstance();
@@ -65,14 +82,22 @@ int main(int argc, char *argv[])
 
     while (1)
     {
+	//Alarm in 1 sec
+	alarm(1);    
         start = std::chrono::high_resolution_clock::now();
+	printf("ReadFromServer() ");
         chairManager.ReadFromServer();
+	printf("UpdateDevices() ");
         chairManager.UpdateDevices();
+	printf("CheckNotification() \n");
         chairManager.CheckNotification();
         stop = std::chrono::high_resolution_clock::now();
         elapsed = stop - start;
-        sleepTime = ((0.10 * 1000000) - (elapsed.count() * 1000000));
-        usleep((sleepTime >= 0) ? sleepTime : 0);
+        sleepTime = ((1.00 * 1000000) - (elapsed.count() * 1000000));
+    	//Cancel alarm (watchdog)
+	alarm(0);
+    	usleep((sleepTime >= 0) ? sleepTime : 0);
+ 	printf("sleep ----------------------------------------- %i\n",(sleepTime >= 0) ? sleepTime: 0);
     }
     return 0;
 }
