@@ -82,8 +82,8 @@ int main(int argc, char *argv[])
 
     while (1)
     {
-	//Alarm in 1 sec
-	alarm(1);    
+	//Alarm in 3 sec
+	alarm(3);    
         start = std::chrono::high_resolution_clock::now();
 	printf("ReadFromServer() ");
         chairManager.ReadFromServer();
