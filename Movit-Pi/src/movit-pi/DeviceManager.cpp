@@ -237,6 +237,20 @@ void DeviceManager::Update() {
     if(_VL53L0XSensor->IsConnected()) {
         sensorData.tofConnected = true;
         sensorData.tofRange = _VL53L0XSensor->ReadRangeSingleMillimeters();
+        //Bug fix : VL53L0X library returns '65535' when it times out. It will keep returning '65535' until deleted.
+        //How to test : Use prints in the VL53L0X library. Pointing the sensor towards rubber tires at close range seems to trigger the issue.
+        //Solution : Delete, reinitialize and read again.
+        if(sensorData.tofRange == 65535) {
+            delete _VL53L0XSensor;
+            _VL53L0XSensor = new VL53L0X;
+            _VL53L0XSensor->Initialize();
+            sensorData.tofRange = _VL53L0XSensor->ReadRangeSingleMillimeters();
+            //If it still returns '65535', replace with '450' to avoid breaking TravelFSM cycle
+            if(sensorData.tofRange == 65535){
+                sensorData.tofRange = 450;
+                printf("\nOverwrote tofRange value to '450' because reading timed out\n");
+            }
+        }
     } else {
 	printf("VL53 not connected\n");
         sensorData.tofConnected = false;

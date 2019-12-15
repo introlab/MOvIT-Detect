@@ -15,7 +15,9 @@ ___
 ## Table des matières :
 - [MOvIT-Detect](#movit-detect)
   - [Table des matières :](#table-des-mati%c3%a8res)
-- [1. Configuration des capteurs](#1-configuration-des-capteurs)
+- [<ol>
+<li>Configuration des capteurs</li>
+</ol>](#ol-liconfiguration-des-capteursli-ol)
   - [1.1. Activation des capteurs](#11-activation-des-capteurs)
       - [Activation I²C](#activation-i%c2%b2c)
       - [Activation SPI](#activation-spi)
@@ -24,7 +26,9 @@ ___
       - [Installation de i2cdetect](#installation-de-i2cdetect)
       - [RTC MCP79410](#rtc-mcp79410)
       - [Vérification de la date et heure](#v%c3%a9rification-de-la-date-et-heure)
-- [2. Installation de MOvIt-Detect](#2-installation-de-movit-detect)
+- [<ol start="2">
+<li>Installation de MOvIt-Detect</li>
+</ol>](#ol-start%222%22-liinstallation-de-movit-detectli-ol)
   - [2.1. Installation de GitHub](#21-installation-de-github)
   - [2.2. Installation de librairies](#22-installation-de-librairies)
   - [2.3. Installation de MOvIT-Detect](#23-installation-de-movit-detect)
@@ -33,7 +37,9 @@ ___
       - [Exécution de MOvIT-Detect](#ex%c3%a9cution-de-movit-detect)
   - [2.4. Cross-compilation](#24-cross-compilation)
       - [Utiliraire de cross-compilation](#utiliraire-de-cross-compilation)
-- [3. Explication du code](#3-explication-du-code)
+- [<ol start="3">
+<li>Explication du code</li>
+</ol>](#ol-start%223%22-liexplication-du-codeli-ol)
   - [3.1. Machines à états finis](#31-machines-%c3%a0-%c3%a9tats-finis)
       - [Machine à états des bascules](#machine-%c3%a0-%c3%a9tats-des-bascules)
       - [Machine à états des déplacements](#machine-%c3%a0-%c3%a9tats-des-d%c3%a9placements)
@@ -166,9 +172,9 @@ git clone https://github.com/introlab/MOvIT-Detect.git
 cd MOvIT-Detect
 ```
 #### Compilation de la librairie bcm2835
-Il faut également la librairie _bcm2835_ pour communiquer avec les ports GPIO du processeur. Or, la librairie a été modifié pour ajouter des _timeouts_. Elle est disponible à la racine du projet :
+Il faut également la librairie _bcm2835_ pour communiquer avec les ports GPIO du processeur. Elle est disponible à la racine du projet :
 ```bash
-cd bcm2835-1.58
+cd bcm2835-1.60
 ./configure
 make && sudo make check && sudo make install
 ```
@@ -180,7 +186,7 @@ Pour compiler le projet, il suffit d'exécuter les lignes suivantes :
 cd MOvIT-Detect/Movit-Pi
 make -f MakefilePI all # Utilisation du Makefile pour compilation directment sur le PI
 ```
-> Il n'est pas recommendé de compiler le projet ainsi directement sur l'appareil à cause du temps que le système prend pour accomplir cette tâche, soit plus de 25 minutes. Voir la section concernant la [cross-compilation](#cross-compilation)
+> La compilation de ce code peut prendre 2 minutes. Voir la section concernant la [cross-compilation](#cross-compilation)
 
 #### Exécution de MOvIT-Detect
 L'exécutable sera alors créé dans le dossier Executables, sous le nom movit-pi. Le programme doit obligatoirement être exécuté avec sudo, autrement le système ne démarrera pas. Il est possible de démarrer le programme compilé avec la commande suivante:

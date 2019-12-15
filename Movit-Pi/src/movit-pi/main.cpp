@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
 {
 
     if (getuid()) {
-        printf("Please run as root exitting...\n");
+        printf("Please run as root, exiting...\n");
         return 0;    
     }
 
@@ -77,13 +77,17 @@ int main(int argc, char *argv[])
     deviceManager->InitializeDevices();
     ChairManager chairManager(&mosquittoBroker, deviceManager);
 
-    system("clear");
+
+    //Alarm testalarm;
+    //testalarm.TurnOnRedLed();    
+    //testalarm.TurnOnAlternatingBlinkAlarmThread();
+//    system("clear");
     printHeader();
 
     while (1)
     {
 	//Alarm in 3 sec
-	alarm(3);    
+	alarm(4);    
         start = std::chrono::high_resolution_clock::now();
 	printf("ReadFromServer() ");
         chairManager.ReadFromServer();
@@ -94,7 +98,7 @@ int main(int argc, char *argv[])
         stop = std::chrono::high_resolution_clock::now();
         elapsed = stop - start;
         sleepTime = ((1.00 * 1000000) - (elapsed.count() * 1000000));
-    	//Cancel alarm (watchdog)
+    //Cancel alarm (watchdog)
 	alarm(0);
     	usleep((sleepTime >= 0) ? sleepTime : 0);
  	printf("sleep ----------------------------------------- %i\n",(sleepTime >= 0) ? sleepTime: 0);

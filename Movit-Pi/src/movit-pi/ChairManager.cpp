@@ -233,15 +233,17 @@ void ChairManager::UpdateDevices()
             lastNotificationState = notificationFSM.getCurrentState();
             _deviceManager->getAlarm()->TurnOffAlarm();
         }
+        else {
+            if(blinkEnable) {
+                _deviceManager->getAlarm()->TurnOnAlternatingBlinkAlarmThread();
+                printf("Turned on blinking alarm");
+            }
 
-        if(blinkEnable) {
-            _deviceManager->getAlarm()->TurnOnAlternatingBlinkAlarmThread();
-        }
-
-        if(vibrationEnable) {
-            _deviceManager->getAlarm()->TurnOnDCMotor();
-        } else {
-            _deviceManager->getAlarm()->TurnOffDCMotor();
+            if(vibrationEnable) {
+                _deviceManager->getAlarm()->TurnOnDCMotor();
+            } else {
+                _deviceManager->getAlarm()->TurnOffDCMotor();
+            }
         }
 
     } else if (notificationFSM.getCurrentState() == static_cast<int>(NotificationState::IN_TILT)) {
@@ -250,26 +252,28 @@ void ChairManager::UpdateDevices()
             lastNotificationState = notificationFSM.getCurrentState();
             _deviceManager->getAlarm()->TurnOffAlarm();
         }
-        if(chairState.seatAngle  < angleFSM.getTargetAngle() - 2) {
-            //Sous l'angle voulu, Allume rouge
-            if(blinkEnable) {
-                _deviceManager->getAlarm()->TurnOnRedLed();
-                _deviceManager->getAlarm()->TurnOffGreenLed();
-                _deviceManager->getAlarm()->TurnOffDCMotor();
-            }
-        } else if(chairState.seatAngle  > angleFSM.getTargetAngle() + 2) {
-            //Au dessus de l'angle voulu, Allume vert
-            if(blinkEnable) {
-                _deviceManager->getAlarm()->TurnOffRedLed();
-                _deviceManager->getAlarm()->TurnOnGreenLed();
-                _deviceManager->getAlarm()->TurnOffDCMotor();
-            }
-        } else {
-            // +/- deux de l'angle voulu allume rouge et vert
-            if(blinkEnable) {
-                _deviceManager->getAlarm()->TurnOnRedLed();
-                _deviceManager->getAlarm()->TurnOnGreenLed();
-                _deviceManager->getAlarm()->TurnOffDCMotor();
+        else {
+            if(chairState.seatAngle  < angleFSM.getTargetAngle() - 2) {
+                //Sous l'angle voulu, Allume rouge
+                if(blinkEnable) {
+                    _deviceManager->getAlarm()->TurnOnRedLed();
+                    _deviceManager->getAlarm()->TurnOffGreenLed();
+                    _deviceManager->getAlarm()->TurnOffDCMotor();
+                }
+            } else if(chairState.seatAngle  > angleFSM.getTargetAngle() + 2) {
+                //Au dessus de l'angle voulu, Allume vert
+                if(blinkEnable) {
+                    _deviceManager->getAlarm()->TurnOffRedLed();
+                    _deviceManager->getAlarm()->TurnOnGreenLed();
+                    _deviceManager->getAlarm()->TurnOffDCMotor();
+                }
+            } else {
+                // +/- deux de l'angle voulu allume rouge et vert
+                if(blinkEnable) {
+                    _deviceManager->getAlarm()->TurnOnRedLed();
+                    _deviceManager->getAlarm()->TurnOnGreenLed();
+                    _deviceManager->getAlarm()->TurnOffDCMotor();
+                }
             }
         }
     } else if (notificationFSM.getCurrentState() == static_cast<int>(NotificationState::TILT_DURATION_OK)) {
@@ -279,14 +283,16 @@ void ChairManager::UpdateDevices()
             lastNotificationState = notificationFSM.getCurrentState();
             _deviceManager->getAlarm()->TurnOffAlarm();
         }
-        if(blinkEnable) {
-            _deviceManager->getAlarm()->TurnOnBlinkGreenAlarmThread();
-        }
+        else {
+            if(blinkEnable) {
+                _deviceManager->getAlarm()->TurnOnBlinkGreenAlarmThread();
+            }
 
-        if(vibrationEnable) {
-            _deviceManager->getAlarm()->TurnOnDCMotor();
-        } else {
-            _deviceManager->getAlarm()->TurnOffDCMotor();
+            if(vibrationEnable) {
+                _deviceManager->getAlarm()->TurnOnDCMotor();
+            } else {
+                _deviceManager->getAlarm()->TurnOffDCMotor();
+            }
         }
     } else {
         _deviceManager->getAlarm()->TurnOffAlarm();
@@ -319,16 +325,16 @@ void ChairManager::ReadFromServer()
     }
 
     if (_mosquittoBroker->GoalHasChanged()) {
-        int a, b, c;
-        _mosquittoBroker->getGoal(&a,&b,&c);
-        angleFSM.setParameter(a,b,c);
+        int frequencyGoal, durationGoal, angleGoal;
+        _mosquittoBroker->getGoal(&frequencyGoal,&durationGoal,&angleGoal);
+        angleFSM.setParameter(frequencyGoal, durationGoal, angleGoal);
         _mosquittoBroker->SetGoalHasChanged(false);
     }
 
     if(_mosquittoBroker->offsetChanged()) {
-        int m, f;
-        _mosquittoBroker->getOffsets(&m, &f);
-        setAngleOffset(f, m);
+        int mobileIMUOffset, fixedIMUOffset;
+        _mosquittoBroker->getOffsets(&mobileIMUOffset, &fixedIMUOffset);
+        setAngleOffset(fixedIMUOffset, mobileIMUOffset);
         _mosquittoBroker->setOffsetChanged(false);
     }
 }
