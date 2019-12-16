@@ -86,22 +86,25 @@ int main(int argc, char *argv[])
 
     while (1)
     {
-	//Alarm in 3 sec
-	alarm(4);    
+	alarm(4); //Alarm in 4 sec
         start = std::chrono::high_resolution_clock::now();
-	printf("ReadFromServer() ");
+
+	    printf("ReadFromServer() ");
         chairManager.ReadFromServer();
-	printf("UpdateDevices() ");
+
+	    printf("UpdateDevices() ");
         chairManager.UpdateDevices();
-	printf("CheckNotification() \n");
-        chairManager.CheckNotification();
+
+	    //printf("CheckNotification() \n"); //Does nothing?
+        //chairManager.CheckNotification();
+
         stop = std::chrono::high_resolution_clock::now();
+
         elapsed = stop - start;
         sleepTime = ((1.00 * 1000000) - (elapsed.count() * 1000000));
-    //Cancel alarm (watchdog)
-	alarm(0);
+        alarm(0); //Cancel alarm (watchdog)
     	usleep((sleepTime >= 0) ? sleepTime : 0);
- 	printf("sleep ----------------------------------------- %i\n",(sleepTime >= 0) ? sleepTime: 0);
+ 	    printf("sleep ----------------------------------------- %i\n",(sleepTime >= 0) ? sleepTime: 0);
     }
     return 0;
 }

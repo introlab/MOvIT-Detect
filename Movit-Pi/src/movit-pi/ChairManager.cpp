@@ -170,6 +170,7 @@ void ChairManager::calculateCenterOfGravityPerQuadrant(SensorData sd, Coord_t *q
 uint32_t ChairManager::calculateDistance(SensorData sd) {
 
     if(sd.tofRange > 8190)  {
+        printf("\nDetected range in ChairManager is higher than 8190; surface is out of reach of sensor.\n");
          return 0.0;
     }
 
@@ -183,12 +184,8 @@ uint32_t ChairManager::calculateDistance(SensorData sd) {
     return static_cast<uint32_t>(((travelInPixels * fieldOfView * sd.tofRange) / numberOfPixels)/10.0);
 }
 
-bool ChairManager::verifyIfUserIsSeated(SensorData sd) {
-    int sum = 0;
-    for(int i = 0; i < 9; i++) {
-        sum += sd.matData[i];
-    }
-    return sum > WEIGHT_THRESHOLD;
+bool ChairManager::verifyIfUserIsSeated(DeviceManager *_deviceManager) {
+    return _deviceManager->IsUserSeated();
 }
 
 void ChairManager::UpdateDevices()
@@ -197,7 +194,7 @@ void ChairManager::UpdateDevices()
     sensorData = _deviceManager->getSensorData();
 
     chairState.time = sensorData.time;
-    chairState.isSeated = verifyIfUserIsSeated(sensorData);
+    chairState.isSeated = verifyIfUserIsSeated(_deviceManager);
     chairState.centerOfGravity = calculateCenterOfGravity(sensorData);
     calculateCenterOfGravityPerQuadrant(sensorData, chairState.centerOfGravityPerQuadrant);
 

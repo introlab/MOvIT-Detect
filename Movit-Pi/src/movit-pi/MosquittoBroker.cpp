@@ -246,7 +246,7 @@ void MosquittoBroker::SendSensorsData(SensorData sd)
                 },\
                 \"pressureMat\" : {\
                     \"connected\" : "+std::to_string(sd.matConnected)+",\
-                    \"matData\" : [ "+std::to_string(sd.matData[0])+", "+std::to_string(sd.matData[1])+", "+std::to_string(sd.matData[2])+", "+std::to_string(sd.matData[3])+", "+std::to_string(sd.matData[0])+", "+std::to_string(sd.matData[5])+", "+std::to_string(sd.matData[6])+", "+std::to_string(sd.matData[7])+", "+std::to_string(sd.matData[8])+" ]\
+                    \"matData\" : [ "+std::to_string(sd.matData[0])+", "+std::to_string(sd.matData[1])+", "+std::to_string(sd.matData[2])+", "+std::to_string(sd.matData[3])+", "+std::to_string(sd.matData[4])+", "+std::to_string(sd.matData[5])+", "+std::to_string(sd.matData[6])+", "+std::to_string(sd.matData[7])+", "+std::to_string(sd.matData[8])+" ]\
                 },\
                 \"mIMU\" : {\
                     \"connected\" : "+std::to_string(sd.mIMUConnected)+",\

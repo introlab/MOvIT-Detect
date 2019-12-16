@@ -47,7 +47,7 @@ bool PressureMat::IsConnected()
 
 bool PressureMat::InitializeForcePlate()
 {
-    isInitialized = true;
+    isInitialized = false;
     if (IsConnected())
     {
         for (uint8_t i = 0; i < PRESSURE_SENSOR_COUNT; i++)
@@ -66,7 +66,7 @@ bool PressureMat::InitializeForcePlate()
 
 void PressureMat::Calibrate()
 {
-    const uint8_t maxIterations = 10; //Calibration preceision adjustement - Number of measures (1s) in final mean
+    const uint8_t maxIterations = 10; //Calibration precision adjustement - Number of measures (1s) in final mean
     UpdateForcePlateData();
     _sensorMatrix.CalibrateForceSensor(_max11611, _max11611Data, maxIterations);
     _isCalibrated = true;

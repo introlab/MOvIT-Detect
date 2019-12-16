@@ -46,11 +46,12 @@ bool DeviceManager::IsPressureMatConnected() {
 void DeviceManager::InitializeDevices()
 {
     I2Cdev::Initialize();
-
+    //Read saved settings
     _fileManager->Read();
-
     _notificationsSettings = _fileManager->GetNotificationsSettings();
     _tiltSettings = _fileManager->GetTiltSettings();
+
+    //Initialise devices
     InitializePressureMat();
     InitializeMobileImu();
     InitializeFixedImu();
@@ -58,6 +59,7 @@ void DeviceManager::InitializeDevices()
     _PMW3901Sensor->Initialize();
     _VL53L0XSensor->Initialize();
 
+    //Save settings
     _fileManager->Save();
 }
 
@@ -237,24 +239,24 @@ void DeviceManager::Update() {
     if(_VL53L0XSensor->IsConnected()) {
         sensorData.tofConnected = true;
         sensorData.tofRange = _VL53L0XSensor->ReadRangeSingleMillimeters();
-        //Bug fix : VL53L0X library returns '65535' when it times out. It will keep returning '65535' until deleted.
-        //How to test : Use prints in the VL53L0X library. Pointing the sensor towards rubber tires at close range seems to trigger the issue.
+        //Bug fix : VL53L0X library returns '65535' when it times out. The instance of the class will keep returning '65535' until deleted.
+        //How to test : Use prints in the VL53L0X library. Moving the sensor quickly at close range seems to trigger the issue.
         //Solution : Delete, reinitialize and read again.
         if(sensorData.tofRange == 65535) {
             delete _VL53L0XSensor;
             _VL53L0XSensor = new VL53L0X;
             _VL53L0XSensor->Initialize();
             sensorData.tofRange = _VL53L0XSensor->ReadRangeSingleMillimeters();
-            //If it still returns '65535', replace with '450' to avoid breaking TravelFSM cycle
+            //If it still returns '65535', replace with '260' to avoid breaking TravelFSM cycle
             if(sensorData.tofRange == 65535){
-                sensorData.tofRange = 450;
-                printf("\nOverwrote tofRange value to '450' because reading timed out\n");
+                sensorData.tofRange = 260;
+                printf("\nOverwrote tofRange value to '260' because reading timed out\n");
             }
         }
     } else {
 	printf("VL53 not connected\n");
         sensorData.tofConnected = false;
-        sensorData.tofRange = 450;                  //Default value to get a distance when no tof
+        sensorData.tofRange = 260;                  //Default value to get a distance when no tof
         _VL53L0XSensor->Initialize(true);
     }
 
