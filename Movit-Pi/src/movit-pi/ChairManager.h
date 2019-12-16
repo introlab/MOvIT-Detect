@@ -44,7 +44,7 @@ class ChairManager
 
     Coord_t calculateCenterOfGravity(SensorData sd); 
     void calculateCenterOfGravityPerQuadrant(SensorData sd, Coord_t *quad);
-    bool verifyIfUserIsSeated(DeviceManager *_deviceManager);
+    bool verifyIfUserIsSeated() { return _deviceManager->IsUserSeated(); }
 
     uint32_t calculateDistance(SensorData sd);
 

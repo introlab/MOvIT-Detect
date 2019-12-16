@@ -18,7 +18,7 @@ ForceSensor::ForceSensor()
         _analogOffset[i] = 0;
     }
     _totalSensorMean = 0;
-    _detectionThreshold = 0;
+    _detectionThreshold = 1500;
 }
 
 ForceSensor::~ForceSensor() {}

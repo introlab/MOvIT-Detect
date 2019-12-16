@@ -109,6 +109,33 @@ void MosquittoBroker::on_subcribe(int mid, int qos_count, const int *granted_qos
     printf("Subscription succeeded with id %d.\n", mid);
 }
 
+void MosquittoBroker::on_connect(int rc)
+{
+    printf("Connected with code %d.\n", rc);
+    if (rc == 0)
+    {
+        subscribe(NULL, ALARM_TOPIC); //Unused ?
+        subscribe(NULL, SELECT_WIFI_TOPIC); //Unused ?
+        subscribe(NULL, CALIB_IMU_WITH_OFFSET_TOPIC);
+        subscribe(NULL, GOAL_CHANGED_TOPIC);
+        subscribe(NULL, CALIB_PRESSURE_MAT_TOPIC);
+        subscribe(NULL, CALIB_IMU_TOPIC);
+        subscribe(NULL, NOTIFICATIONS_SETTINGS_TOPIC);
+        PublishMessage("status", "1", 1, true);
+    }
+}
+
+void MosquittoBroker::on_publish(int mid)
+{
+    // printf("Message published with id %d.\n", mid);
+    // uncomment for debug
+}
+
+void MosquittoBroker::on_subcribe(int mid, int qos_count, const int *granted_qos)
+{
+    printf("Subscription succeeded with id %d.\n", mid);
+}
+
 void MosquittoBroker::on_message(const mosquitto_message *msg)
 {
     std::string message;
@@ -138,14 +165,21 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
             splitStringWithDelemiter(message,":",arr,&num);
             if(num == 3) {
                 _frequency = std::stoi(arr[0]);
+                //printf("_frequency=%i\n",_frequency);
+
                 _duration = std::stoi(arr[1]);
+                //printf("_duration=%i\n",_duration);
+
                 _angle = std::stoi(arr[2]);
+                //printf("_angle=%i\n",_angle);
+
                 _GoalChanged = true;
             }
         }
         catch (const std::exception &e)
         {
             printf(EXCEPTION_MESSAGE, e.what());
+            printf(" in GOAL_CHANGED_TOPIC\n");
         }
     }
     
@@ -158,13 +192,16 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
             splitStringWithDelemiter(message,":",arr,&num);
             if(num == 2) {
                 _mIMUOffset = std::stoi(arr[0]);
+                //printf("_mIMUOffset=%i\n",_mIMUOffset);
                 _fIMUOffset = std::stoi(arr[1]);
+                //printf("_fIMUOffset=%i\n",_fIMUOffset);
                 _OffsetChanged = true;
             }
         }
         catch (const std::exception &e)
         {
             printf(EXCEPTION_MESSAGE, e.what());
+            printf(" in CALIB_IMU_WITH_OFFSET_TOPIC\n");
         }
     }
     else if (topic == CALIB_PRESSURE_MAT_TOPIC)
@@ -172,11 +209,13 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
         try
         {
             _calibPressureMatRequired = std::stoi(message);
+            //printf("_calibPressureMatRequired=%i\n",_calibPressureMatRequired);
         }
         catch (const std::exception &e)
         {
             printf(EXCEPTION_MESSAGE, e.what());
-            printf("Setting _calibPressureMatRequired to false\n");
+            printf(" in CALIB_PRESSURE_MAT_TOPIC\n");
+            //printf("Setting _calibPressureMatRequired to false\n");
             _calibPressureMatRequired = false;
         }
     }
@@ -185,10 +224,12 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
         try
         {
             _calibIMURequired = std::stoi(message);
+            //printf("_calibIMURequired=%i\n",_calibIMURequired);
         }
         catch (const std::exception &e)
         {
             printf(EXCEPTION_MESSAGE, e.what());
+            printf(" in CALIB_IMU_TOPIC\n");
             printf("Setting _requiredDuration to 0\n");
             _calibIMURequired = false;
         }
@@ -205,13 +246,14 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
                 _shouldVibrate = std::stoi(arr[1]);
                 _snoozeTime = std::stoi(arr[2]);
                 _isEnabled = std::stoi(arr[3]);
-                printf("\n_shouldBlink : %s\n_shouldVibrate : %s\n_snoozeTime : %s\n_isEnabled value : %s\n\n", _shouldBlink ? "true" : "false", _shouldVibrate ? "true" : "false", _snoozeTime ? "true" : "false", _isEnabled ? "true" : "false");
+                //printf("\n_shouldBlink : %s\n_shouldVibrate : %s\n_snoozeTime : %s\n_isEnabled value : %s\n\n", _shouldBlink ? "true" : "false", _shouldVibrate ? "true" : "false", _snoozeTime ? "true" : "false", _isEnabled ? "true" : "false");
                 _isNotificationsSettingsChanged = true;
             }
         }
         catch (const std::exception &e)
         {
             printf(EXCEPTION_MESSAGE, e.what());
+            printf(" in NOTIFICATIONS_SETTINGS_TOPIC\n");
         }
     }
 }
