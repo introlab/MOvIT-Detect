@@ -184,17 +184,13 @@ uint32_t ChairManager::calculateDistance(SensorData sd) {
     return static_cast<uint32_t>(((travelInPixels * fieldOfView * sd.tofRange) / numberOfPixels)/10.0);
 }
 
-bool ChairManager::verifyIfUserIsSeated(DeviceManager *_deviceManager) {
-    return _deviceManager->IsUserSeated();
-}
-
 void ChairManager::UpdateDevices()
 {
     _deviceManager->Update();
     sensorData = _deviceManager->getSensorData();
 
     chairState.time = sensorData.time;
-    chairState.isSeated = verifyIfUserIsSeated(_deviceManager);
+    chairState.isSeated = verifyIfUserIsSeated();
     chairState.centerOfGravity = calculateCenterOfGravity(sensorData);
     calculateCenterOfGravityPerQuadrant(sensorData, chairState.centerOfGravityPerQuadrant);
 

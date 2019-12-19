@@ -75,10 +75,10 @@ bool DeviceManager::InitializeMobileImu() {
     _mobileImu->Initialize();
     lastmIMUReset = sensorData.time;
     sensorData.mIMUConnected = _mobileImu->IsConnected();
-    printf("mIMUConnected = %d\n", sensorData.mIMUConnected);
+    //printf("mIMUConnected = %d\n", sensorData.mIMUConnected);
     if (!sensorData.mIMUConnected)
     {   
-        printf("mIMUConnected = %d\n", sensorData.mIMUConnected);
+        //printf("mIMUConnected = %d\n", sensorData.mIMUConnected);
         return sensorData.mIMUConnected;
     }
 
@@ -93,7 +93,7 @@ bool DeviceManager::InitializeMobileImu() {
         //_mobileImu->SetOffset(mobileOffset);
         sensorData.mIMUCalibrated = true;
     }
-    printf("mIMUConnected = %d\n", sensorData.mIMUConnected);
+    //printf("mIMUConnected = %d\n", sensorData.mIMUConnected);
     return sensorData.mIMUConnected;
 }
 
@@ -101,7 +101,6 @@ bool DeviceManager::InitializeFixedImu() {
     _fixedImu->Initialize();
     lastfIMUReset = sensorData.time;
     sensorData.fIMUConnected = _fixedImu->IsConnected();
-
     if (!sensorData.fIMUConnected)
     {
         return sensorData.fIMUConnected;
@@ -254,7 +253,7 @@ void DeviceManager::Update() {
             }
         }
     } else {
-	printf("VL53 not connected\n");
+	printf("VL53L0X not connected\n");
         sensorData.tofConnected = false;
         sensorData.tofRange = 260;                  //Default value to get a distance when no tof
         _VL53L0XSensor->Initialize(true);
@@ -266,6 +265,7 @@ void DeviceManager::Update() {
     } else {
 	printf("PMW3901 not connected \n");
         sensorData.flowConnected = false;
+        //Stops detecting movement in FSM when problems with the connection occur:
         sensorData.flowTravelX = 0;
         sensorData.flowTravelY = 0;
         _PMW3901Sensor->Initialize();

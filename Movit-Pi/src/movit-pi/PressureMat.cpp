@@ -47,7 +47,7 @@ bool PressureMat::IsConnected()
 
 bool PressureMat::InitializeForcePlate()
 {
-    isInitialized = false;
+    isInitialized = true;
     if (IsConnected())
     {
         for (uint8_t i = 0; i < PRESSURE_SENSOR_COUNT; i++)

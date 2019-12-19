@@ -89,10 +89,10 @@ int main(int argc, char *argv[])
 	alarm(4); //Alarm in 4 sec
         start = std::chrono::high_resolution_clock::now();
 
-	    printf("ReadFromServer() ");
+	    printf("ReadFromServer()\n");
         chairManager.ReadFromServer();
 
-	    printf("UpdateDevices() ");
+	    printf("UpdateDevices()\n");
         chairManager.UpdateDevices();
 
 	    //printf("CheckNotification() \n"); //Does nothing?
@@ -103,8 +103,8 @@ int main(int argc, char *argv[])
         elapsed = stop - start;
         sleepTime = ((1.00 * 1000000) - (elapsed.count() * 1000000));
         alarm(0); //Cancel alarm (watchdog)
+ 	    printf("------------------------------------------- Sleeping for %i ms \n",(sleepTime >= 0) ? sleepTime/1000: 0);
     	usleep((sleepTime >= 0) ? sleepTime : 0);
- 	    printf("sleep ----------------------------------------- %i\n",(sleepTime >= 0) ? sleepTime: 0);
     }
     return 0;
 }
