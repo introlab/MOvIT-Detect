@@ -109,33 +109,6 @@ void MosquittoBroker::on_subcribe(int mid, int qos_count, const int *granted_qos
     printf("Subscription succeeded with id %d.\n", mid);
 }
 
-void MosquittoBroker::on_connect(int rc)
-{
-    printf("Connected with code %d.\n", rc);
-    if (rc == 0)
-    {
-        subscribe(NULL, ALARM_TOPIC); //Unused ?
-        subscribe(NULL, SELECT_WIFI_TOPIC); //Unused ?
-        subscribe(NULL, CALIB_IMU_WITH_OFFSET_TOPIC);
-        subscribe(NULL, GOAL_CHANGED_TOPIC);
-        subscribe(NULL, CALIB_PRESSURE_MAT_TOPIC);
-        subscribe(NULL, CALIB_IMU_TOPIC);
-        subscribe(NULL, NOTIFICATIONS_SETTINGS_TOPIC);
-        PublishMessage("status", "1", 1, true);
-    }
-}
-
-void MosquittoBroker::on_publish(int mid)
-{
-    // printf("Message published with id %d.\n", mid);
-    // uncomment for debug
-}
-
-void MosquittoBroker::on_subcribe(int mid, int qos_count, const int *granted_qos)
-{
-    printf("Subscription succeeded with id %d.\n", mid);
-}
-
 void MosquittoBroker::on_message(const mosquitto_message *msg)
 {
     std::string message;
