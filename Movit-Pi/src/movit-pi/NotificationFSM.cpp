@@ -21,6 +21,9 @@ void NotificationFSM::updateState(ChairState cs, AngleFSM aFSM, SeatingFSM sFSM,
             }
 
         break;
+
+        //##################################################
+
         case NotificationState::IN_TRAVEL_ELAPSED:
             if (tFSM.getCurrentState() == static_cast<int>(TravelState::ON_THE_MOVE)) {
                 currentState = NotificationState::IN_TRAVEL_ELAPSED;
@@ -28,6 +31,8 @@ void NotificationFSM::updateState(ChairState cs, AngleFSM aFSM, SeatingFSM sFSM,
                 currentState = NotificationState::WAITING_FOR_TILT;
             }
         break;
+
+        //##################################################
 
         case NotificationState::WAIT_PERIOD:
             stopReason = "Other";
@@ -40,6 +45,7 @@ void NotificationFSM::updateState(ChairState cs, AngleFSM aFSM, SeatingFSM sFSM,
             if(sFSM.getCurrentState() == static_cast<int>(SeatingState::CURRENTLY_SEATING) || sFSM.getCurrentState() == static_cast<int>(SeatingState::CONFIRM_STOP_SEATING)) {
                 if(currentTime != cs.time) {
                     secondsCounter++;
+                    //printf ....*******************************************************************
                     if(secondsCounter >= aFSM.getTargetFrequency()) {
                         currentState = NotificationState::NOTIFICATION_TILT_STARTED;
                     }
@@ -53,6 +59,9 @@ void NotificationFSM::updateState(ChairState cs, AngleFSM aFSM, SeatingFSM sFSM,
                 stopReason = "USER_DISABLED";
             }
         break;
+
+        //##################################################
+
         case NotificationState::IN_TRAVEL:
             stopReason = "Other";
             if (tFSM.getCurrentState() == static_cast<int>(TravelState::ON_THE_MOVE)) {
@@ -75,6 +84,9 @@ void NotificationFSM::updateState(ChairState cs, AngleFSM aFSM, SeatingFSM sFSM,
                 stopReason = "USER_DISABLED";
             }
         break;
+
+        //##################################################
+
         case NotificationState::WAITING_FOR_TILT:
             stopReason = "Other";
             secondsCounter = 0;
@@ -109,11 +121,14 @@ void NotificationFSM::updateState(ChairState cs, AngleFSM aFSM, SeatingFSM sFSM,
             }
 
             if(!isEnable) {
-                currentState = NotificationState::NOTIFICATION_TILT_STOPPED;
+                currentState = NotificationState::INIT;
                 stopReason = "USER_DISABLED";
             }
 
         break;
+
+        //##################################################
+
         case NotificationState::TILT_SNOOZED:
             stopReason = "Other";
             if(currentTime != cs.time) {
@@ -131,16 +146,22 @@ void NotificationFSM::updateState(ChairState cs, AngleFSM aFSM, SeatingFSM sFSM,
             }
 
             if(!isEnable) {
-                currentState = NotificationState::NOTIFICATION_TILT_STOPPED;
+                currentState = NotificationState::INIT;
                 stopReason = "USER_DISABLED";
             }
 
         break;
+
+        //##################################################
+
         case NotificationState::NOTIFICATION_TILT_STARTED:
             stopReason = "Other";
             currentState = NotificationState::WAITING_FOR_TILT;
             stopReason = "INITIAL_TILT_REQUESTED";
         break;
+
+        //##################################################
+
         case NotificationState::IN_TILT:
             stopReason = "Other";
             //La personne n'est plus assise
@@ -172,6 +193,9 @@ void NotificationFSM::updateState(ChairState cs, AngleFSM aFSM, SeatingFSM sFSM,
             }
         
         break;
+
+        //##################################################
+
         case NotificationState::TILT_DURATION_OK:
             //La personne n'est plus assise
             if(!(sFSM.getCurrentState() == static_cast<int>(SeatingState::CURRENTLY_SEATING) || sFSM.getCurrentState() == static_cast<int>(SeatingState::CONFIRM_STOP_SEATING))) {
@@ -198,6 +222,9 @@ void NotificationFSM::updateState(ChairState cs, AngleFSM aFSM, SeatingFSM sFSM,
             }
 
         break;
+
+        //##################################################
+        
         case NotificationState::NOTIFICATION_TILT_STOPPED:
             stopReason = "NOTIFICATION_COMPLETE";
             currentState = NotificationState::INIT;

@@ -16,8 +16,6 @@
 #include <unistd.h>
 #include <chrono>
 
-#define WEIGHT_THRESHOLD 200
-
 const Coord_t POSITION_LOOKUP[9] = {{4.0f,4.0f}, {4.0f,0.0f}, {4.0f,-4.0f}, {0.0f,4.0f}, {0.0f,0.0f}, {0.0f,-4.0f}, {-4.0f,4.0f}, {-4.0f,0.0f}, {-4.0f,-4.0f}};
 
 class ChairManager
@@ -44,7 +42,7 @@ class ChairManager
 
     Coord_t calculateCenterOfGravity(SensorData sd); 
     void calculateCenterOfGravityPerQuadrant(SensorData sd, Coord_t *quad);
-    bool verifyIfUserIsSeated(SensorData sd);
+    bool verifyIfUserIsSeated() { return _deviceManager->IsUserSeated(); }
 
     uint32_t calculateDistance(SensorData sd);
 

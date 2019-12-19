@@ -14,20 +14,21 @@ using rapidjson::Writer;
 
 
 /* Subscibed Topics */
-const char *ALARM_TOPIC = "data/set_alarm";
 //const char *REQUIRED_ANGLE_TOPIC = "data/required_back_rest_angle";
 //const char *REQUIRED_PERIOD_TOPIC = "data/required_period";
-const char *REQUIRED_DURATION_TOPIC = "data/required_duration";
-const char *GOAL_CHANGED_TOPIC = "goal/update_data";
+const char *REQUIRED_DURATION_TOPIC = "data/required_duration"; //Unused ?
+const char *SELECT_WIFI_TOPIC = "config/wifi"; //Unused ?
+const char *ALARM_TOPIC = "data/set_alarm"; //Unused ?
 const char *CALIB_PRESSURE_MAT_TOPIC = "config/calib_pressure_mat";
 const char *CALIB_IMU_TOPIC = "config/calib_imu";
 const char *CALIB_IMU_WITH_OFFSET_TOPIC = "config/calib_imu_offset";
 const char *NOTIFICATIONS_SETTINGS_TOPIC = "config/notifications_settings";
-const char *SELECT_WIFI_TOPIC = "config/wifi";
+const char *GOAL_CHANGED_TOPIC = "goal/update_data";
+
 
 
 /* Published Topics */
-const char *CURRENT_IS_WIFI_CONNECTED_TOPIC = "data/current_is_wifi_connected";
+const char *CURRENT_IS_WIFI_CONNECTED_TOPIC = "data/current_is_wifi_connected"; //Unused ?
 const char *HEARTBEAT_TOPIC = "heartbeat/embedded";
 const char *SENSOR_RAW_DATA_TOPIC = "sensors/rawData";
 const char *SENSOR_CHAIR_STATE_TOPIC = "sensors/chairState";
@@ -37,7 +38,11 @@ const char *FSM_TRAVEL_TOPIC = "fsm/travel";
 const char *FSM_NOTIFICATION_TOPIC = "fsm/notification";
 const char *ANGLE_NEW_OFFSET_TOPIC = "config/angle_new_offset";
 
-const char *EXCEPTION_MESSAGE = "Exception thrown by %s()\n";
+
+/* Exception message */
+const char *EXCEPTION_MESSAGE = "Exception thrown by %s()";
+
+
 
 MosquittoBroker::MosquittoBroker(const char *id) : mosquittopp(id)
 {
@@ -82,13 +87,13 @@ void MosquittoBroker::on_connect(int rc)
     printf("Connected with code %d.\n", rc);
     if (rc == 0)
     {
-        subscribe(NULL, ALARM_TOPIC);
+        subscribe(NULL, ALARM_TOPIC); //Unused ?
+        subscribe(NULL, SELECT_WIFI_TOPIC); //Unused ?
         subscribe(NULL, CALIB_IMU_WITH_OFFSET_TOPIC);
         subscribe(NULL, GOAL_CHANGED_TOPIC);
         subscribe(NULL, CALIB_PRESSURE_MAT_TOPIC);
         subscribe(NULL, CALIB_IMU_TOPIC);
         subscribe(NULL, NOTIFICATIONS_SETTINGS_TOPIC);
-        subscribe(NULL, SELECT_WIFI_TOPIC);
         PublishMessage("status", "1", 1, true);
     }
 }
@@ -119,7 +124,7 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
     }
     topic = msg->topic;
 
-    if (topic == SELECT_WIFI_TOPIC)
+    if (topic == SELECT_WIFI_TOPIC) //Unused ?
     {
         _wifiChanged = true;
         _wifiInformation = message;
@@ -133,14 +138,21 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
             splitStringWithDelemiter(message,":",arr,&num);
             if(num == 3) {
                 _frequency = std::stoi(arr[0]);
+                //printf("_frequency=%i\n",_frequency);
+
                 _duration = std::stoi(arr[1]);
+                //printf("_duration=%i\n",_duration);
+
                 _angle = std::stoi(arr[2]);
+                //printf("_angle=%i\n",_angle);
+
                 _GoalChanged = true;
             }
         }
         catch (const std::exception &e)
         {
             printf(EXCEPTION_MESSAGE, e.what());
+            printf(" in GOAL_CHANGED_TOPIC\n");
         }
     }
     
@@ -153,13 +165,16 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
             splitStringWithDelemiter(message,":",arr,&num);
             if(num == 2) {
                 _mIMUOffset = std::stoi(arr[0]);
+                //printf("_mIMUOffset=%i\n",_mIMUOffset);
                 _fIMUOffset = std::stoi(arr[1]);
+                //printf("_fIMUOffset=%i\n",_fIMUOffset);
                 _OffsetChanged = true;
             }
         }
         catch (const std::exception &e)
         {
             printf(EXCEPTION_MESSAGE, e.what());
+            printf(" in CALIB_IMU_WITH_OFFSET_TOPIC\n");
         }
     }
     else if (topic == CALIB_PRESSURE_MAT_TOPIC)
@@ -167,11 +182,13 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
         try
         {
             _calibPressureMatRequired = std::stoi(message);
+            //printf("_calibPressureMatRequired=%i\n",_calibPressureMatRequired);
         }
         catch (const std::exception &e)
         {
             printf(EXCEPTION_MESSAGE, e.what());
-            printf("Setting _calibPressureMatRequired to false\n");
+            printf(" in CALIB_PRESSURE_MAT_TOPIC\n");
+            //printf("Setting _calibPressureMatRequired to false\n");
             _calibPressureMatRequired = false;
         }
     }
@@ -180,10 +197,12 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
         try
         {
             _calibIMURequired = std::stoi(message);
+            //printf("_calibIMURequired=%i\n",_calibIMURequired);
         }
         catch (const std::exception &e)
         {
             printf(EXCEPTION_MESSAGE, e.what());
+            printf(" in CALIB_IMU_TOPIC\n");
             printf("Setting _requiredDuration to 0\n");
             _calibIMURequired = false;
         }
@@ -200,12 +219,14 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
                 _shouldVibrate = std::stoi(arr[1]);
                 _snoozeTime = std::stoi(arr[2]);
                 _isEnabled = std::stoi(arr[3]);
+                //printf("\n_shouldBlink : %s\n_shouldVibrate : %s\n_snoozeTime : %s\n_isEnabled value : %s\n\n", _shouldBlink ? "true" : "false", _shouldVibrate ? "true" : "false", _snoozeTime ? "true" : "false", _isEnabled ? "true" : "false");
                 _isNotificationsSettingsChanged = true;
             }
         }
         catch (const std::exception &e)
         {
             printf(EXCEPTION_MESSAGE, e.what());
+            printf(" in NOTIFICATIONS_SETTINGS_TOPIC\n");
         }
     }
 }
@@ -240,7 +261,7 @@ void MosquittoBroker::SendSensorsData(SensorData sd)
                 },\
                 \"pressureMat\" : {\
                     \"connected\" : "+std::to_string(sd.matConnected)+",\
-                    \"matData\" : [ "+std::to_string(sd.matData[0])+", "+std::to_string(sd.matData[1])+", "+std::to_string(sd.matData[2])+", "+std::to_string(sd.matData[3])+", "+std::to_string(sd.matData[0])+", "+std::to_string(sd.matData[5])+", "+std::to_string(sd.matData[6])+", "+std::to_string(sd.matData[7])+", "+std::to_string(sd.matData[8])+" ]\
+                    \"matData\" : [ "+std::to_string(sd.matData[0])+", "+std::to_string(sd.matData[1])+", "+std::to_string(sd.matData[2])+", "+std::to_string(sd.matData[3])+", "+std::to_string(sd.matData[4])+", "+std::to_string(sd.matData[5])+", "+std::to_string(sd.matData[6])+", "+std::to_string(sd.matData[7])+", "+std::to_string(sd.matData[8])+" ]\
                 },\
                 \"mIMU\" : {\
                     \"connected\" : "+std::to_string(sd.mIMUConnected)+",\

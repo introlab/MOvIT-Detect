@@ -64,51 +64,46 @@ bool MAX11611::Initialize()
     return true;
 }
 
-//Fonctions traitant les donnees brutes (2*8bits par capteur) sur une seule variable 16 bits
+//Fonctions traitant les donnees brutes (2*8bits par capteur) sur une seule variable 16 bits (les données sont sur 10 bits)
 void MAX11611::GetData(uint8_t nbOfAnalogDevices, uint16_t *realData)
 {
     uint8_t rawDataArray[2 * nbOfAnalogDevices];
-    uint8_t *rawData;
-    //uint16_t valeur;
-    uint8_t rawArraySize;
 
-    rawData = rawDataArray;
-    rawArraySize = sizeof(rawDataArray);
-    //Tres lent dans une loop, fait a fin de test
-    for (int i = 0; i < rawArraySize; i++)
+    //Initialisation des arrays à 0
+    for (int i = 0; i < 2*nbOfAnalogDevices; i++)
     {
-        rawData[i] = 0;
-        if (i < (rawArraySize / 2))
-        {
-            realData[i] = 0;
-        }
+        rawDataArray[i] = 0;
     }
-
-    //Ancien call deprecated
-    //ReadBytes(2 * nbOfAnalogDevices, rawData); //2 bytes par capteur (car valeur sur 10 bits (fig.11 datasheet p.16))
-    //Nouveau call à implémenter
-    //mise en commentaire des 4 printfs, decommenter pour debug
-    I2Cdev::ReadBytes(MAX11611_DEFAULT_ADDRESS, 2 * nbOfAnalogDevices, rawData);
-
-    for (int i = 0; i < (2 * nbOfAnalogDevices); i++)
-    {
-        //Pair = Prend seulement les 2 LSB (MSB du resultat), impair tout le byte est les LSB du resultat
-        if (i % 2 == 0)
-        {
-            //printf("\nValeur pair = %i", rawData[i]);
-            rawData[i] &= 0x03;                  // 0b00000011;            //Garde seulement les 2 LSB
-            realData[(i) / 2] = rawData[i] << 8; //Deplace au 8 MSB du resultat
-        }
-        else
-        {
-            //printf("\nValeur impair = %i", rawData[i]);
-            realData[(i - 1) / 2] += rawData[i];
-        }
-    }
-
-    //printf("\n----RealData ---- \n");
     for (int i = 0; i < nbOfAnalogDevices; i++)
     {
-        //printf("i = %i\tdata = %i\n", i, realData[i]);
+        realData[i] = 0;
     }
+
+    I2Cdev::ReadBytes(MAX11611_DEFAULT_ADDRESS, 2 * nbOfAnalogDevices, rawDataArray); //Lecture sur le bus I2C
+    //Format des données en sortie : [ 1 1 1 1 1 1 x x ][ x x x x x x x x  ]   où les x représentes les bits de la donnée
+    //                               [             1 2 ][ 3 4 5 6 7 8 9 10 ]
+    //                               [ rawData[pair]   ][ rawData[impaire] ]
+    //Formattage : 
+    for(int i = 0; i < 2 * nbOfAnalogDevices; i++)
+    {
+        //rawDataArray pair = Prend seulement les 2 LSB -> représente les MSB de la donnée
+        if (i % 2 == 0)
+        {
+            //printf("\nValeur pair = %i", rawDataArray[i]);
+            rawDataArray[i] &= 0x03;                  // = 0b00000011 donc garde seulement les 2 LSB
+            realData[(i) / 2] = rawDataArray[i] << 8; //Déplace au 8 MSB du resultat (donc [ _ _ _ _ _ _ 1 2 x x x x x x x x ])
+        }
+        //rawDataArray impair = Prend tout le byte et ajoute  les LSB du resultat
+        else
+        {
+            //printf("\nValeur impair = %i", rawDataArray[i]);
+            realData[(i - 1) / 2] += rawDataArray[i]; //donc [ _ _ _ _ _ _ x x 3 4 5 6 7 8 9 10 ]
+        }
+    }
+
+    /*printf("\n----RealData ---- \n");
+    for (int i = 0; i < nbOfAnalogDevices; i++)
+    {
+        printf("i = %i\tdata = %i\n", i, realData[i]); //Valeurs finales
+    }*/
 }

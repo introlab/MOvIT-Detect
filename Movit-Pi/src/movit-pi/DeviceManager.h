@@ -49,6 +49,7 @@ class DeviceManager
     bool IsRangeSensorConnected();
     bool IsFlowSensorConnected();
     bool IsPressureMatConnected();
+    bool IsUserSeated() { return _pressureMat->IsSomeoneThere(); }
 
     bool IsLedBlinkingEnabled() { return _notificationsSettings.isLedBlinkingEnabled; }
     bool IsVibrationEnabled() { return _notificationsSettings.isVibrationEnabled; }

@@ -18,7 +18,7 @@ ForceSensor::ForceSensor()
         _analogOffset[i] = 0;
     }
     _totalSensorMean = 0;
-    _detectionThreshold = 0;
+    _detectionThreshold = 1500;
 }
 
 ForceSensor::~ForceSensor() {}
@@ -66,7 +66,7 @@ void ForceSensor::CalibrateForceSensor(MAX11611 &max11611, uint16_t *max11611Dat
         return;
     }
 
-    const float calibrationRatio = 0.75;
+    const float calibrationRatio = 1.25;
     uint16_t sensorMean[PRESSURE_SENSOR_COUNT]; //Individual iterations sensors mean
     _totalSensorMean = 0;                       //Final sensors analog data reading mean
 

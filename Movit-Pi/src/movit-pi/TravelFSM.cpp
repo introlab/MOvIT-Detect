@@ -9,6 +9,7 @@ void TravelFSM::updateState(ChairState cs)
 
             if(cs.lastDistance > TRAVEL_THRESHOLD) {
                 //La distance minimale est parcouru
+                lastTime = cs.time;
                 currentState = TravelState::WAITING_MOVEMENT;
             } else {
                 //La distance minimale n'est pas parcouru
@@ -47,9 +48,9 @@ void TravelFSM::updateState(ChairState cs)
         
         case TravelState::ON_THE_MOVE:
             if(cs.lastDistance < 5) {
-                currentState = TravelState::MOVEMENT_NOT_DETECTED;
                 lastTime = cs.time;
                 travelStoppedTime = cs.time;
+                currentState = TravelState::MOVEMENT_NOT_DETECTED;
             } else {
                 //printf("Last distance: %d\n", cs.lastDistance);
                 travelStoppedTime = cs.time;
