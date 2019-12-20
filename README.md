@@ -15,9 +15,7 @@ ___
 ## Table des matières :
 - [MOvIT-Detect](#movit-detect)
   - [Table des matières :](#table-des-mati%c3%a8res)
-- [<ol>
-<li>Configuration des capteurs</li>
-</ol>](#ol-liconfiguration-des-capteursli-ol)
+- [1. Configuration des capteurs](#1-configuration-des-capteurs)
   - [1.1. Activation des capteurs](#11-activation-des-capteurs)
       - [Activation I²C](#activation-i%c2%b2c)
       - [Activation SPI](#activation-spi)
@@ -26,9 +24,7 @@ ___
       - [Installation de i2cdetect](#installation-de-i2cdetect)
       - [RTC MCP79410](#rtc-mcp79410)
       - [Vérification de la date et heure](#v%c3%a9rification-de-la-date-et-heure)
-- [<ol start="2">
-<li>Installation de MOvIt-Detect</li>
-</ol>](#ol-start%222%22-liinstallation-de-movit-detectli-ol)
+- [2. Installation de MOvIt-Detect](#2-installation-de-movit-detect)
   - [2.1. Installation de GitHub](#21-installation-de-github)
   - [2.2. Installation de librairies](#22-installation-de-librairies)
   - [2.3. Installation de MOvIT-Detect](#23-installation-de-movit-detect)
@@ -37,9 +33,7 @@ ___
       - [Exécution de MOvIT-Detect](#ex%c3%a9cution-de-movit-detect)
   - [2.4. Cross-compilation](#24-cross-compilation)
       - [Utiliraire de cross-compilation](#utiliraire-de-cross-compilation)
-- [<ol start="3">
-<li>Explication du code</li>
-</ol>](#ol-start%223%22-liexplication-du-codeli-ol)
+- [3. Explication du code](#3-explication-du-code)
   - [3.1. Machines à états finis](#31-machines-%c3%a0-%c3%a9tats-finis)
       - [Machine à états des bascules](#machine-%c3%a0-%c3%a9tats-des-bascules)
       - [Machine à états des déplacements](#machine-%c3%a0-%c3%a9tats-des-d%c3%a9placements)
