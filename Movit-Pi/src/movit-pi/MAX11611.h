@@ -22,7 +22,7 @@ class MAX11611
     MAX11611(uint8_t address);
 
     bool Initialize();
-    void GetData(uint8_t nbOfAnalogDevices, uint16_t *realData);
+    bool GetData(uint8_t nbOfAnalogDevices, uint16_t *realData);
 
   private:
     uint8_t _devAddr;

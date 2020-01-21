@@ -312,7 +312,13 @@ bool I2Cdev::WriteByte(uint8_t devAddr, uint8_t regAddr, uint8_t data) {
     int fd = wiringPiI2CSetup(devAddr);
     if (fd >= 0)
     {
-        wiringPiI2CWriteReg8(fd,regAddr,data);
+        sendBuf[0] = regAddr;
+        sendBuf[1] = data;
+        if(write(fd, sendBuf, 2) != 2)
+        {
+            close(fd);
+            return false;
+        }
         close(fd);
         return true;
     }
@@ -462,14 +468,17 @@ bool I2Cdev::WriteByte(uint8_t devAddr, uint8_t data)
 
 #else
     int fd = wiringPiI2CSetup(devAddr);
-        if (fd >= 0)
+    if (fd >= 0)
+    {
+        if(write(fd, &data, 1) != 1)
         {
-
-            wiringPiI2CWrite(fd, data);
             close(fd);
-            return true;
+            return false;
         }
-        return false;
+        close(fd);
+        return true;
+    }
+    return false;
 #endif
 
 }

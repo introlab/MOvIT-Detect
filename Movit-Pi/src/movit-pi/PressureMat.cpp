@@ -113,10 +113,12 @@ void PressureMat::Update()
 
 void PressureMat::UpdateForcePlateData()
 {
-    _max11611.GetData(PRESSURE_SENSOR_COUNT, _max11611Data);
-    for (uint8_t i = 0; i < PRESSURE_SENSOR_COUNT; i++)
+    if(_max11611.GetData(PRESSURE_SENSOR_COUNT, _max11611Data))
     {
-        _sensorMatrix.SetAnalogData(i, _max11611Data[i]);
+        for (uint8_t i = 0; i < PRESSURE_SENSOR_COUNT; i++)
+        {
+            _sensorMatrix.SetAnalogData(i, _max11611Data[i]);
+        }
     }
 }
 

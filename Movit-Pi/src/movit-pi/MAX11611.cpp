@@ -41,6 +41,7 @@ bool MAX11611::Initialize()
     dataToSend = 0x8A; //10001010
     if (!I2Cdev::WriteByte(_devAddr, dataToSend))
     {
+        printf("MAX11611 initialize error\n");
         return false;
     }
 
@@ -58,6 +59,7 @@ bool MAX11611::Initialize()
     dataToSend = 0x11; //0b00010001
     if (!I2Cdev::WriteByte(_devAddr, dataToSend))
     {
+        printf("MAX11611 initialize error\n");
         return false;
     }
 
@@ -65,7 +67,7 @@ bool MAX11611::Initialize()
 }
 
 //Fonctions traitant les donnees brutes (2*8bits par capteur) sur une seule variable 16 bits (les données sont sur 10 bits)
-void MAX11611::GetData(uint8_t nbOfAnalogDevices, uint16_t *realData)
+bool MAX11611::GetData(uint8_t nbOfAnalogDevices, uint16_t *realData)
 {
     uint8_t rawDataArray[2 * nbOfAnalogDevices];
 
@@ -101,10 +103,15 @@ void MAX11611::GetData(uint8_t nbOfAnalogDevices, uint16_t *realData)
             }
         }
 
+        /*
         printf("\n----RealData ---- \n");
         for (int i = 0; i < nbOfAnalogDevices; i++)
         {
             printf("i = %i\tdata = %i\n", i, realData[i]); //Valeurs finales
         }
+        */
+        return true;
     }
+
+    return false;
 }
