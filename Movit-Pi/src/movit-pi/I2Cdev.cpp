@@ -29,26 +29,41 @@ THE SOFTWARE.
 
 #include "I2Cdev.h"
 #include <stdio.h>
-
+#include <unistd.h>
 //int i2c_fd = 0;
+
+#include <linux/i2c-dev.h>
+
 
 I2Cdev::I2Cdev() { }
 
 void I2Cdev::Initialize() {
-  bcm2835_init();
-  bcm2835_i2c_set_baudrate( i2c_baudrate  );
+
+
+#ifdef USE_BCM2835
+    bcm2835_init();
+    bcm2835_i2c_set_baudrate( i2c_baudrate  );
+#endif
+
+
 }
 
 /** Enable or disable I2C, 
  * @param isEnabled true = enable, false = disable
  */
 void I2Cdev::Enable(bool isEnabled) {
-  if ( set_I2C_pins ){
-    if (isEnabled)
-      bcm2835_i2c_end();
-    else
-      bcm2835_i2c_begin() ;
-  }
+
+#ifdef USE_BCM2835      
+    if ( set_I2C_pins ){
+        if (isEnabled)
+            bcm2835_i2c_end();
+        else
+            bcm2835_i2c_begin() ;
+    }
+#endif
+
+
+
 }
 
 char sendBuf[256];
@@ -64,11 +79,24 @@ char recvBuf[256];
  * @return Status of read operation (true = success)
  */
 int8_t I2Cdev::ReadBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data) {
-  bcm2835_i2c_setSlaveAddress(devAddr);
-  sendBuf[0] = regAddr;
-  uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, 1);
-  *data = recvBuf[1] & (1 << bitNum);
-  return response == BCM2835_I2C_REASON_OK ;
+#ifdef USE_BCM2835
+    bcm2835_i2c_setSlaveAddress(devAddr);
+    sendBuf[0] = regAddr;
+    uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, 1);
+    *data = recvBuf[1] & (1 << bitNum);
+    return response == BCM2835_I2C_REASON_OK ;
+#else
+    int fd = wiringPiI2CSetup(devAddr);
+    *data = 0;
+    if (fd >= 0)
+    {
+        uint8_t response = wiringPiI2CReadReg8(fd, regAddr);
+        *data = response & (1 << bitNum);
+        close(fd);
+        return 1;
+    }
+    return 0;
+#endif
 }
 
 /** Read multiple bits from an 8-bit device register.
@@ -80,22 +108,39 @@ int8_t I2Cdev::ReadBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t
  * @return Status of read operation (true = success)
  */
 int8_t I2Cdev::ReadBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data) {
-  // 01101001 read byte
-  // 76543210 bit numbers
-  //    xxx   args: bitStart=4, length=3
-  //    010   masked
-  //   -> 010 shifted
-  bcm2835_i2c_setSlaveAddress(devAddr);
-  sendBuf[0] = regAddr;
-  uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, 1);
-  uint8_t b = (uint8_t) recvBuf[0];
-  if (response == BCM2835_I2C_REASON_OK) {
-    uint8_t mask = ((1 << length) - 1) << (bitStart - length + 1);
-    b &= mask;
-    b >>= (bitStart - length + 1);
-    *data = b;
-  }
-  return response == BCM2835_I2C_REASON_OK;
+    // 01101001 read byte
+    // 76543210 bit numbers
+    //    xxx   args: bitStart=4, length=3
+    //    010   masked
+    //   -> 010 shifted
+#ifdef USE_BCM2835
+    bcm2835_i2c_setSlaveAddress(devAddr);
+    sendBuf[0] = regAddr;
+    uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, 1);
+    uint8_t b = (uint8_t) recvBuf[0];
+    if (response == BCM2835_I2C_REASON_OK) {
+        uint8_t mask = ((1 << length) - 1) << (bitStart - length + 1);
+        b &= mask;
+        b >>= (bitStart - length + 1);
+        *data = b;
+    }
+    return response == BCM2835_I2C_REASON_OK;
+#else
+    int fd = wiringPiI2CSetup(devAddr);
+    *data = 0;
+    if (fd >= 0) {
+        uint8_t b = wiringPiI2CReadReg8(fd, regAddr);
+        uint8_t mask = ((1 << length) - 1) << (bitStart - length + 1);
+        b &= mask;
+        b >>= (bitStart - length + 1);
+        *data = b;
+        close(fd);
+        return 1;
+    }
+    return 0;
+
+#endif
+
 }
 
 /** Read single byte from an 8-bit device register.
@@ -105,11 +150,26 @@ int8_t I2Cdev::ReadBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint
  * @return Status of read operation (true = success)
  */
 int8_t I2Cdev::ReadByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data) {
-  bcm2835_i2c_setSlaveAddress(devAddr);
-  sendBuf[0] = regAddr;
-  uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, 1);
-  data[0] = (uint8_t) recvBuf[0];
-  return response == BCM2835_I2C_REASON_OK;
+#ifdef USE_BCM2835
+    bcm2835_i2c_setSlaveAddress(devAddr);
+    sendBuf[0] = regAddr;
+    uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, 1);
+    data[0] = (uint8_t) recvBuf[0];
+    return response == BCM2835_I2C_REASON_OK;
+
+#else
+    *data = 0;
+    int fd = wiringPiI2CSetup(devAddr);
+    if (fd >= 0)
+    {
+        *data = wiringPiI2CReadReg8(fd, regAddr);
+        close(fd);
+        return 1;
+    }
+
+    return 0;
+#endif
+
 }
 
 /** Read multiple bytes from an 8-bit device register.
@@ -120,18 +180,32 @@ int8_t I2Cdev::ReadByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data) {
  * @return I2C_TransferReturn_TypeDef http://downloads.energymicro.com/documentation/doxygen/group__I2C.html
  */
 int8_t I2Cdev::ReadBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data) {
-  bcm2835_i2c_setSlaveAddress(devAddr);
-  sendBuf[0] = regAddr;
-  uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, length);
-  int i ;
-  for (i = 0; i < length ; i++) {
-    data[i] = (uint8_t) recvBuf[i];
-  }
+#ifdef USE_BCM2835
+    bcm2835_i2c_setSlaveAddress(devAddr);
+    sendBuf[0] = regAddr;
+    uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, length);
+    int i ;
+    for (i = 0; i < length ; i++) {
+        data[i] = (uint8_t) recvBuf[i];
+    }
 
-  if (response != BCM2835_I2C_REASON_OK)
-	printf("Cannot read length: %i, addr: %2.2x, reg: %2.2x \n",(int) length, (int) devAddr, (int) regAddr);	  
+    if (response != BCM2835_I2C_REASON_OK)
+        printf("Cannot read length: %i, addr: %2.2x, reg: %2.2x \n",(int) length, (int) devAddr, (int) regAddr);
 
-  return response == BCM2835_I2C_REASON_OK;
+    return response == BCM2835_I2C_REASON_OK;
+#else
+    int fd = wiringPiI2CSetup(devAddr);
+    memset(data, 0 , length * sizeof(uint8_t));
+    if (fd >= 0)
+    {
+        for (auto i =0 ; i<length; i++)
+            data[i] = wiringPiI2CReadReg8(fd, regAddr + i);
+
+        close(fd);
+        return 1;
+    }
+    return 0;
+#endif
 }
 
 /** write a single bit in an 8-bit device register.
@@ -142,17 +216,32 @@ int8_t I2Cdev::ReadBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8
  * @return Status of operation (true = success)
  */
 bool I2Cdev::WriteBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data) {
-  bcm2835_i2c_setSlaveAddress(devAddr);
-  //first reading registery value
-  sendBuf[0] = regAddr;
-  uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, 1 );
-  if ( response == BCM2835_I2C_REASON_OK ) {
-    uint8_t b = recvBuf[0] ;
-    b = (data != 0) ? (b | (1 << bitNum)) : (b & ~(1 << bitNum));
-    sendBuf[1] = b ;
-    response = bcm2835_i2c_write(sendBuf, 2);
-  }
-  return response == BCM2835_I2C_REASON_OK;
+#ifdef USE_BCM2835
+    bcm2835_i2c_setSlaveAddress(devAddr);
+    //first reading registery value
+    sendBuf[0] = regAddr;
+    uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, 1 );
+    if ( response == BCM2835_I2C_REASON_OK ) {
+        uint8_t b = recvBuf[0] ;
+        b = (data != 0) ? (b | (1 << bitNum)) : (b & ~(1 << bitNum));
+        sendBuf[1] = b ;
+        response = bcm2835_i2c_write(sendBuf, 2);
+    }
+    return response == BCM2835_I2C_REASON_OK;
+#else
+
+    int fd = wiringPiI2CSetup(devAddr);
+    if (fd >= 0)
+    {
+        uint8_t b = wiringPiI2CReadReg8(fd, regAddr);
+        b = (data != 0) ? (b | (1 << bitNum)) : (b & ~(1 << bitNum));
+        wiringPiI2CWriteReg8(fd,regAddr,b);
+        close(fd);
+        return true;
+    }
+    return false;
+#endif
+
 }
 
 /** Write multiple bits in an 8-bit device register.
@@ -164,28 +253,46 @@ bool I2Cdev::WriteBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t 
  * @return Status of operation (true = success)
  */
 bool I2Cdev::WriteBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data) {
-  //      010 value to write
-  // 76543210 bit numbers
-  //    xxx   args: bitStart=4, length=3
-  // 00011100 mask byte
-  // 10101111 original value (sample)
-  // 10100011 original & ~mask
-  // 10101011 masked | value
-  bcm2835_i2c_setSlaveAddress(devAddr);
-  //first reading registery value
-  sendBuf[0] = regAddr;
-  uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, 1 );
-  if ( response == BCM2835_I2C_REASON_OK ) {
-    uint8_t b = recvBuf[0];
-    uint8_t mask = ((1 << length) - 1) << (bitStart - length + 1);
-    data <<= (bitStart - length + 1); // shift data into correct position
-    data &= mask; // zero all non-important bits in data
-    b &= ~(mask); // zero all important bits in existing byte
-    b |= data; // combine data with existing byte
-    sendBuf[1] = b ;
-    response = bcm2835_i2c_write(sendBuf, 2);
+    //      010 value to write
+    // 76543210 bit numbers
+    //    xxx   args: bitStart=4, length=3
+    // 00011100 mask byte
+    // 10101111 original value (sample)
+    // 10100011 original & ~mask
+    // 10101011 masked | value
+#ifdef USE_BCM2835
+    bcm2835_i2c_setSlaveAddress(devAddr);
+    //first reading registery value
+    sendBuf[0] = regAddr;
+    uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, 1 );
+    if ( response == BCM2835_I2C_REASON_OK ) {
+        uint8_t b = recvBuf[0];
+        uint8_t mask = ((1 << length) - 1) << (bitStart - length + 1);
+        data <<= (bitStart - length + 1); // shift data into correct position
+        data &= mask; // zero all non-important bits in data
+        b &= ~(mask); // zero all important bits in existing byte
+        b |= data; // combine data with existing byte
+        sendBuf[1] = b ;
+        response = bcm2835_i2c_write(sendBuf, 2);
     }
-  return response == BCM2835_I2C_REASON_OK;
+    return response == BCM2835_I2C_REASON_OK;
+#else
+    int fd = wiringPiI2CSetup(devAddr);
+    if (fd >= 0)
+    {
+        uint8_t b = wiringPiI2CReadReg8(fd, regAddr);
+        uint8_t mask = ((1 << length) - 1) << (bitStart - length + 1);
+        data <<= (bitStart - length + 1); // shift data into correct position
+        data &= mask; // zero all non-important bits in data
+        b &= ~(mask); // zero all important bits in existing byte
+        b |= data; // combine data with existing byte
+        wiringPiI2CWriteReg8(fd,regAddr,b);
+        close(fd);
+        return true;
+    }
+    return false;
+#endif
+
 }
 
 /** Write single byte to an 8-bit device register.
@@ -195,11 +302,23 @@ bool I2Cdev::WriteBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8
  * @return Status of operation (true = success)
  */
 bool I2Cdev::WriteByte(uint8_t devAddr, uint8_t regAddr, uint8_t data) {
-  bcm2835_i2c_setSlaveAddress(devAddr);
-  sendBuf[0] = regAddr;
-  sendBuf[1] = data;
-  uint8_t response = bcm2835_i2c_write(sendBuf, 2);
-  return response == BCM2835_I2C_REASON_OK ;
+#ifdef USE_BCM2835
+    bcm2835_i2c_setSlaveAddress(devAddr);
+    sendBuf[0] = regAddr;
+    sendBuf[1] = data;
+    uint8_t response = bcm2835_i2c_write(sendBuf, 2);
+    return response == BCM2835_I2C_REASON_OK ;
+#else
+    int fd = wiringPiI2CSetup(devAddr);
+    if (fd >= 0)
+    {
+        wiringPiI2CWriteReg8(fd,regAddr,data);
+        close(fd);
+        return true;
+    }
+    return false;
+#endif
+
 }
 
 /** Read single word from a 16-bit device register.
@@ -209,11 +328,24 @@ bool I2Cdev::WriteByte(uint8_t devAddr, uint8_t regAddr, uint8_t data) {
  * @return Status of read operation (true = success)
  */
 int8_t I2Cdev::ReadWord(uint8_t devAddr, uint8_t regAddr, uint16_t *data) {
-  bcm2835_i2c_setSlaveAddress(devAddr);
-  sendBuf[0] = regAddr;
-  uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, 2 );
-  data[0] = (recvBuf[0] << 8) | recvBuf[1] ;
-  return  response == BCM2835_I2C_REASON_OK ;
+#ifdef USE_BCM2835
+    bcm2835_i2c_setSlaveAddress(devAddr);
+    sendBuf[0] = regAddr;
+    uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, 2 );
+    data[0] = (recvBuf[0] << 8) | recvBuf[1] ;
+    return  response == BCM2835_I2C_REASON_OK ;
+#else
+    int fd = wiringPiI2CSetup(devAddr);
+    *data = 0;
+    if (fd >= 0)
+    {
+        *data = wiringPiI2CReadReg16(fd,regAddr);
+        close(fd);
+        return true;
+    }
+    return false;
+#endif
+
 }
 
 /** Read multiple words from a 16-bit device register.
@@ -224,58 +356,127 @@ int8_t I2Cdev::ReadWord(uint8_t devAddr, uint8_t regAddr, uint16_t *data) {
  * @return Number of words read (-1 indicates failure)
  */
 int8_t I2Cdev::ReadWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data) {
-  bcm2835_i2c_setSlaveAddress(devAddr);
-  sendBuf[0] = regAddr;
-  uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, length*2 );
-  uint8_t i;
-  for (i = 0; i < length; i++) {
-    data[i] = (recvBuf[i*2] << 8) | recvBuf[i*2+1] ;
-  }
-  return  response == BCM2835_I2C_REASON_OK ;
+#ifdef USE_BCM2835
+    bcm2835_i2c_setSlaveAddress(devAddr);
+    sendBuf[0] = regAddr;
+    uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, length*2 );
+    uint8_t i;
+    for (i = 0; i < length; i++) {
+        data[i] = (recvBuf[i*2] << 8) | recvBuf[i*2+1] ;
+    }
+    return  response == BCM2835_I2C_REASON_OK ;
+#else
+    int fd = wiringPiI2CSetup(devAddr);
+    memset(data, 0, length * sizeof(uint16_t));
+    if (fd >= 0)
+    {
+        for (auto i = 0; i < length; i++)
+            data[i] = wiringPiI2CReadReg16(fd,regAddr + 2 * i);
+        close(fd);
+        return true;
+    }
+    return false;
+#endif
+
 }
 
 bool I2Cdev::WriteWord(uint8_t devAddr, uint8_t regAddr, uint16_t data){
-  bcm2835_i2c_setSlaveAddress(devAddr);
-  sendBuf[0] = regAddr;
-  sendBuf[1] = (uint8_t) (data >> 8); //MSByte
-  sendBuf[2] = (uint8_t) (data >> 0); //LSByte
-  uint8_t response = bcm2835_i2c_write(sendBuf, 3);
-  return response == BCM2835_I2C_REASON_OK ;
+#ifdef USE_BCM2835
+    bcm2835_i2c_setSlaveAddress(devAddr);
+    sendBuf[0] = regAddr;
+    sendBuf[1] = (uint8_t) (data >> 8); //MSByte
+    sendBuf[2] = (uint8_t) (data >> 0); //LSByte
+    uint8_t response = bcm2835_i2c_write(sendBuf, 3);
+    return response == BCM2835_I2C_REASON_OK ;
+
+#else
+    int fd = wiringPiI2CSetup(devAddr);
+    if (fd >= 0)
+    {
+        wiringPiI2CWriteReg16(fd,regAddr, data);
+        close(fd);
+        return true;
+    }
+    return false;
+#endif
 }
 
 bool I2Cdev::WriteBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data){
-  bcm2835_i2c_setSlaveAddress(devAddr);
-  sendBuf[0] = regAddr;
-  uint8_t i;
-  for (i = 0; i < length; i++) {
-    sendBuf[i+1] = data[i] ;
-  }
-  uint8_t response = bcm2835_i2c_write(sendBuf, 1+length);
-  return response == BCM2835_I2C_REASON_OK ;
+#ifdef USE_BCM2835
+    bcm2835_i2c_setSlaveAddress(devAddr);
+    sendBuf[0] = regAddr;
+    uint8_t i;
+    for (i = 0; i < length; i++) {
+        sendBuf[i+1] = data[i] ;
+    }
+    uint8_t response = bcm2835_i2c_write(sendBuf, 1+length);
+    return response == BCM2835_I2C_REASON_OK ;
+
+#else
+    int fd = wiringPiI2CSetup(devAddr);
+    if (fd >= 0)
+    {
+        for (auto i = 0; i < length; i++)
+            wiringPiI2CWriteReg8(fd,regAddr + i, data[i]);
+        close(fd);
+        return true;
+    }
+    return false;
+#endif
+
 }
 
 bool I2Cdev::WriteWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data){
-  bcm2835_i2c_setSlaveAddress(devAddr);
-  sendBuf[0] = regAddr;
-  uint8_t i;
-  for (i = 0; i < length; i++) {
-    sendBuf[1+2*i] = (uint8_t) (data[i] >> 8); //MSByte
-    sendBuf[2+2*i] = (uint8_t) (data[i] >> 0); //LSByte
-  }
-  uint8_t response = bcm2835_i2c_write(sendBuf, 1+2*length);
-  return response == BCM2835_I2C_REASON_OK ;
+#ifdef USE_BCM2835
+    bcm2835_i2c_setSlaveAddress(devAddr);
+    sendBuf[0] = regAddr;
+    uint8_t i;
+    for (i = 0; i < length; i++) {
+        sendBuf[1+2*i] = (uint8_t) (data[i] >> 8); //MSByte
+        sendBuf[2+2*i] = (uint8_t) (data[i] >> 0); //LSByte
+    }
+    uint8_t response = bcm2835_i2c_write(sendBuf, 1+2*length);
+    return response == BCM2835_I2C_REASON_OK ;
+#else
+    int fd = wiringPiI2CSetup(devAddr);
+    if (fd >= 0)
+    {
+        for (auto i = 0; i < length; i++)
+            wiringPiI2CWriteReg16(fd,regAddr + 2 *i, data[i]);
+        close(fd);
+        return true;
+    }
+    return false;
+
+#endif
+
 }
 
 bool I2Cdev::WriteByte(uint8_t devAddr, uint8_t data)
 {
+#ifdef USE_BCM2835
     bcm2835_i2c_setSlaveAddress(devAddr);
     sendBuf[0] = data;
     uint8_t response = bcm2835_i2c_write(sendBuf, 1);
     return response == BCM2835_I2C_REASON_OK;
+
+#else
+    int fd = wiringPiI2CSetup(devAddr);
+        if (fd >= 0)
+        {
+
+            wiringPiI2CWrite(fd, data);
+            close(fd);
+            return true;
+        }
+        return false;
+#endif
+
 }
 
 bool I2Cdev::ReadBytes(uint8_t devAddr, uint8_t length, uint8_t *data)
 {
+#ifdef USE_BCM2835	
     bcm2835_i2c_setSlaveAddress(devAddr);
     uint8_t response = bcm2835_i2c_read(recvBuf, length);
 
@@ -284,4 +485,24 @@ bool I2Cdev::ReadBytes(uint8_t devAddr, uint8_t length, uint8_t *data)
         data[i] = (uint8_t)recvBuf[i];
     }
     return response == BCM2835_I2C_REASON_OK;
+#else
+    int fd = wiringPiI2CSetup(devAddr);
+    memset(data,0, length * sizeof(uint8_t));
+    if (fd >= 0)
+    {
+        //Read all at once
+        if (read(fd, data, length) != length)
+        {
+            close(fd);
+            return false;
+        }
+        close(fd);
+        return true;
+    }
+    return false;
+
+#endif
 }
+
+
+

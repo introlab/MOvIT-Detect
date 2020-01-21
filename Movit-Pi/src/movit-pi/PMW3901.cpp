@@ -19,6 +19,9 @@ PMW3901::~PMW3901()
 
 bool PMW3901::Initialize()
 {
+  //Required to use SPI
+  bcm2835_init();
+
   //Set the CS pin
   bcm2835_gpio_fsel(PIN, BCM2835_GPIO_FSEL_OUTP);
   SetChipSelect(HIGH);

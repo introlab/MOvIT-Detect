@@ -35,12 +35,15 @@ THE SOFTWARE.
 #endif 
 
 
-#include <bcm2835.h>
-//#include <wiringPiI2C.h>
+//#include <bcm2835.h>
+#include <wiringPiI2C.h>
 #include <math.h> // required for BMP180
 #include <stdlib.h> // required for MPU6060
 #include <string.h> // required for MPU6060
+#include <stdint.h>
 
+
+//#define USE_BCM2835 1
 
 #define set_I2C_pins  false  
 /* used to boolean for setting RPi I2C pins P1-03 (SDA) and P1-05 (SCL) to alternate function ALT0, which enables those pins for I2C interface. 
@@ -63,7 +66,7 @@ class I2Cdev {
         static int8_t ReadByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data);
         static int8_t ReadWord(uint8_t devAddr, uint8_t regAddr, uint16_t *data);
         static int8_t ReadBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
-	    static bool   ReadBytes(uint8_t devAddr, uint8_t length, uint8_t *data);
+        static bool ReadBytes(uint8_t devAddr, uint8_t length, uint8_t *data);
         static int8_t ReadWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data);
 
         static bool WriteBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data);
