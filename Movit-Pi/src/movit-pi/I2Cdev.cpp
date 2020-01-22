@@ -86,16 +86,13 @@ int8_t I2Cdev::ReadBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t
     *data = recvBuf[1] & (1 << bitNum);
     return response == BCM2835_I2C_REASON_OK ;
 #else
-    int fd = wiringPiI2CSetup(devAddr);
-    *data = 0;
-    if (fd >= 0)
+    uint8_t response = 0;
+    if (!I2Cdev::ReadByte(devAddr, regAddr, &response))
     {
-        uint8_t response = wiringPiI2CReadReg8(fd, regAddr);
-        *data = response & (1 << bitNum);
-        close(fd);
-        return 1;
+        return false;
     }
-    return 0;
+    *data = response & (1 << bitNum);
+    return true;
 #endif
 }
 
@@ -126,19 +123,19 @@ int8_t I2Cdev::ReadBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint
     }
     return response == BCM2835_I2C_REASON_OK;
 #else
-    int fd = wiringPiI2CSetup(devAddr);
-    *data = 0;
-    if (fd >= 0) {
-        uint8_t b = wiringPiI2CReadReg8(fd, regAddr);
-        uint8_t mask = ((1 << length) - 1) << (bitStart - length + 1);
-        b &= mask;
-        b >>= (bitStart - length + 1);
-        *data = b;
-        close(fd);
-        return 1;
-    }
-    return 0;
 
+    uint8_t b = 0;
+    if (!I2Cdev::ReadByte(devAddr, regAddr, &b))
+    {
+        return false;
+    }
+
+    //Apply mask
+    uint8_t mask = ((1 << length) - 1) << (bitStart - length + 1);
+    b &= mask;
+    b >>= (bitStart - length + 1);
+    *data = b;
+    return true;
 #endif
 
 }
@@ -158,16 +155,7 @@ int8_t I2Cdev::ReadByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data) {
     return response == BCM2835_I2C_REASON_OK;
 
 #else
-    *data = 0;
-    int fd = wiringPiI2CSetup(devAddr);
-    if (fd >= 0)
-    {
-        *data = wiringPiI2CReadReg8(fd, regAddr);
-        close(fd);
-        return 1;
-    }
-
-    return 0;
+    return I2Cdev::ReadBytes(devAddr, regAddr, 1, data);
 #endif
 
 }
@@ -198,13 +186,26 @@ int8_t I2Cdev::ReadBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8
     memset(data, 0 , length * sizeof(uint8_t));
     if (fd >= 0)
     {
-        for (auto i =0 ; i<length; i++)
-            data[i] = wiringPiI2CReadReg8(fd, regAddr + i);
+
+        //Write register address
+        if (write(fd, &regAddr, 1) != 1)
+        {
+            close(fd);
+            return false;
+        }
+
+        //Read data bytes
+        if (read(fd, data, length) != length)
+        {
+            close(fd);
+            return false;
+        }
 
         close(fd);
-        return 1;
+        return true;
+
     }
-    return 0;
+    return false;
 #endif
 }
 
@@ -230,16 +231,20 @@ bool I2Cdev::WriteBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t 
     return response == BCM2835_I2C_REASON_OK;
 #else
 
-    int fd = wiringPiI2CSetup(devAddr);
-    if (fd >= 0)
+    uint8_t b = 0;
+    if (!I2Cdev::ReadByte(devAddr, regAddr, &b))
     {
-        uint8_t b = wiringPiI2CReadReg8(fd, regAddr);
-        b = (data != 0) ? (b | (1 << bitNum)) : (b & ~(1 << bitNum));
-        wiringPiI2CWriteReg8(fd,regAddr,b);
-        close(fd);
-        return true;
+        return false;
     }
-    return false;
+
+    b = (data != 0) ? (b | (1 << bitNum)) : (b & ~(1 << bitNum));
+
+    if  (!I2Cdev::WriteByte(devAddr, regAddr, b))
+    {
+        return false;
+    }
+
+    return true;
 #endif
 
 }
@@ -277,20 +282,25 @@ bool I2Cdev::WriteBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8
     }
     return response == BCM2835_I2C_REASON_OK;
 #else
-    int fd = wiringPiI2CSetup(devAddr);
-    if (fd >= 0)
+    uint8_t b = 0;
+    if (!I2Cdev::ReadByte(devAddr, regAddr, &b))
     {
-        uint8_t b = wiringPiI2CReadReg8(fd, regAddr);
-        uint8_t mask = ((1 << length) - 1) << (bitStart - length + 1);
-        data <<= (bitStart - length + 1); // shift data into correct position
-        data &= mask; // zero all non-important bits in data
-        b &= ~(mask); // zero all important bits in existing byte
-        b |= data; // combine data with existing byte
-        wiringPiI2CWriteReg8(fd,regAddr,b);
-        close(fd);
-        return true;
+        return false;
     }
-    return false;
+
+    uint8_t mask = ((1 << length) - 1) << (bitStart - length + 1);
+    data <<= (bitStart - length + 1); // shift data into correct position
+    data &= mask; // zero all non-important bits in data
+    b &= ~(mask); // zero all important bits in existing byte
+    b |= data; // combine data with existing byte
+
+    if  (!I2Cdev::WriteByte(devAddr, regAddr, b))
+    {
+        return false;
+    }
+
+    return true;
+
 #endif
 
 }
@@ -309,20 +319,7 @@ bool I2Cdev::WriteByte(uint8_t devAddr, uint8_t regAddr, uint8_t data) {
     uint8_t response = bcm2835_i2c_write(sendBuf, 2);
     return response == BCM2835_I2C_REASON_OK ;
 #else
-    int fd = wiringPiI2CSetup(devAddr);
-    if (fd >= 0)
-    {
-        sendBuf[0] = regAddr;
-        sendBuf[1] = data;
-        if(write(fd, sendBuf, 2) != 2)
-        {
-            close(fd);
-            return false;
-        }
-        close(fd);
-        return true;
-    }
-    return false;
+    return I2Cdev::WriteBytes(devAddr, regAddr, 1, &data);
 #endif
 
 }
@@ -341,15 +338,7 @@ int8_t I2Cdev::ReadWord(uint8_t devAddr, uint8_t regAddr, uint16_t *data) {
     data[0] = (recvBuf[0] << 8) | recvBuf[1] ;
     return  response == BCM2835_I2C_REASON_OK ;
 #else
-    int fd = wiringPiI2CSetup(devAddr);
-    *data = 0;
-    if (fd >= 0)
-    {
-        *data = wiringPiI2CReadReg16(fd,regAddr);
-        close(fd);
-        return true;
-    }
-    return false;
+    return I2Cdev::ReadWords(devAddr, regAddr, 1, data);
 #endif
 
 }
@@ -372,16 +361,7 @@ int8_t I2Cdev::ReadWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint1
     }
     return  response == BCM2835_I2C_REASON_OK ;
 #else
-    int fd = wiringPiI2CSetup(devAddr);
-    memset(data, 0, length * sizeof(uint16_t));
-    if (fd >= 0)
-    {
-        for (auto i = 0; i < length; i++)
-            data[i] = wiringPiI2CReadReg16(fd,regAddr + 2 * i);
-        close(fd);
-        return true;
-    }
-    return false;
+    return I2Cdev::ReadBytes(devAddr,regAddr,length*2, (uint8_t*)data);
 #endif
 
 }
@@ -396,14 +376,7 @@ bool I2Cdev::WriteWord(uint8_t devAddr, uint8_t regAddr, uint16_t data){
     return response == BCM2835_I2C_REASON_OK ;
 
 #else
-    int fd = wiringPiI2CSetup(devAddr);
-    if (fd >= 0)
-    {
-        wiringPiI2CWriteReg16(fd,regAddr, data);
-        close(fd);
-        return true;
-    }
-    return false;
+    return I2Cdev::WriteWords(devAddr, regAddr, 1, &data);
 #endif
 }
 
@@ -422,8 +395,17 @@ bool I2Cdev::WriteBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_
     int fd = wiringPiI2CSetup(devAddr);
     if (fd >= 0)
     {
-        for (auto i = 0; i < length; i++)
-            wiringPiI2CWriteReg8(fd,regAddr + i, data[i]);
+        sendBuf[0] = regAddr;
+
+        for (auto i = 0; i < length; i++) {
+            sendBuf[i+1] = data[i] ;
+        }
+
+        if (write(fd, sendBuf, length +1) != (length+1))
+        {
+            close(fd);
+            return false;
+        }
         close(fd);
         return true;
     }
@@ -444,15 +426,7 @@ bool I2Cdev::WriteWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16
     uint8_t response = bcm2835_i2c_write(sendBuf, 1+2*length);
     return response == BCM2835_I2C_REASON_OK ;
 #else
-    int fd = wiringPiI2CSetup(devAddr);
-    if (fd >= 0)
-    {
-        for (auto i = 0; i < length; i++)
-            wiringPiI2CWriteReg16(fd,regAddr + 2 *i, data[i]);
-        close(fd);
-        return true;
-    }
-    return false;
+   return I2Cdev::WriteBytes(devAddr, regAddr, length * 2, (uint8_t*) data);
 
 #endif
 

@@ -53,31 +53,31 @@ THE SOFTWARE.
 //uint32_t i2c_baudrate = 400000 ; //400 kHz, 
 
 class I2Cdev {
- public:
-        I2Cdev();
+public:
+    I2Cdev();
 
-        static void Initialize();
-        static void Enable(bool isEnabled);
+    static void Initialize();
+    static void Enable(bool isEnabled);
 
-        static int8_t ReadBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data);
-        //TODO static int8_t readBitW(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint16_t *data);
-        static int8_t ReadBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data);
-        //TODO static int8_t readBitsW(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint16_t *data);
-        static int8_t ReadByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data);
-        static int8_t ReadWord(uint8_t devAddr, uint8_t regAddr, uint16_t *data);
-        static int8_t ReadBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
-        static bool ReadBytes(uint8_t devAddr, uint8_t length, uint8_t *data);
-        static int8_t ReadWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data);
+    static int8_t ReadBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data);
+    //TODO static int8_t readBitW(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint16_t *data);
+    static int8_t ReadBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data);
+    //TODO static int8_t readBitsW(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint16_t *data);
+    static int8_t ReadByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data);
+    static int8_t ReadWord(uint8_t devAddr, uint8_t regAddr, uint16_t *data);
+    static int8_t ReadBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
+    static bool ReadBytes(uint8_t devAddr, uint8_t length, uint8_t *data);
+    static int8_t ReadWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data);
 
-        static bool WriteBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data);
-        //TODO static bool writeBitW(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint16_t data);
-        static bool WriteBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data);
-        //TODO static bool writeBitsW(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint16_t data);
-        static bool WriteByte(uint8_t devAddr, uint8_t regAddr, uint8_t data);
-	    static bool WriteByte(uint8_t devAddr, uint8_t data);
-        static bool WriteWord(uint8_t devAddr, uint8_t regAddr, uint16_t data);
-        static bool WriteBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
-        static bool WriteWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data);
+    static bool WriteBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data);
+    //TODO static bool writeBitW(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint16_t data);
+    static bool WriteBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data);
+    //TODO static bool writeBitsW(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint16_t data);
+    static bool WriteByte(uint8_t devAddr, uint8_t regAddr, uint8_t data);
+    static bool WriteByte(uint8_t devAddr, uint8_t data);
+    static bool WriteWord(uint8_t devAddr, uint8_t regAddr, uint16_t data);
+    static bool WriteBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
+    static bool WriteWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data);
 };
 
 #endif /* _I2CDEV_H_ */

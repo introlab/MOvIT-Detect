@@ -293,6 +293,7 @@ uint8_t VL53L0X::ReadReg(uint8_t reg)
   {
     return value;
   }
+  printf("error uint8_t VL53L0X::ReadReg(uint8_t reg = %2.2x) \n", reg);
   return 0x0;
 }
 
@@ -304,6 +305,7 @@ uint16_t VL53L0X::ReadReg16Bit(uint8_t reg)
   {
     return value;
   }
+  printf("error uint8_t VL53L0X::ReadReg16Bit(uint8_t reg = %2.2x) \n", reg);
   return 0x00;
 }
 
@@ -747,6 +749,8 @@ uint16_t VL53L0X::ReadRangeContinuousMillimeters()
   uint16_t range = ReadReg16Bit(RESULT_RANGE_STATUS + 10);
 
   WriteReg(SYSTEM_INTERRUPT_CLEAR, 0x01);
+
+  printf("mm range : %i \n", range);
 
   return range;
 }

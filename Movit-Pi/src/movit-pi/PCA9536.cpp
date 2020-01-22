@@ -61,6 +61,7 @@ bool PCA9536::isConnected() {
     uint8_t regData = 0;
     uint8_t response = I2Cdev::ReadByte(DEV_ADDR, 0x02, &regData);
     uint8_t response2 = I2Cdev::ReadByte(DEV_ADDR, 0x03, &regData);
+    printf("PCA9536 isConnected %i, %i \n", response, response2);
     return response == 1 && response2 == 1;
 }
 
