@@ -13,11 +13,11 @@ default: all
 OBJECTS-PI = $(patsubst src/movit-pi/%.cpp,Obj/movit-pi/%.o,$(wildcard src/movit-pi/*.cpp))
 HEADERS-PI = $(wildcard src/movit-pi/*.h)
 
-
 Obj/movit-pi/%.o: src/movit-pi/%.cpp $(HEADERS-PI)
 	$(CXX) $(CXXFLAGS) -c $< -o Obj/movit-pi/$(notdir $@) $(LDFLAGS)
 
-.PRECIOUS: movit-pi Obj/movit-pi/$(notdir OBJECTS-PI)
+
+.PRECIOUS: movit-pi Obj/movit-pi/$(notdir OBJECTS-PI) 
 
 movit-pi: $(DIRECTORIES) $(OBJECTS-PI) $(HEADERS-PI)
 	$(CXX) $(CXXFLAGS) $(wildcard Obj/movit-pi/*.o) -Wall $(LDLIBS) -o Executables/$@ $(LDFLAGS)
