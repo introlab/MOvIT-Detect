@@ -45,7 +45,6 @@ void I2Cdev::Initialize() {
     bcm2835_i2c_set_baudrate( i2c_baudrate  );
 #endif
 
-
 }
 
 /** Enable or disable I2C, 

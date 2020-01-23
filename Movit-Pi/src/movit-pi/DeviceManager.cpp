@@ -242,10 +242,10 @@ void DeviceManager::Update() {
         //How to test : Use prints in the VL53L0X library. Moving the sensor quickly at close range seems to trigger the issue.
         //Solution : Delete, reinitialize and read again.
         if(sensorData.tofRange == 65535) {
-            delete _VL53L0XSensor;
-            _VL53L0XSensor = new VL53L0X;
-            _VL53L0XSensor->Initialize();
-            sensorData.tofRange = _VL53L0XSensor->ReadRangeSingleMillimeters();
+            //delete _VL53L0XSensor;
+            //_VL53L0XSensor = new VL53L0X;
+            //_VL53L0XSensor->Initialize();
+            //sensorData.tofRange = _VL53L0XSensor->ReadRangeSingleMillimeters();
             //If it still returns '65535', replace with '260' to avoid breaking TravelFSM cycle
             if(sensorData.tofRange == 65535){
                 sensorData.tofRange = 260;
@@ -256,7 +256,7 @@ void DeviceManager::Update() {
 	printf("VL53L0X not connected\n");
         sensorData.tofConnected = false;
         sensorData.tofRange = 260;                  //Default value to get a distance when no tof
-        _VL53L0XSensor->Initialize(true);
+        _VL53L0XSensor->Initialize();
     }
 
     if(_PMW3901Sensor->IsConnected()) {
