@@ -13,8 +13,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Executables)
 
 
 file(GLOB movitpi_cpp_srcs src/movit-pi/*.cpp)
-set(movitpi_c_srcs)
-#file(GLOB movitpi_c_srcs src/movit-pi/*.c)
+#set(movitpi_c_srcs)
+file(GLOB movitpi_c_srcs src/movit-pi/*.c)
 file(GLOB movitpi_headers src/movit-pi/*.h)
 
 message(STATUS "cpp: ${movitpi_cpp_srcs}")

@@ -1,5 +1,10 @@
 #ifndef _TOFLIB_H_
 #define _TOFLIB_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //
 // Copyright (c) 2017 Larry Bank
 // email: bitbank@pobox.com
@@ -34,5 +39,10 @@ int tofReadDistance(void);
 // sets the device continous capture mode
 //
 int tofInit(int iChan, int iAddr, int bLongRange);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // _TOFLIB_H

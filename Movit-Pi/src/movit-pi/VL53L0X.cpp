@@ -21,6 +21,41 @@
 #include <fcntl.h>
 #include "I2Cdev.h"
 #include "VL53L0X.h"
+#include "tof.h"
+
+VL53L0X::VL53L0X()
+    : isInitialized(false), address(ADDRESS_DEFAULT)
+{
+
+}
+
+
+int VL53L0X::ReadRangeSingleMillimeters()
+{
+    return tofReadDistance();
+}
+
+bool VL53L0X::Initialize()
+{
+    isInitialized = tofInit(1, address, 1);
+    printf("Vl53L0X::Initialize : %i\n", isInitialized);
+    return isInitialized;
+}
+
+bool VL53L0X::IsConnected() {
+    int model = 0;
+    int revision = 0;
+    if (tofGetModel(&model, &revision))
+    {
+        //printf("model: %i, revision : %i\n", model, revision);
+        if (model == 238 && revision  == 16)
+            return true;
+    }
+    return false;
+}
+
+
+#if 0
 
 // Defines /////////////////////////////////////////////////////////////////////
 #define calcMacroPeriod(vcsel_period_pclks) ((((uint32_t)2304 * (vcsel_period_pclks) * 1655) + 500) / 1000)
@@ -31,6 +66,8 @@
 //
 // Register init lists consist of the count followed by register/value pairs
 //
+namespace {
+
 unsigned char ucI2CMode[] = {4, 0x88,0x00, 0x80,0x01, 0xff,0x01, 0x00,0x00};
 unsigned char ucI2CMode2[] = {3, 0x00,0x01, 0xff,0x00, 0x80,0x00};
 unsigned char ucSPAD0[] = {4, 0x80,0x01, 0xff,0x01, 0x00,0x00, 0xff,0x06};
@@ -49,6 +86,7 @@ unsigned char ucDefTuning[] = {80, 0xff,0x01, 0x00,0x00, 0xff,0x00, 0x09,0x00,
                                0x44,0x00, 0x45,0x20, 0x47,0x08, 0x48,0x28, 0x67,0x00, 0x70,0x04, 0x71,0x01,
                                0x72,0xfe, 0x76,0x00, 0x77,0x00, 0xff,0x01, 0x0d,0x01, 0xff,0x00, 0x80,0x01,
                                0x01,0xf8, 0xff,0x01, 0x8e,0x01, 0x00,0x01, 0xff,0x00, 0x80,0x00};
+}
 
 VL53L0X::VL53L0X()
     : isInitialized(false), address(ADDRESS_DEFAULT)
@@ -77,6 +115,7 @@ bool VL53L0X::Initialize()
 
     return isInitialized;
 }
+
 
 unsigned short VL53L0X::readReg16(unsigned char ucAddr)
 {
@@ -865,4 +904,4 @@ int VL53L0X::tofGetModel(int *model, int *revision)
     return 1;
 } /* tofGetModel() */
 
-
+#endif

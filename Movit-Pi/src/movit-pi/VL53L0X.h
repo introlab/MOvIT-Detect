@@ -85,7 +85,7 @@ public:
     int ReadRangeSingleMillimeters();
 
 private:
-
+#if 0
     bool IsConnectedOnly();
 
     int getSpadInfo(unsigned char *pCount, unsigned char *pTypeIsAperture);
@@ -113,12 +113,14 @@ private:
     void writeReg(unsigned char ucAddr, unsigned char ucValue);
     void writeRegList(unsigned char *ucList);
 
-    bool isInitialized;
-    uint8_t address;
+
 
     unsigned char stop_variable;
     uint32_t measurement_timing_budget_us;
+#endif
 
+    bool isInitialized;
+    uint8_t address;
 
 };
 
