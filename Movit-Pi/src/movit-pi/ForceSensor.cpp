@@ -97,7 +97,8 @@ void ForceSensor::CalibrateForceSensor(MAX11611 &max11611, uint16_t *max11611Dat
             }
             printf(".");
         }
-        delay(1000);
+        //delay(1000);
+	sleep(1);
     }
 
     //Total sensors analog data readings mean

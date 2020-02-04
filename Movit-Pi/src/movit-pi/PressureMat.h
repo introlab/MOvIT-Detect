@@ -56,7 +56,7 @@ class PressureMat : public Sensor
 	bool _isSomeoneThere = false;
 	bool _isForcePlateInitialized = false;
 	bool _isCalibrated = false;
-    bool isInitialized = false;
+        bool isInitialized = false;
 
 	MAX11611 _max11611;
 	uint16_t _max11611Data[PRESSURE_SENSOR_COUNT];
