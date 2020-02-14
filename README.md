@@ -137,7 +137,7 @@ Il faut donc ajouter un "#" devant chacune des lignes de sorte à obtenir:
 
 Il faut aussi commenter avec un "#" les lignes suivantes:
 ```bash
-if [yes = "BADYEAR" ] ...
+if [yes = "BADYEAR" ] ; then
     #/sbin/hwclock --rtc=$dev --systz --badyear
     ...
 else
