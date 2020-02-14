@@ -111,6 +111,13 @@ On peut confirmer que le RTC est bel et bien connecté a l'aide de `i2cdetect -y
 60: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- UU 
 70: -- -- -- -- -- -- -- --    
 ```
+Il faut également désactiver certains modules pour la fake-hwclock :
+
+```bash
+sudo apt-get -y remove fake-hwclock
+sudo update-rc.d -f fake-hwclock remove
+sudo systemctl disable fake-hwclock
+```
 Le RTC est utilisé par le système Linux, car 6f a été remplacé par UU, il faut ensuite modifier le fichier `/lib/udev/hwclock-set` et commenter certaines lignes:
 ```bash
 sudo nano /lib/udev/hwclock-set
@@ -127,6 +134,18 @@ Il faut donc ajouter un "#" devant chacune des lignes de sorte à obtenir:
 #    exit 0
 #fi 
 ```
+
+Il faut aussi commenter avec un "#" les lignes suivantes:
+```bash
+if [yes = "BADYEAR" ] ...
+    #/sbin/hwclock --rtc=$dev --systz --badyear
+    ...
+else
+    #/sbin/hwclock --rtc=$dev --systz
+    ...
+fi
+```
+
 
 #### Vérification de la date et heure
 On détermine la date et l'heure a l'aide de la commande `date` cette commande retourne la date et l'heure, voici la sortie de ce système:
