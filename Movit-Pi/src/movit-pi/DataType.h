@@ -64,7 +64,10 @@ struct SensorData {
 
     bool alarmConnected = false;
     bool alarmRedLedOn = false;
+    bool alarmRedLedBlink = false;
     bool alarmGreenLedOn = false;
+    bool alarmGreenLedBlink = false;
+    bool alarmAlternatingLedBlink= false;
     bool alarmDCMotorOn = false;
     bool alarmButtonPressed = false;
 

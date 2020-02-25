@@ -65,6 +65,7 @@ class DeviceManager
       return &_alarm;
     }
 
+
   private:
     DeviceManager(FileManager *fileManager);
 

@@ -2,11 +2,11 @@
 #include "Utils.h"
 #include "SysTime.h"
 
-#include <mutex>
+
 #include <stdio.h>
 #include <unistd.h>
 
-std::mutex mtx;
+
 
 Alarm::Alarm()
 {
@@ -19,7 +19,7 @@ Alarm::Alarm(double blinkFrequency) : _blinkFrequency(blinkFrequency)
 
 bool Alarm::Initialize()
 {
-
+     std::lock_guard<std::recursive_mutex> lock(_mtx);
     _pca9536.SetMode(DC_MOTOR, IO_INPUT);
     _pca9536.SetMode(GREEN_LED, IO_OUTPUT);
     _pca9536.SetMode(RED_LED, IO_OUTPUT);
@@ -44,16 +44,19 @@ Alarm::~Alarm() {
 
 bool Alarm::IsConnected()
 {
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
     return _pca9536.isConnected();
 }
 
 uint8_t Alarm::GetPinState(pin_t pin)
 {
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
     return _pca9536.GetState(pin);
 }
 
 void Alarm::TurnOnDCMotor()
 {
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
     _pca9536.SetMode(DC_MOTOR, IO_OUTPUT);
     if (GetPinState(DC_MOTOR) == IO_LOW)
     {
@@ -63,6 +66,7 @@ void Alarm::TurnOnDCMotor()
 
 void Alarm::TurnOffDCMotor()
 {   
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
     _pca9536.SetMode(DC_MOTOR, IO_OUTPUT);
     if (GetPinState(DC_MOTOR) == IO_HIGH)
     {
@@ -73,26 +77,35 @@ void Alarm::TurnOffDCMotor()
 
 void Alarm::TurnOnRedLed()
 {
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
+    _isRedAlarmOn = true;
     _pca9536.SetState(RED_LED, IO_HIGH);
 }
 
 void Alarm::TurnOffRedLed()
 {
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
+    _isRedAlarmOn = false;
     _pca9536.SetState(RED_LED, IO_LOW);
 }
 
 void Alarm::TurnOnGreenLed()
 {
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
+    _isGreenAlarmOn = true;
     _pca9536.SetState(GREEN_LED, IO_HIGH);
 }
 
 void Alarm::TurnOffGreenLed()
 {
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
+    _isGreenAlarmOn = false;
     _pca9536.SetState(GREEN_LED, IO_LOW);
 }
 
 void Alarm::TurnOffAlarm()
 {
+    printf("Alarm::TurnOffAlarm\n");
     TurnOffBlinkRedAlarm();
     TurnOffBlinkLedsAlarm();
     TurnOffBlinkGreenAlarm();
@@ -103,7 +116,14 @@ void Alarm::TurnOffAlarm()
 }
 
 void Alarm::TurnOnAlternatingAlarm() {
+    _mtx.lock();
     _isAlternatingAlarmOn = true;
+    _isGreenAlarmOn = false;
+    _isRedAlarmOn = false;
+    _mtx.unlock();
+
+    TurnOffRedLed();
+    TurnOffGreenLed();
 
     if (!_deactivateVibration)
     {
@@ -114,13 +134,16 @@ void Alarm::TurnOnAlternatingAlarm() {
     while (_isAlternatingAlarmOn)
     {   counter++;
 
+        _mtx.lock();
         if(counter % 2 == 0) {
+
             _pca9536.SetState(GREEN_LED, IO_HIGH);
             _pca9536.SetState(RED_LED, IO_LOW);
         } else {
             _pca9536.SetState(GREEN_LED, IO_LOW);
             _pca9536.SetState(RED_LED, IO_HIGH);
         }
+        _mtx.unlock();
         sleep_for_milliseconds((1 / _blinkFrequency) * SECONDS_TO_MILLISECONDS);
     }
 
@@ -129,6 +152,7 @@ void Alarm::TurnOnAlternatingAlarm() {
 }
 
 void Alarm::TurnOffAlternatingAlarm() {
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
     _isAlternatingAlarmOn = false;
 }
 
@@ -139,7 +163,11 @@ void Alarm::TurnOnGreenAlarm()
 
 void Alarm::TurnOnBlinkLedsAlarm()
 {
+    _mtx.lock();
     _isBlinkLedsAlarmOn = true;
+    _isRedAlarmOn = false;
+    _isGreenAlarmOn = false;
+    _mtx.unlock();
 
     if (!_deactivateVibration)
     {
@@ -149,8 +177,10 @@ void Alarm::TurnOnBlinkLedsAlarm()
 
     while (_isBlinkLedsAlarmOn)
     {
+        _mtx.lock();
         _pca9536.ToggleState(RED_LED);
         _pca9536.ToggleState(GREEN_LED);
+        _mtx.unlock();
         sleep_for_milliseconds((1 / _blinkFrequency) * SECONDS_TO_MILLISECONDS);
     }
 
@@ -160,7 +190,10 @@ void Alarm::TurnOnBlinkLedsAlarm()
 
 void Alarm::TurnOnBlinkRedAlarm()
 {
+    _mtx.lock();
     _isBlinkRedAlarmOn = true;
+    _isRedAlarmOn = false;
+    _mtx.unlock();
 
     if (!_deactivateVibration)
     {
@@ -172,7 +205,9 @@ void Alarm::TurnOnBlinkRedAlarm()
     {
         if (!_deactivateBlinking)
         {
+            _mtx.lock();
             _pca9536.ToggleState(RED_LED);
+            _mtx.unlock();
         }
         sleep_for_milliseconds((1 / _blinkFrequency) * SECONDS_TO_MILLISECONDS);
     }
@@ -182,12 +217,16 @@ void Alarm::TurnOnBlinkRedAlarm()
 
 void Alarm::TurnOnBlinkGreenAlarm()
 {
-
-    _isBlinkGreenAlarmOn = true;
+    _mtx.lock();
+    _isBlinkGreenAlarmOn = true;    
+    _isGreenAlarmOn = false;
+    _mtx.unlock();
 
     while (_isBlinkGreenAlarmOn)
     {
+        _mtx.lock();
         _pca9536.ToggleState(GREEN_LED);
+        _mtx.unlock();
         sleep_for_milliseconds((1 / _blinkFrequency) * SECONDS_TO_MILLISECONDS);
     }
 
@@ -196,16 +235,19 @@ void Alarm::TurnOnBlinkGreenAlarm()
 
 void Alarm::TurnOffBlinkLedsAlarm()
 {
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
     _isBlinkLedsAlarmOn = false;
 }
 
 void Alarm::TurnOffBlinkRedAlarm()
 {
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
     _isBlinkRedAlarmOn = false;
 }
 
 void Alarm::TurnOffBlinkGreenAlarm()
 {
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
     _isBlinkGreenAlarmOn = false;
 }
 
@@ -214,7 +256,7 @@ void Alarm::TurnOnBlinkRedAlarmThread()
     if(_isBlinkRedAlarmOn) {
         return;
     }
-
+    printf("Alarm::TurnOnBlinkRedAlarmThread()\n");
     blinkRedLedThread = std::thread([=] {
         TurnOnBlinkRedAlarm();
     });
@@ -226,7 +268,7 @@ void Alarm::TurnOnBlinkLedsAlarmThread()
     if(_isBlinkLedsAlarmOn) {
         return;
     }
-
+    printf("Alarm::TurnOnBlinkLedsAlarmThread()\n");
     blinkLedsThread = std::thread([=] {
         TurnOnBlinkLedsAlarm();
     });
@@ -238,7 +280,7 @@ void Alarm::TurnOnBlinkGreenAlarmThread()
     if(_isBlinkGreenAlarmOn) {
         return;
     }
-
+    printf("Alarm::TurnOnBlinkGreenAlarmThread()\n");
     blinkGreenLedThread = std::thread([=] {
         TurnOnBlinkGreenAlarm();
     });
@@ -249,7 +291,7 @@ void Alarm::TurnOnAlternatingBlinkAlarmThread() {
     if(_isAlternatingAlarmOn) {
         return;
     }
-
+    printf("Alarm::TurnOnAlternatingBlinkAlarmThread()\n");
     alternatingLedThread = std::thread([=] {
         TurnOnAlternatingAlarm();
     });

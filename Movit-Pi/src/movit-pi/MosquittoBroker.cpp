@@ -255,7 +255,10 @@ void MosquittoBroker::SendSensorsData(SensorData sd)
                 \"alarmSensor\" : {\
                     \"connected\" : "+std::to_string(sd.alarmConnected)+",\
                     \"redLedOn\" : "+std::to_string(sd.alarmRedLedOn)+",\
+                    \"redLedBlink\" : "+std::to_string(sd.alarmRedLedBlink)+",\
                     \"greenLedOn\" : "+std::to_string(sd.alarmGreenLedOn)+",\
+                    \"greenLedBlink\" : "+std::to_string(sd.alarmGreenLedBlink)+",\
+                    \"alternatingLedBlink\" : "+std::to_string(sd.alarmAlternatingLedBlink)+",\
                     \"motorOn\" : "+std::to_string(sd.alarmDCMotorOn)+",\
                     \"buttonPressed\" : "+std::to_string(sd.alarmButtonPressed)+"\
                 },\

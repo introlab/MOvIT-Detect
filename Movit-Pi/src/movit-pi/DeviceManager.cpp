@@ -11,7 +11,7 @@
 
 
 DeviceManager::DeviceManager(FileManager *fileManager) : _fileManager(fileManager),
-                                                         _alarm(10) {
+    _alarm(10) {
     _mobileImu = MobileImu::GetInstance();
     _fixedImu = FixedImu::GetInstance();
     _pressureMat = PressureMat::GetInstance();
@@ -77,7 +77,7 @@ bool DeviceManager::InitializeMobileImu() {
     sensorData.mIMUConnected = _mobileImu->IsConnected();
     //printf("mIMUConnected = %d\n", sensorData.mIMUConnected);
     if (!sensorData.mIMUConnected)
-    {   
+    {
         //printf("mIMUConnected = %d\n", sensorData.mIMUConnected);
         return sensorData.mIMUConnected;
     }
@@ -133,7 +133,7 @@ void DeviceManager::CalibrateIMU() {
     CalibrateFixedIMU();
     CalibrateMobileIMU();
 }
- 
+
 void DeviceManager::CalibrateFixedIMU() {
     printf("Calibrating FixedIMU");
     _fixedImu->CalibrateAndSetOffsets();
@@ -156,7 +156,7 @@ void DeviceManager::Update() {
     //double arr[3];
 
     //Reception données mobileIMU
-  
+
 
     if(sensorData.time - lastmIMUReset > 900) {
         lastmIMUReset = sensorData.time;
@@ -190,7 +190,7 @@ void DeviceManager::Update() {
             printf("Fixed: %d, mobile: %d count: %d\n", fixedFail, mobileFail, (int) count);
         }
     } else {
-	printf("Mobile not connected\n");
+        printf("Mobile not connected\n");
         _mobileImu->Initialize();
         sensorData.mIMUConnected = false;
         //sensorData.mIMUAccX = 0;
@@ -223,7 +223,7 @@ void DeviceManager::Update() {
             printf("Fixed: %d, mobile: %d\n", fixedFail, mobileFail);
         }
     } else {
-	printf("Fixed not connected \n");
+        printf("Fixed not connected \n");
         _fixedImu->Initialize();
         sensorData.fIMUConnected = false;
         //sensorData.fIMUAccX = 0;
@@ -253,7 +253,7 @@ void DeviceManager::Update() {
             }
         }
     } else {
-	printf("VL53L0X not connected\n");
+        printf("VL53L0X not connected\n");
         sensorData.tofConnected = false;
         sensorData.tofRange = 260;                  //Default value to get a distance when no tof
         _VL53L0XSensor->Initialize();
@@ -263,7 +263,7 @@ void DeviceManager::Update() {
         sensorData.flowConnected = true;
         _PMW3901Sensor->ReadMotionCount(&sensorData.flowTravelX, &sensorData.flowTravelY);
     } else {
-	printf("PMW3901 not connected \n");
+        printf("PMW3901 not connected \n");
         sensorData.flowConnected = false;
         //Stops detecting movement in FSM when problems with the connection occur:
         sensorData.flowTravelX = 0;
@@ -275,13 +275,23 @@ void DeviceManager::Update() {
     if(_alarm.IsConnected()) {
         sensorData.alarmConnected = true;
         sensorData.alarmButtonPressed = _alarm.ButtonPressed();
+        //DL - Update led states
+        sensorData.alarmRedLedOn = _alarm.IsRedAlarmOn();
+        sensorData.alarmGreenLedOn = _alarm.IsGreenAlarmOn();
+        sensorData.alarmRedLedBlink = _alarm.IsBlinkRedAlarmOn();
+        sensorData.alarmGreenLedBlink = _alarm.IsBlinkGreenAlarmOn();
+        sensorData.alarmAlternatingLedBlink = _alarm.IsAlternatingAlarmOn();
     } else {
-	printf("Alarm is not connected\n");
+        printf("Alarm is not connected\n");
         sensorData.alarmConnected = false;
         sensorData.alarmRedLedOn = false;
         sensorData.alarmGreenLedOn = false;
         sensorData.alarmDCMotorOn = false;
         sensorData.alarmButtonPressed = false;
+        //DL Update led states
+        sensorData.alarmRedLedBlink = false;
+        sensorData.alarmGreenLedBlink = false;
+        sensorData.alarmAlternatingLedBlink = false;
         _alarm.Initialize();
     }
 
@@ -290,7 +300,7 @@ void DeviceManager::Update() {
         _pressureMat->Update();
         _pressureMat->GetRawAnalogData(sensorData.matData);
     } else {
-	printf("Pressure mat not connected\n");
+        printf("Pressure mat not connected\n");
         sensorData.matConnected = false;
         _pressureMat->Initialize();
         for(int i = 0; i < 9; i++) {

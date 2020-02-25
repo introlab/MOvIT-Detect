@@ -42,13 +42,18 @@ void NotificationFSM::updateState(ChairState cs, AngleFSM aFSM, SeatingFSM sFSM,
             }
 
             //La personne est assise
-            if(sFSM.getCurrentState() == static_cast<int>(SeatingState::CURRENTLY_SEATING) || sFSM.getCurrentState() == static_cast<int>(SeatingState::CONFIRM_STOP_SEATING)) {
+            if(sFSM.getCurrentState() == static_cast<int>(SeatingState::CURRENTLY_SEATING) ||
+                    sFSM.getCurrentState() == static_cast<int>(SeatingState::CONFIRM_STOP_SEATING)) {
                 if(currentTime != cs.time) {
                     secondsCounter++;
                     //printf ....*******************************************************************
-                    if(secondsCounter >= aFSM.getTargetFrequency()) {
+
+
+                    //Le temps d'attente pour une bascule est ecoule
+                    //DL Ou nous sommes deja en bascule
+                    if(secondsCounter >= aFSM.getTargetFrequency() || aFSM.getCurrentState() == static_cast<int>(AngleState::IN_TILT)) {
                         currentState = NotificationState::NOTIFICATION_TILT_STARTED;
-                    }
+                    }                                                                                                    
                 }
             } else {
                 currentState = NotificationState::INIT;
@@ -133,7 +138,9 @@ void NotificationFSM::updateState(ChairState cs, AngleFSM aFSM, SeatingFSM sFSM,
             stopReason = "Other";
             if(currentTime != cs.time) {
                 secondsCounter++;
-                if(secondsCounter >= SNOOZE_TIME) {
+                //Atteint le snooze time
+                //DL ou la personne est deja en tilt
+                if(secondsCounter >= SNOOZE_TIME || aFSM.getCurrentState() == static_cast<int>(AngleState::IN_TILT)) {
                     currentState = NotificationState::WAITING_FOR_TILT;
                     stopReason = "TILT_REQUESTED";
                 }

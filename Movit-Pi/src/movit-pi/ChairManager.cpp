@@ -229,7 +229,7 @@ void ChairManager::UpdateDevices()
         else {
             if(blinkEnable) {
                 _deviceManager->getAlarm()->TurnOnAlternatingBlinkAlarmThread();
-                printf("Turned on blinking alarm");
+                //printf("Turned on blinking alarm");
             }
 
             if(vibrationEnable) {
@@ -301,7 +301,6 @@ void ChairManager::UpdateDevices()
     ReadFromServer();
 
     //DL
-
     //displaySensorData(sensorData);
     //displayChairState(chairState);
     //printf("\r\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K\033[A\33[2K%s%s%s", (sensorData.matConnected) ? "\033[A\33[2K\033[A\33[2K\033[A\33[2K" : "", (sensorData.mIMUConnected) ? "\033[A\33[2K" : "", (sensorData.fIMUConnected) ? "\033[A\33[2K" : "");

@@ -4,6 +4,7 @@
 #include "Sensor.h"
 #include "PCA9536.h"
 #include <thread>
+#include <mutex>
 
 #define DEFAULT_BLINK_FREQUENCY 10
 
@@ -12,7 +13,7 @@ class Alarm : public Sensor
   public:
     Alarm();
     Alarm(double blinkFrequency);
-    ~Alarm();
+    virtual ~Alarm();
 
     bool Initialize();
     bool IsConnected();
@@ -45,8 +46,10 @@ class Alarm : public Sensor
     void TurnOffBlinkLedsAlarm();
     void TurnOffAlternatingAlarm();
 
-    bool IsRedAlarmOn() { return _isBlinkRedAlarmOn; }
+    bool IsRedAlarmOn() { return _isRedAlarmOn; }
+    bool IsGreenAlarmOn() {return _isGreenAlarmOn;}
     bool IsBlinkLedsAlarmOn() { return _isBlinkLedsAlarmOn; }
+    bool IsBlinkRedAlarmOn() {return _isBlinkRedAlarmOn;}
     bool IsBlinkGreenAlarmOn() { return _isBlinkGreenAlarmOn; }
     bool IsAlternatingAlarmOn() { return _isAlternatingAlarmOn; }
 
@@ -58,6 +61,8 @@ class Alarm : public Sensor
   private:
     PCA9536 _pca9536;
 
+    bool _isGreenAlarmOn = false;
+    bool _isRedAlarmOn = false;
     bool _isBlinkRedAlarmOn = false;
     bool _isBlinkLedsAlarmOn = false;
     bool _isBlinkGreenAlarmOn = false;
@@ -72,6 +77,7 @@ class Alarm : public Sensor
     bool _deactivateBlinking = false;
 
     double _blinkFrequency;
+    std::recursive_mutex _mtx;
 
     uint8_t GetPinState(pin_t pin);
 };
