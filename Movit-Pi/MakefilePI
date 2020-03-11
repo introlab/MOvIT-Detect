@@ -1,7 +1,9 @@
 export TARGET_PREFIX=arm-linux-gnueabihf-
 export CXX = $(TARGET_PREFIX)g++
+export CC = $(TARGET_PREFIX)gcc
 
 CXXFLAGS = -g -Wall -std=c++11
+CFLAGS = -g -Wall
 LDLIBS = -lpthread -lrt -lm -lmosquitto -lwiringPi -lmosquittopp
 LDFLAGS = -I/usr/include -I/usr/local/include -Iexternal/include -Lexternal/lib -lmosquitto -lwiringPi -lbcm2835 -lmosquittopp
 DIRECTORIES := Obj/movit-pi Executables
@@ -10,16 +12,20 @@ DIRECTORIES := Obj/movit-pi Executables
 
 default: all
 
-OBJECTS-PI = $(patsubst src/movit-pi/%.cpp,Obj/movit-pi/%.o,$(wildcard src/movit-pi/*.cpp))
+OBJECTS-PI-CPP = $(patsubst src/movit-pi/%.cpp,Obj/movit-pi/%.o,$(wildcard src/movit-pi/*.cpp))
+OBJECTS-PI-C = $(patsubst src/movit-pi/%.c,Obj/movit-pi/%.o, $(wildcard src/movit-pi/*.c))
 HEADERS-PI = $(wildcard src/movit-pi/*.h)
 
 Obj/movit-pi/%.o: src/movit-pi/%.cpp $(HEADERS-PI)
 	$(CXX) $(CXXFLAGS) -c $< -o Obj/movit-pi/$(notdir $@) $(LDFLAGS)
 
+Obj/movit-pi/%.o: src/movit-pi/%.c $(HEADERS-PI)
+	$(CC) $(CFLAGS) -c $< -o Obj/movit-pi/$(notdir $@) $(LDFLAGS)
+
 
 .PRECIOUS: movit-pi Obj/movit-pi/$(notdir OBJECTS-PI) 
 
-movit-pi: $(DIRECTORIES) $(OBJECTS-PI) $(HEADERS-PI)
+movit-pi: $(DIRECTORIES) $(OBJECTS-PI-CPP) $(OBJECTS-PI-C) $(HEADERS-PI)
 	$(CXX) $(CXXFLAGS) $(wildcard Obj/movit-pi/*.o) -Wall $(LDLIBS) -o Executables/$@ $(LDFLAGS)
 
 all: movit-pi
