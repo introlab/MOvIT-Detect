@@ -46,7 +46,7 @@ class ChairManager
 
     uint32_t calculateDistance(SensorData sd);
 
-    Alarm *_alarm;
+    //Alarm *_alarm;
     MosquittoBroker *_mosquittoBroker;
     DeviceManager *_deviceManager;
 

@@ -54,10 +54,12 @@ PCA9536::~PCA9536() {}
  *==============================================================================================================*/
 uint8_t PCA9536::GetMode(pin_t pin)
 {
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
     return GetPin(pin, REG_CONFIG);
 }
 
 bool PCA9536::isConnected() {
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
     uint8_t regData = 0;
     uint8_t response = I2Cdev::ReadByte(DEV_ADDR, 0x02, &regData);
     uint8_t response2 = I2Cdev::ReadByte(DEV_ADDR, 0x03, &regData);
@@ -70,6 +72,7 @@ bool PCA9536::isConnected() {
  *==============================================================================================================*/
 uint8_t PCA9536::GetState(pin_t pin)
 {
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
     return GetPin(pin, GetMode(pin) ? REG_INPUT : REG_OUTPUT);
 }
 
@@ -78,6 +81,7 @@ uint8_t PCA9536::GetState(pin_t pin)
  *==============================================================================================================*/
 uint8_t PCA9536::GetPolarity(pin_t pin)
 {
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
     return GetPin(pin, REG_POLARITY);
 }
 
@@ -86,7 +90,9 @@ uint8_t PCA9536::GetPolarity(pin_t pin)
  *==============================================================================================================*/
 
 void PCA9536::SetMode(pin_t pin, mode_t newMode)
-{                                     // PARAMS: IO0 / IO1 / IO2 / IO3
+{
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
+    // PARAMS: IO0 / IO1 / IO2 / IO3
     SetPin(pin, REG_CONFIG, newMode); //         IO_INPUT / IO_OUTPUT
 }
 
@@ -95,6 +101,7 @@ void PCA9536::SetMode(pin_t pin, mode_t newMode)
  *==============================================================================================================*/
 void PCA9536::SetMode(mode_t newMode)
 {
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
     // PARAMS: IO_INPUT / IO_OUTPUT
     SetReg(REG_CONFIG, newMode ? ALL_INPUT : ALL_OUTPUT);
 }
@@ -103,7 +110,9 @@ void PCA9536::SetMode(mode_t newMode)
     SET STATE (OUTPUT PINS ONLY)
  *==============================================================================================================*/
 void PCA9536::SetState(pin_t pin, state_t newState)
-{                                      // PARAMS: IO0 / IO1 / IO2 / IO3
+{
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
+    // PARAMS: IO0 / IO1 / IO2 / IO3
     SetPin(pin, REG_OUTPUT, newState); //         IO_LOW / IO_HIGH
 }
 
@@ -112,6 +121,7 @@ void PCA9536::SetState(pin_t pin, state_t newState)
  *==============================================================================================================*/
 void PCA9536::SetState(state_t newState)
 {
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
     // PARAMS: IO_LOW / IO_HIGH
     SetReg(REG_OUTPUT, newState ? ALL_HIGH : ALL_LOW);
 }
@@ -121,6 +131,7 @@ void PCA9536::SetState(state_t newState)
  *==============================================================================================================*/
 void PCA9536::ToggleState(pin_t pin)
 {
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
     SetReg(REG_OUTPUT, GetReg(REG_OUTPUT) ^ (1 << pin));
 }
 
@@ -129,6 +140,7 @@ void PCA9536::ToggleState(pin_t pin)
  *==============================================================================================================*/
 void PCA9536::ToggleState()
 {
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
     SetReg(REG_OUTPUT, ~GetReg(REG_OUTPUT));
 }
 
@@ -136,7 +148,9 @@ void PCA9536::ToggleState()
     SET POLARITY (INPUT PINS ONLY)
  *==============================================================================================================*/
 void PCA9536::SetPolarity(pin_t pin, polarity_t newPolarity)
-{                                           // PARAMS: IO0 / IO1 / IO2 / IO3
+{
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
+    // PARAMS: IO0 / IO1 / IO2 / IO3
     SetPin(pin, REG_POLARITY, newPolarity); //         IO_NON_INVERTED / IO_INVERTED
 }
 
@@ -145,6 +159,7 @@ void PCA9536::SetPolarity(pin_t pin, polarity_t newPolarity)
  *==============================================================================================================*/
 void PCA9536::SetPolarity(polarity_t newPolarity)
 {
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
     // PARAMS: IO_NON_INVERTED / IO_INVERTED
     uint8_t polarityVals, polarityMask, polarityNew;
     polarityVals = GetReg(REG_POLARITY);
@@ -158,6 +173,7 @@ void PCA9536::SetPolarity(polarity_t newPolarity)
  *==============================================================================================================*/
 void PCA9536::Reset()
 {
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
     SetMode(IO_INPUT);
     SetState(IO_HIGH);
     SetPolarity(IO_NON_INVERTED);
@@ -168,6 +184,7 @@ void PCA9536::Reset()
  *==============================================================================================================*/
 uint8_t PCA9536::GetReg(reg_ptr_t regPtr)
 {
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
     uint8_t regData = 0;
     I2Cdev::ReadByte(DEV_ADDR, regPtr, &regData);
     return regData;
@@ -178,6 +195,7 @@ uint8_t PCA9536::GetReg(reg_ptr_t regPtr)
  *==============================================================================================================*/
 uint8_t PCA9536::GetPin(pin_t pin, reg_ptr_t regPtr)
 {
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
     return (GetReg(regPtr) >> pin) & 1U;
 }
 
@@ -186,9 +204,13 @@ uint8_t PCA9536::GetPin(pin_t pin, reg_ptr_t regPtr)
  *==============================================================================================================*/
 void PCA9536::SetReg(reg_ptr_t regPtr, uint8_t newSetting)
 {
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
     if (regPtr > 0)
     {
-        I2Cdev::WriteByte(DEV_ADDR, regPtr, newSetting);
+        if (!I2Cdev::WriteByte(DEV_ADDR, regPtr, newSetting))
+        {
+            printf("Error writing register: %2.2x val: %2.2x",regPtr, newSetting);
+        }
     }
 }
 
@@ -197,7 +219,9 @@ void PCA9536::SetReg(reg_ptr_t regPtr, uint8_t newSetting)
  *==============================================================================================================*/
 void PCA9536::SetPin(pin_t pin, reg_ptr_t regPtr, uint8_t newSetting)
 {
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
     uint8_t newReg = GetReg(regPtr);
+    //printf("PCA9536::SetPin register output pin: %i, state : %2.2x \n", pin, newReg);
     if (newSetting)
     {
         newReg |= 1U << pin;

@@ -9,17 +9,19 @@
 
 
 Alarm::Alarm()
+    : _blinkFrequency(DEFAULT_BLINK_FREQUENCY)
 {
-    Alarm(DEFAULT_BLINK_FREQUENCY);
+
 }
 
-Alarm::Alarm(double blinkFrequency) : _blinkFrequency(blinkFrequency)
+Alarm::Alarm(double blinkFrequency)
+    : _blinkFrequency(blinkFrequency)
 {
 }
 
 bool Alarm::Initialize()
 {
-     std::lock_guard<std::recursive_mutex> lock(_mtx);
+    std::lock_guard<std::recursive_mutex> lock(_mtx);
     _pca9536.SetMode(DC_MOTOR, IO_INPUT);
     _pca9536.SetMode(GREEN_LED, IO_OUTPUT);
     _pca9536.SetMode(RED_LED, IO_OUTPUT);
@@ -32,9 +34,7 @@ bool Alarm::Initialize()
         return false;
     }
 
-    TurnOffRedLed();
-    TurnOffGreenLed();
-    TurnOffDCMotor();
+    TurnOffAlarm();
     return true;
 }
 
@@ -56,6 +56,7 @@ uint8_t Alarm::GetPinState(pin_t pin)
 
 void Alarm::TurnOnDCMotor()
 {
+    //printf("Alarm::TurnOnDCMotor\n");
     std::lock_guard<std::recursive_mutex> lock(_mtx);
     _pca9536.SetMode(DC_MOTOR, IO_OUTPUT);
     if (GetPinState(DC_MOTOR) == IO_LOW)
@@ -66,6 +67,7 @@ void Alarm::TurnOnDCMotor()
 
 void Alarm::TurnOffDCMotor()
 {   
+    //printf("Alarm::TurnOffDCMotor\n");
     std::lock_guard<std::recursive_mutex> lock(_mtx);
     _pca9536.SetMode(DC_MOTOR, IO_OUTPUT);
     if (GetPinState(DC_MOTOR) == IO_HIGH)
@@ -77,6 +79,7 @@ void Alarm::TurnOffDCMotor()
 
 void Alarm::TurnOnRedLed()
 {
+    //printf("Alarm::TurnOnRedLed\n");
     std::lock_guard<std::recursive_mutex> lock(_mtx);
     _isRedAlarmOn = true;
     _pca9536.SetState(RED_LED, IO_HIGH);
@@ -84,6 +87,7 @@ void Alarm::TurnOnRedLed()
 
 void Alarm::TurnOffRedLed()
 {
+    //printf("Alarm::TurnOffRedLed\n");
     std::lock_guard<std::recursive_mutex> lock(_mtx);
     _isRedAlarmOn = false;
     _pca9536.SetState(RED_LED, IO_LOW);
@@ -91,6 +95,7 @@ void Alarm::TurnOffRedLed()
 
 void Alarm::TurnOnGreenLed()
 {
+    //printf("Alarm::TurnOnGreenLed\n");
     std::lock_guard<std::recursive_mutex> lock(_mtx);
     _isGreenAlarmOn = true;
     _pca9536.SetState(GREEN_LED, IO_HIGH);
@@ -98,6 +103,7 @@ void Alarm::TurnOnGreenLed()
 
 void Alarm::TurnOffGreenLed()
 {
+    //printf("Alarm::TurnOffGreenLed\n");
     std::lock_guard<std::recursive_mutex> lock(_mtx);
     _isGreenAlarmOn = false;
     _pca9536.SetState(GREEN_LED, IO_LOW);
@@ -105,7 +111,7 @@ void Alarm::TurnOffGreenLed()
 
 void Alarm::TurnOffAlarm()
 {
-    printf("Alarm::TurnOffAlarm\n");
+    //printf("Alarm::TurnOffAlarm\n");
     TurnOffBlinkRedAlarm();
     TurnOffBlinkLedsAlarm();
     TurnOffBlinkGreenAlarm();
@@ -116,6 +122,7 @@ void Alarm::TurnOffAlarm()
 }
 
 void Alarm::TurnOnAlternatingAlarm() {
+    //printf("Alarm::TurnOnAlternatingAlarm\n");
     _mtx.lock();
     _isAlternatingAlarmOn = true;
     _isGreenAlarmOn = false;
@@ -132,7 +139,8 @@ void Alarm::TurnOnAlternatingAlarm() {
     int counter = 0;
 
     while (_isAlternatingAlarmOn)
-    {   counter++;
+    {
+        counter++;
 
         _mtx.lock();
         if(counter % 2 == 0) {
@@ -144,7 +152,8 @@ void Alarm::TurnOnAlternatingAlarm() {
             _pca9536.SetState(RED_LED, IO_HIGH);
         }
         _mtx.unlock();
-        sleep_for_milliseconds((1 / _blinkFrequency) * SECONDS_TO_MILLISECONDS);
+        //printf("Alarm::TurnOnAlternatingAlarm - sleeping\n");
+        sleep_for_milliseconds(static_cast<uint32_t>((1.0 / _blinkFrequency) * SECONDS_TO_MILLISECONDS));
     }
 
     TurnOffRedLed();
@@ -152,17 +161,20 @@ void Alarm::TurnOnAlternatingAlarm() {
 }
 
 void Alarm::TurnOffAlternatingAlarm() {
+    //printf("Alarm::TurnOffAlternatingAlarm\n");
     std::lock_guard<std::recursive_mutex> lock(_mtx);
     _isAlternatingAlarmOn = false;
 }
 
 void Alarm::TurnOnGreenAlarm()
 {
+    //printf("Alarm::TurnOnGreenAlarm\n");
     TurnOnGreenLed();
 }
 
 void Alarm::TurnOnBlinkLedsAlarm()
 {
+    //printf("Alarm::TurnOnBlinkLedsAlarm\n");
     _mtx.lock();
     _isBlinkLedsAlarmOn = true;
     _isRedAlarmOn = false;
@@ -181,7 +193,7 @@ void Alarm::TurnOnBlinkLedsAlarm()
         _pca9536.ToggleState(RED_LED);
         _pca9536.ToggleState(GREEN_LED);
         _mtx.unlock();
-        sleep_for_milliseconds((1 / _blinkFrequency) * SECONDS_TO_MILLISECONDS);
+        sleep_for_milliseconds(static_cast<uint32_t>((1.0 / _blinkFrequency) * SECONDS_TO_MILLISECONDS));
     }
 
     TurnOffRedLed();
@@ -190,6 +202,7 @@ void Alarm::TurnOnBlinkLedsAlarm()
 
 void Alarm::TurnOnBlinkRedAlarm()
 {
+    //printf("Alarm::TurnOnBlinkRedAlarm\n");
     _mtx.lock();
     _isBlinkRedAlarmOn = true;
     _isRedAlarmOn = false;
@@ -209,7 +222,7 @@ void Alarm::TurnOnBlinkRedAlarm()
             _pca9536.ToggleState(RED_LED);
             _mtx.unlock();
         }
-        sleep_for_milliseconds((1 / _blinkFrequency) * SECONDS_TO_MILLISECONDS);
+        sleep_for_milliseconds(static_cast<uint32_t>((1.0 / _blinkFrequency) * SECONDS_TO_MILLISECONDS));
     }
 
     TurnOffRedLed();
@@ -217,8 +230,9 @@ void Alarm::TurnOnBlinkRedAlarm()
 
 void Alarm::TurnOnBlinkGreenAlarm()
 {
+    //printf("Alarm::TurnOnBlinkGreenAlarm\n");
     _mtx.lock();
-    _isBlinkGreenAlarmOn = true;    
+    _isBlinkGreenAlarmOn = true;
     _isGreenAlarmOn = false;
     _mtx.unlock();
 
@@ -227,7 +241,7 @@ void Alarm::TurnOnBlinkGreenAlarm()
         _mtx.lock();
         _pca9536.ToggleState(GREEN_LED);
         _mtx.unlock();
-        sleep_for_milliseconds((1 / _blinkFrequency) * SECONDS_TO_MILLISECONDS);
+        sleep_for_milliseconds(static_cast<uint32_t>((1.0 / _blinkFrequency) * SECONDS_TO_MILLISECONDS));
     }
 
     TurnOffGreenLed();
@@ -235,18 +249,21 @@ void Alarm::TurnOnBlinkGreenAlarm()
 
 void Alarm::TurnOffBlinkLedsAlarm()
 {
+    //printf("Alarm::TurnOffBlinkLedsAlarm\n");
     std::lock_guard<std::recursive_mutex> lock(_mtx);
     _isBlinkLedsAlarmOn = false;
 }
 
 void Alarm::TurnOffBlinkRedAlarm()
 {
+    //printf("Alarm::TurnOffBlinkRedAlarm\n");
     std::lock_guard<std::recursive_mutex> lock(_mtx);
     _isBlinkRedAlarmOn = false;
 }
 
 void Alarm::TurnOffBlinkGreenAlarm()
 {
+    //printf("Alarm::TurnOffBlinkGreenAlarm\n");
     std::lock_guard<std::recursive_mutex> lock(_mtx);
     _isBlinkGreenAlarmOn = false;
 }
@@ -256,7 +273,7 @@ void Alarm::TurnOnBlinkRedAlarmThread()
     if(_isBlinkRedAlarmOn) {
         return;
     }
-    printf("Alarm::TurnOnBlinkRedAlarmThread()\n");
+    //printf("Alarm::TurnOnBlinkRedAlarmThread()\n");
     blinkRedLedThread = std::thread([=] {
         TurnOnBlinkRedAlarm();
     });
@@ -268,7 +285,7 @@ void Alarm::TurnOnBlinkLedsAlarmThread()
     if(_isBlinkLedsAlarmOn) {
         return;
     }
-    printf("Alarm::TurnOnBlinkLedsAlarmThread()\n");
+    //printf("Alarm::TurnOnBlinkLedsAlarmThread()\n");
     blinkLedsThread = std::thread([=] {
         TurnOnBlinkLedsAlarm();
     });
@@ -280,7 +297,7 @@ void Alarm::TurnOnBlinkGreenAlarmThread()
     if(_isBlinkGreenAlarmOn) {
         return;
     }
-    printf("Alarm::TurnOnBlinkGreenAlarmThread()\n");
+    //printf("Alarm::TurnOnBlinkGreenAlarmThread()\n");
     blinkGreenLedThread = std::thread([=] {
         TurnOnBlinkGreenAlarm();
     });
@@ -291,7 +308,7 @@ void Alarm::TurnOnAlternatingBlinkAlarmThread() {
     if(_isAlternatingAlarmOn) {
         return;
     }
-    printf("Alarm::TurnOnAlternatingBlinkAlarmThread()\n");
+    //printf("Alarm::TurnOnAlternatingBlinkAlarmThread()\n");
     alternatingLedThread = std::thread([=] {
         TurnOnAlternatingAlarm();
     });

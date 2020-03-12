@@ -4,8 +4,8 @@
 #include "SysTime.h"
 
 
-ChairManager::ChairManager(MosquittoBroker *mosquittoBroker, DeviceManager *deviceManager) : _mosquittoBroker(mosquittoBroker),
-                                                                                             _deviceManager(deviceManager)
+ChairManager::ChairManager(MosquittoBroker *mosquittoBroker, DeviceManager *deviceManager)
+    : _mosquittoBroker(mosquittoBroker), _deviceManager(deviceManager)
 {
 }
 
@@ -229,7 +229,6 @@ void ChairManager::UpdateDevices()
         else {
             if(blinkEnable) {
                 _deviceManager->getAlarm()->TurnOnAlternatingBlinkAlarmThread();
-                //printf("Turned on blinking alarm");
             }
 
             if(vibrationEnable) {

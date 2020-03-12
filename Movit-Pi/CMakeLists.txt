@@ -31,3 +31,18 @@ link_directories(/usr/lib /usr/local/lib)
 target_link_libraries(movit-pi wiringPi mosquitto wiringPi bcm2835 mosquittopp pthread)
 
 
+
+# Tests (compile useful files only)
+set(test-Alarm-srcs
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/movit-pi/tests/test-Alarm.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/movit-pi/Alarm.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/movit-pi/Sensor.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/movit-pi/Utils.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/movit-pi/SysTime.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/movit-pi/PCA9536.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/movit-pi/I2Cdev.cpp
+
+)
+add_executable(test-Alarm ${test-Alarm-srcs} ${movitpi_headers})
+target_link_libraries(test-Alarm wiringPi mosquitto wiringPi bcm2835 mosquittopp pthread)
+
