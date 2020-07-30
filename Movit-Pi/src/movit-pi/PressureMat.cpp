@@ -1,4 +1,7 @@
 #include "PressureMat.h"
+#include <iostream>
+
+using namespace std;
 
 PressureMat::PressureMat() : _forcePlate1(_sensorMatrix, 4, 1, 0, 3, _distX, _distY, _distZ0),
                              _forcePlate2(_sensorMatrix, 7, 4, 3, 6, _distX, _distY, _distZ0),
@@ -74,7 +77,10 @@ void PressureMat::Calibrate()
 
 void PressureMat::Update()
 {
-    if (_isForcePlateInitialized && !_isCalibrated)
+    //cout << "initialized" << _isForcePlateInitialized << endl;
+    //cout << "calibrated" << _isCalibrated << endl;
+
+    if (_isForcePlateInitialized && _isCalibrated)
     {
         // Data: Capteur de force
         UpdateForcePlateData();
@@ -117,6 +123,7 @@ void PressureMat::UpdateForcePlateData()
     {
         for (uint8_t i = 0; i < PRESSURE_SENSOR_COUNT; i++)
         {
+	    cout << i << " " << _max11611Data[i] << endl;
             _sensorMatrix.SetAnalogData(i, _max11611Data[i]);
         }
     }

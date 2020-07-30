@@ -134,10 +134,13 @@ bool ForceSensor::IsUserDetected()
     {
         sensedPresence += static_cast<float>(_analogData[i]);
     }
-    if (!PRESSURE_SENSOR_COUNT)
+    if (PRESSURE_SENSOR_COUNT > 0)
     {
         sensedPresence /= PRESSURE_SENSOR_COUNT;
     }
+
+    //printf("Is user detected: %i %f %f\n",(sensedPresence > _detectionThreshold), sensedPresence, _detectionThreshold) ;
+
     return sensedPresence > _detectionThreshold;
 }
 
