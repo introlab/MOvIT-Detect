@@ -19,6 +19,7 @@ bool PressureMat::Initialize()
         return false;
     }
 
+
     pressure_mat_offset_t pressureMatOffset = _sensorMatrix.GetOffsets();
     if (IsPressureMatOffsetValid(pressureMatOffset))
     {
@@ -69,6 +70,7 @@ bool PressureMat::InitializeForcePlate()
 
 void PressureMat::Calibrate()
 {
+    printf("PressureMat::Calibrate()\n");
     const uint8_t maxIterations = 10; //Calibration precision adjustement - Number of measures (1s) in final mean
     UpdateForcePlateData();
     _sensorMatrix.CalibrateForceSensor(_max11611, _max11611Data, maxIterations);
@@ -123,7 +125,7 @@ void PressureMat::UpdateForcePlateData()
     {
         for (uint8_t i = 0; i < PRESSURE_SENSOR_COUNT; i++)
         {
-	    cout << i << " " << _max11611Data[i] << endl;
+	    //cout << i << " " << _max11611Data[i] << endl;
             _sensorMatrix.SetAnalogData(i, _max11611Data[i]);
         }
     }
