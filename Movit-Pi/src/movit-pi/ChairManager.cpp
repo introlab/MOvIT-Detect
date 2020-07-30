@@ -83,7 +83,7 @@ void ChairManager::displayChairState(ChairState chairState) {
 
 }
 
-int ChairManager::calculatemIMUAngle(SensorData sd) {
+float ChairManager::calculatemIMUAngle(SensorData sd) {
     float y = -sd.mIMUAccX;
     float x = sqrtf(sd.mIMUAccY*sd.mIMUAccY + sd.mIMUAccZ*sd.mIMUAccZ);
     float angleRad = atan2f(y, x);
@@ -96,10 +96,10 @@ int ChairManager::calculatemIMUAngle(SensorData sd) {
         angleDeg = 90.0f - fmod(abs(angleDeg), 90.0f);
     }
     */
-    return static_cast<int>(angleDeg);    
+    return static_cast<float>(angleDeg);    
 }
 
-int ChairManager::calculatefIMUAngle(SensorData sd) {
+float ChairManager::calculatefIMUAngle(SensorData sd) {
     /*
         https://www.dfrobot.com/wiki/index.php/How_to_Use_a_Three-Axis_Accelerometer_for_Tilt_Sensing
     */
@@ -108,11 +108,11 @@ int ChairManager::calculatefIMUAngle(SensorData sd) {
     float angleRad = atan2f(y, x);
     float angleDeg = angleRad*(180.0f/M_PI);
 
-    return static_cast<int>(angleDeg);    
+    return static_cast<float>(angleDeg);    
 }
 
-int ChairManager::calculateSeatAngle(ChairState cs) {
-    int a = chairState.fIMUAngle - chairState.mIMUAngle;
+float ChairManager::calculateSeatAngle(ChairState cs) {
+    float a = chairState.fIMUAngle - chairState.mIMUAngle;
     seatAngleUncorrected = a;
     a -= mIMUOffset;
     return -a;

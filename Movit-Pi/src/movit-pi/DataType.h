@@ -105,9 +105,9 @@ struct ChairState {
     Coord_t centerOfGravity = {0.0f, 0.0f};                                                         
     Coord_t centerOfGravityPerQuadrant[4] = {{0.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f}};
 
-    int mIMUAngle = 0;
-    int fIMUAngle = 0;
-    int seatAngle = 0;
+    float mIMUAngle = 0;
+    float fIMUAngle = 0;
+    float seatAngle = 0;
 
     bool button = false;
 };

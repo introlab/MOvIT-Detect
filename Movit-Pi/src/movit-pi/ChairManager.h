@@ -33,9 +33,9 @@ class ChairManager
     int getQuadrant(float y, float x);
 
   private:
-    int calculatemIMUAngle(SensorData sd);
-    int calculatefIMUAngle(SensorData sd);
-    int calculateSeatAngle(ChairState cs);
+    float calculatemIMUAngle(SensorData sd);
+    float calculatefIMUAngle(SensorData sd);
+    float calculateSeatAngle(ChairState cs);
 
     int fIMUOffset = 0;
     int mIMUOffset = 0;
