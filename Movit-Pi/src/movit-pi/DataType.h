@@ -72,6 +72,7 @@ struct SensorData {
     bool alarmButtonPressed = false;
 
     bool matConnected = false;
+    float matThreshold = 0.0;
     uint16_t matData[9] = {0};
 
     bool mIMUConnected = false;
