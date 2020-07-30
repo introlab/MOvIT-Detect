@@ -311,7 +311,9 @@ void ChairManager::ReadFromServer()
 {
     if (_mosquittoBroker->CalibPressureMatRequired())
     {
-        
+        printf("ChairManager::ReadFromServer(), calib pressure mat enabled.\n");
+
+
         //Reset flag
         _mosquittoBroker->SetCalibPressurMatRequired(false);
     }
