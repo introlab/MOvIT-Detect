@@ -309,7 +309,15 @@ void ChairManager::UpdateDevices()
 
 void ChairManager::ReadFromServer()
 {
-        if (_mosquittoBroker->CalibIMURequired()) {
+    if (_mosquittoBroker->CalibPressureMatRequired())
+    {
+        
+        //Reset flag
+        _mosquittoBroker->SetCalibPressurMatRequired(false);
+    }
+
+
+    if (_mosquittoBroker->CalibIMURequired()) {
         setAngleOffset(chairState.fIMUAngle, seatAngleUncorrected);
         _mosquittoBroker->SendAngleOffset(mIMUOffset, fIMUOffset);
         _mosquittoBroker->SetCalibIMURequired(false);

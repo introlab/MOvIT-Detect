@@ -456,6 +456,17 @@ void MosquittoBroker::splitStringWithDelemiter(std::string toSplit, std::string 
       _calibIMURequired = required;
     }
 
+    bool MosquittoBroker::CalibPressureMatRequired()
+    {
+        return _calibPressureMatRequired;
+    }
+
+    void MosquittoBroker::SetCalibPressurMatRequired(bool required)
+    {
+        _calibPressureMatRequired = required;
+    }
+
+
     bool MosquittoBroker::GoalHasChanged() {
       return _GoalChanged;
     }

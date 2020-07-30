@@ -30,6 +30,11 @@ class MosquittoBroker : public mosqpp::mosquittopp
 
     bool CalibIMURequired();
     void SetCalibIMURequired(bool required);
+
+    bool CalibPressureMatRequired();
+    void SetCalibPressurMatRequired(bool required);
+
+
     bool GoalHasChanged();
     void SetGoalHasChanged(bool changed);
     void getGoal(int *frequency, int *duration, int *angle);
