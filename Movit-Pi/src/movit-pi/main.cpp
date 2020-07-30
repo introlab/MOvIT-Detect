@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 
     while (1)
     {
-	alarm(4); //Alarm in 4 sec
+	alarm(30); //Alarm in 30 secs
         start = std::chrono::high_resolution_clock::now();
 
 	    printf("ReadFromServer()\n");
