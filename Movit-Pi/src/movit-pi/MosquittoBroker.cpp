@@ -182,7 +182,7 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
         try
         {
             _calibPressureMatRequired = std::stoi(message);
-            //printf("_calibPressureMatRequired=%i\n",_calibPressureMatRequired);
+             printf("_calibPressureMatRequired=%i\n",_calibPressureMatRequired);
         }
         catch (const std::exception &e)
         {
