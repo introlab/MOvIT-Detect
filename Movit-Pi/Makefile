@@ -114,6 +114,19 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named test-IMU
+
+# Build rule for target.
+test-IMU: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 test-IMU
+.PHONY : test-IMU
+
+# fast build rule for target.
+test-IMU/fast:
+	$(MAKE) -f CMakeFiles/test-IMU.dir/build.make CMakeFiles/test-IMU.dir/build
+.PHONY : test-IMU/fast
+
+#=============================================================================
 # Target rules for targets named movit-pi
 
 # Build rule for target.
@@ -418,6 +431,7 @@ src/movit-pi/I2Cdev.o: src/movit-pi/I2Cdev.cpp.o
 
 # target to build an object file
 src/movit-pi/I2Cdev.cpp.o:
+	$(MAKE) -f CMakeFiles/test-IMU.dir/build.make CMakeFiles/test-IMU.dir/src/movit-pi/I2Cdev.cpp.o
 	$(MAKE) -f CMakeFiles/movit-pi.dir/build.make CMakeFiles/movit-pi.dir/src/movit-pi/I2Cdev.cpp.o
 	$(MAKE) -f CMakeFiles/test-Alarm.dir/build.make CMakeFiles/test-Alarm.dir/src/movit-pi/I2Cdev.cpp.o
 .PHONY : src/movit-pi/I2Cdev.cpp.o
@@ -428,6 +442,7 @@ src/movit-pi/I2Cdev.i: src/movit-pi/I2Cdev.cpp.i
 
 # target to preprocess a source file
 src/movit-pi/I2Cdev.cpp.i:
+	$(MAKE) -f CMakeFiles/test-IMU.dir/build.make CMakeFiles/test-IMU.dir/src/movit-pi/I2Cdev.cpp.i
 	$(MAKE) -f CMakeFiles/movit-pi.dir/build.make CMakeFiles/movit-pi.dir/src/movit-pi/I2Cdev.cpp.i
 	$(MAKE) -f CMakeFiles/test-Alarm.dir/build.make CMakeFiles/test-Alarm.dir/src/movit-pi/I2Cdev.cpp.i
 .PHONY : src/movit-pi/I2Cdev.cpp.i
@@ -438,6 +453,7 @@ src/movit-pi/I2Cdev.s: src/movit-pi/I2Cdev.cpp.s
 
 # target to generate assembly for a file
 src/movit-pi/I2Cdev.cpp.s:
+	$(MAKE) -f CMakeFiles/test-IMU.dir/build.make CMakeFiles/test-IMU.dir/src/movit-pi/I2Cdev.cpp.s
 	$(MAKE) -f CMakeFiles/movit-pi.dir/build.make CMakeFiles/movit-pi.dir/src/movit-pi/I2Cdev.cpp.s
 	$(MAKE) -f CMakeFiles/test-Alarm.dir/build.make CMakeFiles/test-Alarm.dir/src/movit-pi/I2Cdev.cpp.s
 .PHONY : src/movit-pi/I2Cdev.cpp.s
@@ -529,6 +545,7 @@ src/movit-pi/MPU6050.o: src/movit-pi/MPU6050.cpp.o
 
 # target to build an object file
 src/movit-pi/MPU6050.cpp.o:
+	$(MAKE) -f CMakeFiles/test-IMU.dir/build.make CMakeFiles/test-IMU.dir/src/movit-pi/MPU6050.cpp.o
 	$(MAKE) -f CMakeFiles/movit-pi.dir/build.make CMakeFiles/movit-pi.dir/src/movit-pi/MPU6050.cpp.o
 .PHONY : src/movit-pi/MPU6050.cpp.o
 
@@ -538,6 +555,7 @@ src/movit-pi/MPU6050.i: src/movit-pi/MPU6050.cpp.i
 
 # target to preprocess a source file
 src/movit-pi/MPU6050.cpp.i:
+	$(MAKE) -f CMakeFiles/test-IMU.dir/build.make CMakeFiles/test-IMU.dir/src/movit-pi/MPU6050.cpp.i
 	$(MAKE) -f CMakeFiles/movit-pi.dir/build.make CMakeFiles/movit-pi.dir/src/movit-pi/MPU6050.cpp.i
 .PHONY : src/movit-pi/MPU6050.cpp.i
 
@@ -547,6 +565,7 @@ src/movit-pi/MPU6050.s: src/movit-pi/MPU6050.cpp.s
 
 # target to generate assembly for a file
 src/movit-pi/MPU6050.cpp.s:
+	$(MAKE) -f CMakeFiles/test-IMU.dir/build.make CMakeFiles/test-IMU.dir/src/movit-pi/MPU6050.cpp.s
 	$(MAKE) -f CMakeFiles/movit-pi.dir/build.make CMakeFiles/movit-pi.dir/src/movit-pi/MPU6050.cpp.s
 .PHONY : src/movit-pi/MPU6050.cpp.s
 
@@ -994,6 +1013,33 @@ src/movit-pi/tests/test-Alarm.cpp.s:
 	$(MAKE) -f CMakeFiles/test-Alarm.dir/build.make CMakeFiles/test-Alarm.dir/src/movit-pi/tests/test-Alarm.cpp.s
 .PHONY : src/movit-pi/tests/test-Alarm.cpp.s
 
+src/movit-pi/tests/test-IMU.o: src/movit-pi/tests/test-IMU.cpp.o
+
+.PHONY : src/movit-pi/tests/test-IMU.o
+
+# target to build an object file
+src/movit-pi/tests/test-IMU.cpp.o:
+	$(MAKE) -f CMakeFiles/test-IMU.dir/build.make CMakeFiles/test-IMU.dir/src/movit-pi/tests/test-IMU.cpp.o
+.PHONY : src/movit-pi/tests/test-IMU.cpp.o
+
+src/movit-pi/tests/test-IMU.i: src/movit-pi/tests/test-IMU.cpp.i
+
+.PHONY : src/movit-pi/tests/test-IMU.i
+
+# target to preprocess a source file
+src/movit-pi/tests/test-IMU.cpp.i:
+	$(MAKE) -f CMakeFiles/test-IMU.dir/build.make CMakeFiles/test-IMU.dir/src/movit-pi/tests/test-IMU.cpp.i
+.PHONY : src/movit-pi/tests/test-IMU.cpp.i
+
+src/movit-pi/tests/test-IMU.s: src/movit-pi/tests/test-IMU.cpp.s
+
+.PHONY : src/movit-pi/tests/test-IMU.s
+
+# target to generate assembly for a file
+src/movit-pi/tests/test-IMU.cpp.s:
+	$(MAKE) -f CMakeFiles/test-IMU.dir/build.make CMakeFiles/test-IMU.dir/src/movit-pi/tests/test-IMU.cpp.s
+.PHONY : src/movit-pi/tests/test-IMU.cpp.s
+
 src/movit-pi/tof.o: src/movit-pi/tof.c.o
 
 .PHONY : src/movit-pi/tof.o
@@ -1028,6 +1074,7 @@ help:
 	@echo "... clean"
 	@echo "... depend"
 	@echo "... rebuild_cache"
+	@echo "... test-IMU"
 	@echo "... edit_cache"
 	@echo "... movit-pi"
 	@echo "... test-Alarm"
@@ -1124,6 +1171,9 @@ help:
 	@echo "... src/movit-pi/tests/test-Alarm.o"
 	@echo "... src/movit-pi/tests/test-Alarm.i"
 	@echo "... src/movit-pi/tests/test-Alarm.s"
+	@echo "... src/movit-pi/tests/test-IMU.o"
+	@echo "... src/movit-pi/tests/test-IMU.i"
+	@echo "... src/movit-pi/tests/test-IMU.s"
 	@echo "... src/movit-pi/tof.o"
 	@echo "... src/movit-pi/tof.i"
 	@echo "... src/movit-pi/tof.s"

@@ -97,6 +97,7 @@ void Imu::SetImuOffsets(MPU6050 &mpu)
 
 void Imu::SetImuAccelOffsets(MPU6050 &mpu)
 {
+    printf("offsets : %f %f %f\n", _offsets.accelerometerOffsets[AXIS::x], _offsets.accelerometerOffsets[AXIS::y], _offsets.accelerometerOffsets[AXIS::z]);
     mpu.SetXAccelOffset(_offsets.accelerometerOffsets[AXIS::x]);
     mpu.SetYAccelOffset(_offsets.accelerometerOffsets[AXIS::y]);
     mpu.SetZAccelOffset(_offsets.accelerometerOffsets[AXIS::z]);
@@ -250,6 +251,17 @@ int8_t Imu::GetMotion6(double *motion)
     motion[3] = static_cast<double>(gx) / (262.0f / 2.0f);
     motion[4] = static_cast<double>(gy) / (262.0f / 2.0f);
     motion[5] = static_cast<double>(gz) / (262.0f / 2.0f);
+
+/*
+    double test[3] = {0, 0, 0};
+    _imu.GetRotation(&gx,&gy,&gz);
+    test[0] = static_cast<double>(gx) / (262.0f / 2.0f);
+    test[1] = static_cast<double>(gy) / (262.0f / 2.0f);
+    test[2] = static_cast<double>(gz) / (262.0f / 2.0f);
+
+    printf("motion %f %f %f \n", motion[3], motion[4], motion[5]);
+    printf("test %f %f %f \n", test[0], test[1], test[2]);
+*/
     return count;
 }
 

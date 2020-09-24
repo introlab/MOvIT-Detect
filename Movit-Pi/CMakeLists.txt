@@ -46,3 +46,13 @@ set(test-Alarm-srcs
 add_executable(test-Alarm ${test-Alarm-srcs} ${movitpi_headers})
 target_link_libraries(test-Alarm wiringPi mosquitto wiringPi bcm2835 mosquittopp pthread)
 
+
+# Tests (compile useful files only)
+set(test-IMU-srcs
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/movit-pi/tests/test-IMU.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/movit-pi/I2Cdev.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/movit-pi/MPU6050.cpp
+
+)
+add_executable(test-IMU ${test-IMU-srcs} ${movitpi_headers})
+target_link_libraries(test-IMU wiringPi mosquitto wiringPi bcm2835 mosquittopp pthread)

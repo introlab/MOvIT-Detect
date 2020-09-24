@@ -82,7 +82,7 @@ void PressureMat::Update()
     //cout << "initialized" << _isForcePlateInitialized << endl;
     //cout << "calibrated" << _isCalibrated << endl;
 
-    if (_isForcePlateInitialized && _isCalibrated)
+    if (_isForcePlateInitialized /*&& _isCalibrated*/)
     {
         // Data: Capteur de force
         UpdateForcePlateData();

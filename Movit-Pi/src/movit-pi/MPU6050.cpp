@@ -35,6 +35,7 @@ THE SOFTWARE.
 */
 
 #include "MPU6050.h"
+#include <stdio.h>
 
 /** Default constructor, uses default I2C address.
  * @see MPU6050_DEFAULT_ADDRESS
@@ -67,17 +68,33 @@ void MPU6050::Initialize()
     I2Cdev::WriteByte(_devAddr, MPU6050_RA_PWR_MGMT_1, 0b10000000);           //Reset device
     usleep(100000);                                                           //Sleep 100 ms
     I2Cdev::WriteByte(_devAddr, MPU6050_RA_SIGNAL_PATH_RESET, 0b00000111);    //Reset data path
-    usleep(100000);                                                           //Sleep 100 ms
+    usleep(100000); //Sleep 100 ms
     I2Cdev::WriteByte(_devAddr, MPU6050_RA_PWR_MGMT_1, 0b00000001);           //Enable device
     usleep(100000);
 
-    SetIntDataReadyEnabled(true);
+/*
+    I2Cdev::WriteByte(_devAddr, MPU6050_RA_SMPLRT_DIV, 7);
+    I2Cdev::WriteByte(_devAddr, MPU6050_RA_PWR_MGMT_1, 1);
+    I2Cdev::WriteByte(_devAddr, MPU6050_RA_CONFIG, 0);
+    I2Cdev::WriteByte(_devAddr, MPU6050_RA_GYRO_CONFIG, 24);
+    I2Cdev::WriteByte(_devAddr, MPU6050_RA_INT_ENABLE, 1);
+*/
+
+
+
     SetClockSource(MPU6050_CLOCK_INTERNAL);
     SetFullScaleGyroRange(MPU6050_GYRO_FS_250);
+    printf("gyro range : %2.2x\n", GetFullScaleGyroRange());
+
+    uint8_t buffer;
+    I2Cdev::ReadByte(_devAddr, MPU6050_RA_GYRO_CONFIG, &buffer);
+    printf("Gyro Config : %2.2x\n", buffer);
+
     SetFullScaleAccelRange(MPU6050_ACCEL_FS_2);
     SetSleepEnabled(false);
     SetIntDataReadyEnabled(true);
     SetDLPFMode(MPU6050_DLPF_BW_20);
+
 }
 
 void MPU6050::ResetDevice() {

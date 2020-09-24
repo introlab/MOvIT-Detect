@@ -298,6 +298,7 @@ void DeviceManager::Update() {
     if(_pressureMat->IsConnected()) {
         sensorData.matConnected = true;
         sensorData.matThreshold = _pressureMat->GetOffsets().detectionThreshold;
+        sensorData.matCalibrated = _pressureMat->IsCalibrated();
         _pressureMat->Update();
         _pressureMat->GetRawAnalogData(sensorData.matData);
     } else {
