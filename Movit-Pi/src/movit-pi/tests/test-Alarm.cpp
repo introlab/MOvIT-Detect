@@ -12,6 +12,8 @@ int main(int argc, char* argv[])
 
     alarm.Initialize();
 
+    int count = 0;
+
     while(alarm.IsConnected())
     {
         //cout << "Alarm is connected." << endl;
@@ -28,10 +30,17 @@ int main(int argc, char* argv[])
 
         alarm.TurnOnAlternatingBlinkAlarmThread();
 
-        alarm.TurnOffDCMotor();
+        //0.1 sec sleep
+        usleep(100000);
 
-        //1 sec sleep
-        usleep(10000);
+	if (count++ / 10 % 2 == 0)
+		alarm.TurnOnDCMotor();
+	else
+		alarm.TurnOffDCMotor();
+
+	if (alarm.ButtonPressed())
+	   cout << "Button Pressed" << endl;
+
     }
 
     return 0;
