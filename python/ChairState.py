@@ -1,4 +1,3 @@
-import paho.mqtt.client as mqtt
 import json
 import datetime
 
@@ -102,14 +101,7 @@ ChairState: (sensors/chairState)
   }
 }
 
-AngleFSM: (fsm/angle)
-{
-  "time": 1604434147,
-  "elapsed": 0,
-  "event": "Other",
-  "stateNum": 0,
-  "stateName": "INIT"
-}
+
 TravelFSM: (fsm/travel)
 {
   "time": 1604434147,
@@ -153,6 +145,12 @@ class TravelInformation:
             'lastDistance': self.lastDistance
         }
 
+    def from_dict(self, values: dict):
+        if 'isMoving' in values:
+            self.isMoving = values['isMoving']
+        if 'lastDistance' in values:
+            self.lastDistance = values['lastDistance']
+
 
 class PressureInformation:
     def __init__(self):
@@ -171,6 +169,22 @@ class PressureInformation:
                                            self.centerOfGravityQ3, self.centerOfGravityQ4]
         }
 
+    def from_dict(self, values: dict):
+        if 'isSeated' in values:
+            self.isSeated = values['isSeated']
+        if 'centerOfGravity' in values:
+            self.centerOfGravity = values['centerOfGravity']
+        if 'centerOfGravityPerQuadrant' in values:
+            if len(values['centerOfGravityPerQuadrant']) == 4:
+                self.centerOfGravityQ1['x'] = values['centerOfGravityPerQuadrant'][0]['x']
+                self.centerOfGravityQ1['y'] = values['centerOfGravityPerQuadrant'][0]['y']
+                self.centerOfGravityQ2['x'] = values['centerOfGravityPerQuadrant'][1]['x']
+                self.centerOfGravityQ2['y'] = values['centerOfGravityPerQuadrant'][1]['y']
+                self.centerOfGravityQ3['x'] = values['centerOfGravityPerQuadrant'][2]['x']
+                self.centerOfGravityQ3['y'] = values['centerOfGravityPerQuadrant'][2]['y']
+                self.centerOfGravityQ4['x'] = values['centerOfGravityPerQuadrant'][3]['x']
+                self.centerOfGravityQ4['y'] = values['centerOfGravityPerQuadrant'][3]['y']
+
 
 class AngleInformation:
     def __init__(self):
@@ -184,6 +198,14 @@ class AngleInformation:
             'fIMUAngle': float(self.fIMUAngle),
             'seatAngle': float(self.seatAngle)
         }
+
+    def from_dict(self, values: dict):
+        if 'mIMUAngle' in values:
+            self.mIMUAngle = values['mIMUAngle']
+        if 'fIMUAngle' in values:
+            self.fIMUAngle = values['fIMUAngle']
+        if 'seatAngle' in values:
+            self.seatAngle = values['seatAngle']
 
 
 class ChairState:
@@ -203,8 +225,24 @@ class ChairState:
             'Angle': self.Angle.to_dict()
         }
 
+    def from_dict(self, values: dict):
+        if 'time' in values:
+            self.timestamp = values['time']
+        if 'snoozeButton' in values:
+            self.snoozeButton = values['snoozeButton']
+        if 'Travel' in values:
+            self.Travel.from_dict(values['Travel'])
+        if 'Pressure' in values:
+            self.Pressure.from_dict(values['Pressure'])
+        if 'Angle' in values:
+            self.Angle.from_dict(values['Angle'])
+
     def to_json(self):
         return json.dumps(self.to_dict())
+
+    def from_json(self, data: str):
+        values = json.loads(data)
+        self.from_dict(values)
 
     def updateRawData(self, data):
         if 'time' in data:
@@ -212,47 +250,3 @@ class ChairState:
         # print(data)
 
 
-# # Global chair state
-# #chair = ChairState()
-#
-#
-# # The callback for when the client receives a CONNACK response from the server.
-# def on_connect(client, userdata, flags, rc):
-#     print("Connected with result code " + str(rc))
-#
-#     # Subscribing in on_connect() means that if we lose the connection and
-#     # reconnect then subscriptions will be renewed.
-#     client.subscribe("sensors/rawData")
-#
-#
-# # The callback for when a PUBLISH message is received from the server.
-# def on_message(client, userdata, msg):
-#     # print(msg.topic+" "+str(msg.payload))
-#
-#     if 'sensors/rawData' in msg.topic:
-#         rawData = json.loads(msg.payload)
-#         # print(state)
-#         chair.updateRawData(rawData)
-#
-#         # publish chair state
-#         state = chair.to_dict()
-#         print(state)
-#         client.publish('sensors/chairState', json.dumps(chair.to_dict()))
-#
-#
-# if __name__ == "__main__":
-#     print('Starting ChairState')
-#
-#     client = mqtt.Client()
-#     client.on_connect = on_connect
-#     client.on_message = on_message
-#
-#     client.username_pw_set('admin', 'movitplus')
-#     client.connect("10.0.1.20", 1883, 60)
-#
-#     # Blocking call that processes network traffic, dispatches callbacks and
-#     # handles reconnecting.
-#     # Other loop*() functions are available that give a threaded interface and a
-#     # manual interface.
-#
-#     client.loop_forever()

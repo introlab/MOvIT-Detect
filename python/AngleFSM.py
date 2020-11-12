@@ -1,10 +1,59 @@
+from datetime import datetime
 import asyncio
 import aiofiles
 from contextlib import AsyncExitStack, asynccontextmanager
-from random import randrange
 from asyncio_mqtt import Client, MqttError
 from ChairState import ChairState, TravelInformation, AngleInformation, PressureInformation
 import json
+
+# AngleFSM: (fsm/angle)
+# {
+#   "time": 1604434147,
+#   "elapsed": 0,
+#   "event": "Other",
+#   "stateNum": 0,
+#   "stateName": "INIT"
+# }
+
+
+class AngleFSMState:
+    def __init__(self):
+        self.timestamp = int(datetime.now().timestamp())
+        self.elapsed = 0
+        self.event = "Other"
+        self.stateNum = 0
+        self.stateName = "INIT"
+
+    def to_dict(self):
+        return {
+            'time': self.timestamp,
+            'elapsed': self.elapsed,
+            'event': self.event,
+            'stateNum': self.stateNum,
+            'stateName': self.stateName
+        }
+
+    def reset(self):
+        self.timestamp = int(datetime.now().timestamp())
+        self.elapsed = 0
+        self.event = "Other"
+        self.stateNum = 0
+        self.stateName = "INIT"
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
+
+
+class AngleFSM:
+    def __init__(self):
+        self.state = AngleFSMState()
+        self.chairState = ChairState()
+
+    def setChairState(self, state: ChairState):
+        self.chairState = state
+
+    def to_json(self):
+        return self.state.to_json()
 
 
 async def connect_to_mqtt_server(config):
@@ -23,66 +72,34 @@ async def connect_to_mqtt_server(config):
 
             await stack.enter_async_context(client)
 
-            # Create chair state
-            chair_state = ChairState()
-
-            # Select topic filters
-            # You can create any number of topic filters
-            topic_filters = (
-                "sensors/#",
-                # TODO add more filters
-            )
-
-            # Log all messages
-            # for topic_filter in topic_filters:
-            #     # Log all messages that matches the filter
-            #     manager = client.filtered_messages(topic_filter)
-            #     messages = await stack.enter_async_context(manager)
-            #     template = f'[topic_filter="{topic_filter}"] {{}}'
-            #     task = asyncio.create_task(log_messages(messages, template))
-            #     tasks.add(task)
+            # Create angle fsm
+            fsm = AngleFSM()
 
             # Messages that doesn't match a filter will get logged here
             messages = await stack.enter_async_context(client.unfiltered_messages())
             task = asyncio.create_task(log_messages(messages, "[unfiltered] {}"))
             tasks.add(task)
 
-            # Subscribe to topic(s)
-            # 🤔 Note that we subscribe *after* starting the message
-            # loggers. Otherwise, we may miss retained messages.
-            await client.subscribe("sensors/rawData")
-            manager = client.filtered_messages('sensors/rawData')
+            # Subscribe to chairState
+            await client.subscribe("sensors/chairState")
+            manager = client.filtered_messages('sensors/chairState')
             messages = await stack.enter_async_context(manager)
-            task = asyncio.create_task(handle_sensors_rawData(client, messages, chair_state))
+            task = asyncio.create_task(handle_sensors_chair_state(client, messages, fsm))
             tasks.add(task)
 
             # Start periodic publish of chair state
-            task = asyncio.create_task(publish_chair_state(client, chair_state))
+            task = asyncio.create_task(publish_angle_fsm(client, fsm))
             tasks.add(task)
 
             # Wait for everything to complete (or fail due to, e.g., network errors)
             await asyncio.gather(*tasks)
 
 
-async def publish_chair_state(client, chair_state):
-    # 1Hz
-    while True:
-        # print('publish chair state', chair_state)
-        await client.publish('sensors/chairState', chair_state.to_json(), qos=2)
-        await asyncio.sleep(1)
-
-
 async def log_messages(messages, template):
     async for message in messages:
-        # 🤔 Note that we assume that the message paylod is an
+        # 🤔 Note that we assume that the message payload is an
         # UTF8-encoded string (hence the `bytes.decode` call).
         print(template.format(message.payload.decode()))
-
-
-async def handle_sensors_rawData(client, messages, chair_state):
-    async for message in messages:
-        # print('rawData', message.payload.decode())
-        pass
 
 
 async def cancel_tasks(tasks):
@@ -96,7 +113,22 @@ async def cancel_tasks(tasks):
             pass
 
 
-async def chair_state_main():
+async def publish_angle_fsm(client, fsm):
+    # 1Hz
+    while True:
+        # print('publish chair state', chair_state)
+        await client.publish('fsm/angle', fsm.to_json(), qos=2)
+        await asyncio.sleep(1)
+
+
+async def handle_sensors_chair_state(client, messages, fsm):
+    async for message in messages:
+        state = ChairState()
+        state.from_json(message.payload.decode())
+        fsm.setChairState(state)
+
+
+async def angle_fsm_main():
     reconnect_interval = 3  # [seconds]
 
     # Read config file
@@ -113,4 +145,10 @@ async def chair_state_main():
             await asyncio.sleep(reconnect_interval)
 
 # main task
-asyncio.run(chair_state_main())
+asyncio.run(angle_fsm_main())
+
+
+# if __name__ == "__main__":
+#     state = AngleFSMState()
+#     print(state.to_json())
+
