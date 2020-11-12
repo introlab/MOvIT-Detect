@@ -1,1 +1,3 @@
 paho-mqtt
+asyncio-mqtt
+aiofiles

@@ -203,53 +203,56 @@ class ChairState:
             'Angle': self.Angle.to_dict()
         }
 
+    def to_json(self):
+        return json.dumps(self.to_dict())
+
     def updateRawData(self, data):
         if 'time' in data:
             self.timestamp = int(datetime.datetime.now().timestamp())
         # print(data)
 
 
-# Global chair state
-chair = ChairState()
-
-
-# The callback for when the client receives a CONNACK response from the server.
-def on_connect(client, userdata, flags, rc):
-    print("Connected with result code " + str(rc))
-
-    # Subscribing in on_connect() means that if we lose the connection and
-    # reconnect then subscriptions will be renewed.
-    client.subscribe("sensors/rawData")
-
-
-# The callback for when a PUBLISH message is received from the server.
-def on_message(client, userdata, msg):
-    # print(msg.topic+" "+str(msg.payload))
-
-    if 'sensors/rawData' in msg.topic:
-        rawData = json.loads(msg.payload)
-        # print(state)
-        chair.updateRawData(rawData)
-
-        # publish chair state
-        state = chair.to_dict()
-        print(state)
-        client.publish('sensors/chairState', json.dumps(chair.to_dict()))
-
-
-if __name__ == "__main__":
-    print('Starting ChairState')
-
-    client = mqtt.Client()
-    client.on_connect = on_connect
-    client.on_message = on_message
-
-    client.username_pw_set('admin', 'movitplus')
-    client.connect("192.168.3.214", 1883, 60)
-
-    # Blocking call that processes network traffic, dispatches callbacks and
-    # handles reconnecting.
-    # Other loop*() functions are available that give a threaded interface and a
-    # manual interface.
-
-    client.loop_forever()
+# # Global chair state
+# #chair = ChairState()
+#
+#
+# # The callback for when the client receives a CONNACK response from the server.
+# def on_connect(client, userdata, flags, rc):
+#     print("Connected with result code " + str(rc))
+#
+#     # Subscribing in on_connect() means that if we lose the connection and
+#     # reconnect then subscriptions will be renewed.
+#     client.subscribe("sensors/rawData")
+#
+#
+# # The callback for when a PUBLISH message is received from the server.
+# def on_message(client, userdata, msg):
+#     # print(msg.topic+" "+str(msg.payload))
+#
+#     if 'sensors/rawData' in msg.topic:
+#         rawData = json.loads(msg.payload)
+#         # print(state)
+#         chair.updateRawData(rawData)
+#
+#         # publish chair state
+#         state = chair.to_dict()
+#         print(state)
+#         client.publish('sensors/chairState', json.dumps(chair.to_dict()))
+#
+#
+# if __name__ == "__main__":
+#     print('Starting ChairState')
+#
+#     client = mqtt.Client()
+#     client.on_connect = on_connect
+#     client.on_message = on_message
+#
+#     client.username_pw_set('admin', 'movitplus')
+#     client.connect("10.0.1.20", 1883, 60)
+#
+#     # Blocking call that processes network traffic, dispatches callbacks and
+#     # handles reconnecting.
+#     # Other loop*() functions are available that give a threaded interface and a
+#     # manual interface.
+#
+#     client.loop_forever()
