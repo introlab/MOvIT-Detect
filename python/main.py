@@ -112,5 +112,6 @@ async def chair_state_main():
         finally:
             await asyncio.sleep(reconnect_interval)
 
-# main task
-asyncio.run(chair_state_main())
+if __name__ == "__main__":
+    # main task
+    asyncio.run(chair_state_main())

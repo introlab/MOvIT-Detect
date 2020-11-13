@@ -4,9 +4,14 @@ import aiofiles
 from contextlib import AsyncExitStack, asynccontextmanager
 from asyncio_mqtt import Client, MqttError
 from ChairState import ChairState, TravelInformation, AngleInformation, PressureInformation
+from AngleFSM import AngleFSMState
+from TravelFSM import TravelFSMState
+from SeatingFSM import SeatingFSMState
+
 import json
 
-# AngleFSM: (fsm/angle)
+
+# NotificationFSM: (fsm/notification)
 # {
 #   "time": 1604434147,
 #   "elapsed": 0,
@@ -15,10 +20,9 @@ import json
 #   "stateName": "INIT"
 # }
 
-
-class AngleFSMState:
+class NotificationFSMState:
     def __init__(self):
-        self.type = 'AngleFSMState'
+        self.type = 'NotificationFSMState'
         self.timestamp = int(datetime.now().timestamp())
         self.elapsed = 0
         self.event = "Other"
@@ -35,7 +39,7 @@ class AngleFSMState:
             'stateName': self.stateName
         }
 
-    def from_dict(self, values: dict):
+    def from_dict(self, values):
         if 'type' in values and values['type'] == self.type:
             if 'time' in values:
                 self.timestamp = values['time']
@@ -69,13 +73,25 @@ class AngleFSMState:
         self.from_dict(values)
 
 
-class AngleFSM:
+class NotificationFSM:
     def __init__(self):
-        self.state = AngleFSMState()
+        self.state = NotificationFSMState()
         self.chairState = ChairState()
+        self.angleState = AngleFSMState()
+        self.travelState = TravelFSMState()
+        self.seatingState = SeatingFSMState()
 
     def setChairState(self, state: ChairState):
         self.chairState = state
+
+    def setAngeState(self, state: AngleFSMState):
+        self.angleState = state
+
+    def setTravelState(self, state: TravelFSMState):
+        self.travelState = state
+
+    def setSeatingState(self, state: SeatingFSMState):
+        self.seatingState = state
 
     def update(self):
         pass
@@ -101,7 +117,7 @@ async def connect_to_mqtt_server(config):
             await stack.enter_async_context(client)
 
             # Create angle fsm
-            fsm = AngleFSM()
+            fsm = NotificationFSM()
 
             # Messages that doesn't match a filter will get logged here
             messages = await stack.enter_async_context(client.unfiltered_messages())
@@ -115,8 +131,29 @@ async def connect_to_mqtt_server(config):
             task = asyncio.create_task(handle_sensors_chair_state(client, messages, fsm))
             tasks.add(task)
 
+            # Subscribe to angle fsm
+            await client.subscribe("fsm/angle")
+            manager = client.filtered_messages('fsm/angle')
+            messages = await stack.enter_async_context(manager)
+            task = asyncio.create_task(handle_angle_fsm_state(client, messages, fsm))
+            tasks.add(task)
+
+            # Subscribe to travel fsm
+            await client.subscribe("fsm/travel")
+            manager = client.filtered_messages('fsm/travel')
+            messages = await stack.enter_async_context(manager)
+            task = asyncio.create_task(handle_travel_fsm_state(client, messages, fsm))
+            tasks.add(task)
+
+            # Subscribe to seating fsm
+            await client.subscribe("fsm/seating")
+            manager = client.filtered_messages('fsm/seating')
+            messages = await stack.enter_async_context(manager)
+            task = asyncio.create_task(handle_seating_fsm_state(client, messages, fsm))
+            tasks.add(task)
+
             # Start periodic publish of chair state
-            task = asyncio.create_task(publish_angle_fsm(client, fsm))
+            task = asyncio.create_task(publish_notification_fsm(client, fsm))
             tasks.add(task)
 
             # Wait for everything to complete (or fail due to, e.g., network errors)
@@ -141,25 +178,46 @@ async def cancel_tasks(tasks):
             pass
 
 
-async def publish_angle_fsm(client, fsm):
+async def publish_notification_fsm(client, fsm: NotificationFSM):
     # 1Hz
     while True:
         # Handle FSM
         fsm.update()
 
         # print('publish chair state', chair_state)
-        await client.publish('fsm/angle', fsm.to_json(), qos=2)
+        await client.publish('fsm/notification', fsm.to_json(), qos=2)
         await asyncio.sleep(1)
 
 
-async def handle_sensors_chair_state(client, messages, fsm):
+async def handle_sensors_chair_state(client, messages, fsm: NotificationFSM):
     async for message in messages:
         state = ChairState()
         state.from_json(message.payload.decode())
         fsm.setChairState(state)
 
 
-async def angle_fsm_main():
+async def handle_angle_fsm_state(client, messages, fsm: NotificationFSM):
+    async for message in messages:
+        state = AngleFSMState()
+        state.from_json(message.payload.decode())
+        fsm.setAngeState(state)
+
+
+async def handle_travel_fsm_state(client, messages, fsm: NotificationFSM):
+    async for message in messages:
+        state = TravelFSMState()
+        state.from_json(message.payload.decode())
+        fsm.setTravelState(state)
+
+
+async def handle_seating_fsm_state(client, messages, fsm: NotificationFSM):
+    async for message in messages:
+        state = SeatingFSMState()
+        state.from_json(message.payload.decode())
+        fsm.setSeatingState(state)
+
+
+async def notification_fsm_main():
     reconnect_interval = 3  # [seconds]
 
     # Read config file
@@ -175,6 +233,8 @@ async def angle_fsm_main():
         finally:
             await asyncio.sleep(reconnect_interval)
 
+
 if __name__ == "__main__":
     # main task
-    asyncio.run(angle_fsm_main())
+    asyncio.run(notification_fsm_main())
+

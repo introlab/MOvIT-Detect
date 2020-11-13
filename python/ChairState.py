@@ -102,30 +102,9 @@ ChairState: (sensors/chairState)
 }
 
 
-TravelFSM: (fsm/travel)
-{
-  "time": 1604434147,
-  "elapsed": 0,
-  "event": "Other",
-  "stateNum": 0,
-  "stateName": "INIT"
-}
-SeatingFSM: (fsm/seating)
-{
-  "time": 1604434147,
-  "elapsed": 0,
-  "event": "Other",
-  "stateNum": 0,
-  "stateName": "INIT"
-}
-NotificationFSM: (fsm/notification)
-{
-  "time": 1604434147,
-  "elapsed": 0,
-  "event": "Other",
-  "stateNum": 0,
-  "stateName": "INIT"
-}
+
+
+
 
 
 topic:  config/angle_new_offset
