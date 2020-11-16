@@ -60,8 +60,8 @@ async def connect_to_mqtt_server(config):
             task = asyncio.create_task(publish_chair_state(client, chair_state))
             tasks.add(task)
 
-            # Wait for everything to complete (or fail due to, e.g., network errors)
-            await asyncio.gather(*tasks)
+        # Wait for everything to complete (or fail due to, e.g., network errors)
+        await asyncio.gather(*tasks)
 
 
 async def publish_chair_state(client, chair_state):
@@ -79,10 +79,11 @@ async def log_messages(messages, template):
         print(template.format(message.payload.decode()))
 
 
-async def handle_sensors_rawData(client, messages, chair_state):
+async def handle_sensors_rawData(client, messages, chair_state: ChairState):
     async for message in messages:
         # print('rawData', message.payload.decode())
-        pass
+        values = json.loads(message.payload.decode())
+        chair_state.updateRawData(values)
 
 
 async def cancel_tasks(tasks):

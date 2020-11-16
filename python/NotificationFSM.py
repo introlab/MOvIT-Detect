@@ -156,8 +156,8 @@ async def connect_to_mqtt_server(config):
             task = asyncio.create_task(publish_notification_fsm(client, fsm))
             tasks.add(task)
 
-            # Wait for everything to complete (or fail due to, e.g., network errors)
-            await asyncio.gather(*tasks)
+        # Wait for everything to complete (or fail due to, e.g., network errors)
+        await asyncio.gather(*tasks)
 
 
 async def log_messages(messages, template):

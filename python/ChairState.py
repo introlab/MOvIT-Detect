@@ -1,5 +1,6 @@
 import json
 import datetime
+import math
 
 '''
 Raw Data: (sensors/rawData)
@@ -118,9 +119,13 @@ class TravelInformation:
         self.isMoving = False
         self.lastDistance = float(0.0)
 
+    def reset(self):
+        self.isMoving = False
+        self.lastDistance = float(0.0)
+
     def to_dict(self):
         return {
-            'isMoving': self.isMoving,
+            'isMoving': int(self.isMoving),
             'lastDistance': self.lastDistance
         }
 
@@ -135,6 +140,17 @@ class PressureInformation:
     def __init__(self):
         self.isSeated = False
         self.centerOfGravity = {'x': float(0.0), 'y': float(0.0)}
+        self.centerOfGravityValue = float(0.0)
+        # TODO Center of gravity per quadrant should be removed
+        self.centerOfGravityQ1 = {'x': float(0.0), 'y': float(0.0)}
+        self.centerOfGravityQ2 = {'x': float(0.0), 'y': float(0.0)}
+        self.centerOfGravityQ3 = {'x': float(0.0), 'y': float(0.0)}
+        self.centerOfGravityQ4 = {'x': float(0.0), 'y': float(0.0)}
+
+    def reset(self):
+        self.isSeated = False
+        self.centerOfGravity = {'x': float(0.0), 'y': float(0.0)}
+        self.centerOfGravityValue = float(0.0)
         self.centerOfGravityQ1 = {'x': float(0.0), 'y': float(0.0)}
         self.centerOfGravityQ2 = {'x': float(0.0), 'y': float(0.0)}
         self.centerOfGravityQ3 = {'x': float(0.0), 'y': float(0.0)}
@@ -142,8 +158,9 @@ class PressureInformation:
 
     def to_dict(self):
         return {
-            'isSeated': self.isSeated,
+            'isSeated': int(self.isSeated),
             'centerOfGravity': self.centerOfGravity,
+            'centerOfGravityValue': self.centerOfGravityValue,
             'centerOfGravityPerQuadrant': [self.centerOfGravityQ1, self.centerOfGravityQ2,
                                            self.centerOfGravityQ3, self.centerOfGravityQ4]
         }
@@ -170,12 +187,20 @@ class AngleInformation:
         self.mIMUAngle = 0.0
         self.fIMUAngle = 0.0
         self.seatAngle = 0.0
+        self.angleOffset = 0.0
+
+    def reset(self):
+        self.mIMUAngle = 0.0
+        self.fIMUAngle = 0.0
+        self.seatAngle = 0.0
+        self.angleOffset = 0.0
 
     def to_dict(self):
         return {
             'mIMUAngle': float(self.mIMUAngle),
             'fIMUAngle': float(self.fIMUAngle),
-            'seatAngle': float(self.seatAngle)
+            'seatAngle': float(self.seatAngle),
+            'angleOffset': float(self.angleOffset)
         }
 
     def from_dict(self, values: dict):
@@ -185,6 +210,8 @@ class AngleInformation:
             self.fIMUAngle = values['fIMUAngle']
         if 'seatAngle' in values:
             self.seatAngle = values['seatAngle']
+        if 'angleOffset' in values:
+            self.angleOffset = values['angleOffset']
 
 
 class ChairState:
@@ -195,10 +222,28 @@ class ChairState:
         self.Pressure = PressureInformation()
         self.Angle = AngleInformation()
 
+        # const Coord_t POSITION_LOOKUP[9] = {{4.0f,4.0f}, {4.0f,0.0f}, {4.0f,-4.0f},
+        # {0.0f,4.0f}, {0.0f,0.0f}, {0.0f,-4.0f}, {-4.0f,4.0f}, {-4.0f,0.0f}, {-4.0f,-4.0f}};
+
+        # This should be modified with the type of pressure mat sensor
+        # units are in centimeters
+        # (0,0) is center of seat
+        self.positionLookup = [
+            {'x': 4.0, 'y': 4.0},
+            {'x': 4.0, 'y': 0.0},
+            {'x': 4.0, 'y': -4.0},
+            {'x': 0.0, 'y': 4.0},
+            {'x': 0.0, 'y': 0.0},
+            {'x': 0.0, 'y': -4.0},
+            {'x': -4.0, 'y': 4.0},
+            {'x': -4.0, 'y': 0.0},
+            {'x': -4.0, 'y': -4.0}
+        ]
+
     def to_dict(self):
         return {
             'time': self.timestamp,
-            'snoozeButton': self.snoozeButton,
+            'snoozeButton': int(self.snoozeButton),
             'Travel': self.Travel.to_dict(),
             'Pressure': self.Pressure.to_dict(),
             'Angle': self.Angle.to_dict()
@@ -223,9 +268,99 @@ class ChairState:
         values = json.loads(data)
         self.from_dict(values)
 
-    def updateRawData(self, data):
-        if 'time' in data:
-            self.timestamp = int(datetime.datetime.now().timestamp())
-        # print(data)
+    def calculate_fIMU_angle(self, acc_x, acc_y, acc_z):
+        # Old implementation to be replaced by something better
+        y = -acc_x
+        x = math.sqrt(acc_y * acc_y + acc_z * acc_z)
+        # Convert radians to degrees
+        return math.atan2(y, x) * (180.0 / math.pi)
 
+    def calculate_mIMU_angle(self, acc_x, acc_y, acc_z):
+        # Old implementation to be replaced by something better
+        y = -acc_x
+        x = math.sqrt(acc_y * acc_y + acc_z * acc_z)
+        # Convert radians to degrees
+        return math.atan2(y, x) * (180.0 / math.pi)
 
+    def calculate_9x9_center_of_pressure(self, data: list, coordinates: list, threshold=0.0):
+        result = {'x': 0.0, 'y': 0.0, 'value': 0.0, 'isSeated': False}
+
+        # Make sure we have the right vector length
+        if len(data) == len(coordinates):
+            s = 0
+            position = {'x': 0.0, 'y': 0.0}
+
+            for i in range(len(data)):
+                position['x'] += data[i] * coordinates[i]['x']
+                position['y'] += data[i] * coordinates[i]['y']
+                s += data[i]
+
+            if s == 0:
+                position['x'] = 0.0
+                position['y'] = 0.0
+            else:
+                position['x'] = position['x'] / s
+                position['y'] = position['y'] / s
+
+            result['x'] = position['x']
+            result['y'] = position['y']
+            result['value'] = s / len(data)
+
+            # TODO isSeated
+            if result['value'] > threshold:
+                result['isSeated'] = True
+
+        return result
+
+    def updateRawData(self, values: dict):
+        """
+            The data comes from the old C implementation. Let's calculate everything all at once.
+        """
+
+        # Reset everything
+        self.Pressure.reset()
+        self.Angle.reset()
+        self.Travel.reset()
+
+        if 'time' in values:
+            self.timestamp = values['time']
+
+        # Mobile IMU
+        if 'mIMU' in values and values['mIMU']['connected']:
+            self.Angle.mIMUAngle = self.calculate_mIMU_angle(values['mIMU']['accX'],
+                                                             values['mIMU']['accY'],
+                                                             values['mIMU']['accZ'])
+
+        # Fixed IMU
+        if 'fIMU' in values and values['fIMU']['connected']:
+            self.Angle.fIMUAngle = self.calculate_fIMU_angle(values['fIMU']['accX'],
+                                                             values['fIMU']['accY'],
+                                                             values['fIMU']['accZ'])
+
+        # Angle calculation
+        self.Angle.seatAngle = - (self.Angle.fIMUAngle - self.Angle.mIMUAngle - self.Angle.angleOffset)
+
+        if 'pressureMat' in values and 'matData' in values['pressureMat']:
+            # Calculate center of pressure
+            cop = self.calculate_9x9_center_of_pressure(values['pressureMat']['matData'],
+                                                        self.positionLookup,
+                                                        threshold=values['pressureMat']['threshold'])
+            self.Pressure.isSeated = cop['isSeated']
+            self.Pressure.centerOfGravity['x'] = cop['x']
+            self.Pressure.centerOfGravity['y'] = cop['y']
+            self.Pressure.centerOfGravityValue = cop['value']
+            # TODO Center of gravity per quadrant should be removed.
+
+        # Travel calculation
+        if 'flowSensor' in values and values['flowSensor']['connected']:
+            self.Travel.lastDistance += math.sqrt(math.pow(values['flowSensor']['travelX'], 2) +
+                                                  math.pow(values['flowSensor']['travelY'], 2))
+
+            # Are we moving?
+            # TODO hard coded threshold here...
+            if self.Travel.lastDistance > 25.0:
+                self.Travel.isMoving = True
+
+        # Snooze button
+        if 'alarmSensor' in values and values['alarmSensor']['connected']:
+            self.snoozeButton = values['alarmSensor']['buttonPressed']
