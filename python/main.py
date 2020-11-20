@@ -1,9 +1,6 @@
 import asyncio
 import aiofiles
 from contextlib import AsyncExitStack, asynccontextmanager
-from random import randrange
-from asyncio_mqtt import Client, MqttError
-from ChairState import ChairState, TravelInformation, AngleInformation, PressureInformation
 import json
 
 

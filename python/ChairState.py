@@ -310,7 +310,8 @@ class ChairState:
 
             result['x'] = position['x']
             result['y'] = position['y']
-            result['value'] = s / len(data)
+            # Sum of all sensors
+            result['value'] = s
 
             # TODO isSeated
             if result['value'] > threshold:
