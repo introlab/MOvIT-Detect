@@ -29,7 +29,7 @@ class AngleFSMState:
     @classmethod
     def setParameters(cls, frequency, duration, angle):
         AngleFSMState.ANGLE_TARGET = angle
-        AngleFSMState.ANGLE_DURATION =  duration
+        AngleFSMState.ANGLE_DURATION = duration
         AngleFSMState.ANGLE_FREQUENCY = frequency
 
     @classmethod
@@ -170,8 +170,6 @@ class AngleFSMState:
         self.from_dict(values)
 
     def update(self, chair_state: ChairState):
-        print('update')
-
         # Default = Other
         self.__event = 'Other'
 
@@ -196,17 +194,18 @@ class AngleFSMState:
                     }
                 break;
             """
+
+            # Init default values
+            self.__angleStarted = chair_state.timestamp
+            self.__angleStopped = chair_state.timestamp
+            self.__result = [0, 0, 0, 0, 0]
+            self.__sum = 0
+            self.__dataPoints = 0
+
             if chair_state.Angle.seatAngle >= AngleFSMState.ANGLE_THRESHOLD \
                     or chair_state.Angle.seatAngle <= AngleFSMState.REVERSE_ANGLE_THRESHOLD:
+                # Change state
                 self.__state = AngleFSMState.AngleState.CONFIRM_ANGLE
-                self.__angleStarted = chair_state.timestamp
-                self.__angleStopped = chair_state.timestamp
-                self.__result = [0, 0, 0, 0, 0]
-                self.__sum = 0
-                self.__dataPoints = 0
-            else:
-                self.__angleStarted = 0
-                self.__angleStopped = 0
 
         elif self.__state == AngleFSMState.AngleState.CONFIRM_ANGLE:
             """
@@ -223,10 +222,11 @@ class AngleFSMState:
                 break;
             """
             if AngleFSMState.ANGLE_THRESHOLD > chair_state.Angle.seatAngle > AngleFSMState.REVERSE_ANGLE_THRESHOLD:
+                # Go back to INIT state
                 self.__state = AngleFSMState.AngleState.INIT
-                self.__angleStarted = 0
             elif (chair_state.timestamp - self.__angleStarted) > self.ANGLE_TIMEOUT:
                 self.__angleStarted = chair_state.timestamp
+                # Go to ANGLE_STARTED
                 self.__state = AngleFSMState.AngleState.ANGLE_STARTED
 
             self.__angleStopped = chair_state.timestamp
@@ -298,7 +298,6 @@ class AngleFSMState:
             self.__sum += chair_state.Angle.seatAngle
 
             if AngleFSMState.ANGLE_THRESHOLD > chair_state.Angle.seatAngle > AngleFSMState.REVERSE_ANGLE_THRESHOLD:
-                self.__angleStopped = chair_state.timestamp
                 self.__state = AngleFSMState.AngleState.CONFIRM_STOP_ANGLE
 
             self.__angleStopped = chair_state.timestamp
@@ -316,11 +315,10 @@ class AngleFSMState:
                 }
             break;
             """
+            # Do not modify angle started or angle stopped here
             if chair_state.Angle.seatAngle >= AngleFSMState.ANGLE_THRESHOLD or \
                     chair_state.Angle.seatAngle <= AngleFSMState.REVERSE_ANGLE_THRESHOLD:
                 self.__state = AngleFSMState.AngleState.IN_TILT
-                # TODO Verify 0
-                self.__angleStopped = 0
             else:
                 # Wait for timeout
                 if (chair_state.timestamp - self.__angleStopped) > AngleFSMState.ANGLE_TIMEOUT:
@@ -388,6 +386,13 @@ async def connect_to_mqtt_server(config):
             task = asyncio.create_task(handle_sensors_chair_state(client, messages, fsm))
             tasks.add(task)
 
+            # Subscribe to config notification settings changes
+            await client.subscribe("goal/update_data")
+            manager = client.filtered_messages('goal/update_data')
+            messages = await stack.enter_async_context(manager)
+            task = asyncio.create_task(handle_goal_update_data(client, messages, fsm))
+            tasks.add(task)
+
             # Start periodic publish of chair state
             task = asyncio.create_task(publish_angle_fsm(client, fsm))
             tasks.add(task)
@@ -423,6 +428,18 @@ async def publish_angle_fsm(client, fsm):
         # print('publish chair state', chair_state)
         await client.publish('fsm/angle', fsm.to_json(), qos=2)
         await asyncio.sleep(1)
+
+
+async def handle_goal_update_data(client, messages, fsm):
+    async for message in messages:
+        parts = message.payload.decode().split(':')
+        if len(parts) == 3 and len(message.payload) > 2:
+            # get all info
+            frequency = int(parts[0])
+            duration = int(parts[1])
+            angle = int(parts[2])
+            # update parameters
+            AngleFSMState.setParameters(frequency, duration, angle)
 
 
 async def handle_sensors_chair_state(client, messages, fsm):

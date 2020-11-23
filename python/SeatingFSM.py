@@ -5,61 +5,96 @@ from contextlib import AsyncExitStack, asynccontextmanager
 from asyncio_mqtt import Client, MqttError
 from ChairState import ChairState, TravelInformation, AngleInformation, PressureInformation
 import json
+from enum import Enum, unique
 
-
-# SeatingFSM: (fsm/seating)
-# {
-#   "time": 1604434147,
-#   "elapsed": 0,
-#   "event": "Other",
-#   "stateNum": 0,
-#   "stateName": "INIT"
-# }
 
 class SeatingFSMState:
+
+    SEATING_TIMEOUT = 5
+
+    @unique
+    class SeatingState(Enum):
+        INIT = 0
+        CONFIRM_SEATING = 1
+        SEATING_STARTED = 2
+        CURRENTLY_SEATING = 3
+        CONFIRM_STOP_SEATING = 4
+        SEATING_STOPPED = 5
+
+        @classmethod
+        def from_name(cls, name: str):
+            if name == 'INIT':
+                return SeatingFSMState.SeatingState.INIT
+            elif name == 'CONFIRM_SEATING':
+                return SeatingFSMState.SeatingState.CONFIRM_SEATING
+            elif name == 'SEATING_STARTED':
+                return SeatingFSMState.SeatingState.SEATING_STARTED
+            elif name == 'CURRENTLY_SEATING':
+                return SeatingFSMState.SeatingState.CURRENTLY_SEATING
+            elif name == 'CONFIRM_STOP_SEATING':
+                return SeatingFSMState.SeatingState.CONFIRM_STOP_SEATING
+            elif name == 'SEATING_STOPPED':
+                return SeatingFSMState.SeatingState.SEATING_STOPPED
+            else:
+                raise ValueError('{} is not a valid SeatingState name'.format(name))
+
     def __init__(self):
-        self.type = 'SeatingFSMState'
-        self.timestamp = int(datetime.now().timestamp())
-        self.elapsed = 0
-        self.event = "Other"
-        self.stateNum = 0
-        self.stateName = "INIT"
+        self.__type = 'SeatingFSMState'
+        self.__event = 'Other'
+        self.__currentState = SeatingFSMState.SeatingState.INIT
+        self.__seatingStarted = 0
+        self.__seatingStopped = 0
+        self.__currentTime = 0
+
+    def getElapsedTime(self):
+        return self.__seatingStopped - self.__seatingStarted
+
+    def getStartTime(self):
+        return self.__seatingStarted
+
+    def getStopTime(self):
+        return self.__seatingStopped
+
+    def getCurrentState(self):
+        return self.__currentState.value
+
+    def getCurrentStateName(self):
+        return self.__currentState.name
 
     def to_dict(self):
         return {
-            'type': self.type,
-            'time': self.timestamp,
-            'elapsed': self.elapsed,
-            'event': self.event,
-            'stateNum': self.stateNum,
-            'stateName': self.stateName
+            'type': self.__type,
+            'time': self.__currentTime,
+            'elapsed': self.getElapsedTime(),
+            'event': self.__event,
+            'stateNum': self.getCurrentState(),
+            'stateName': self.getCurrentStateName()
         }
 
     def from_dict(self, values):
-        if 'type' in values and values['type'] == self.type:
+        if 'type' in values and values['type'] == self.__type:
             if 'time' in values:
-                self.timestamp = values['time']
+                self.__currentTime = values['time']
 
-            if 'elapsed' in values:
-                self.elapsed = values['elapsed']
+            if 'elapsed' in values and 'time' in values:
+                self.__seatingStopped = values['time']
+                self.__seatingStarted = self.__seatingStopped = values['elapsed']
 
             if 'event' in values:
-                self.event = values['event']
+                self.__event = values['event']
 
             if 'stateNum' in values:
-                self.stateNum = values['event']
+                self.__currentState = values['stateNum']
 
-            if 'stateName' in values:
-                self.stateName = values['stateName']
             return True
         return False
 
     def reset(self):
-        self.timestamp = int(datetime.now().timestamp())
-        self.elapsed = 0
-        self.event = "Other"
-        self.stateNum = 0
-        self.stateName = "INIT"
+        self.__event = 'Other'
+        self.__currentState = SeatingFSMState.SeatingState.INIT
+        self.__seatingStarted = 0
+        self.__seatingStopped = 0
+        self.__currentTime = 0
 
     def to_json(self):
         return json.dumps(self.to_dict())
@@ -67,6 +102,112 @@ class SeatingFSMState:
     def from_json(self, data: str):
         values = json.loads(data)
         self.from_dict(values)
+
+    def update(self, chair_state: ChairState):
+
+        # Default = Other
+        self.__event = 'Other'
+
+        if self.__currentState == SeatingFSMState.SeatingState.INIT:
+            """
+            case SeatingState::INIT:
+                if (cs.isSeated)
+                {
+                    currentState = SeatingState::CONFIRM_SEATING;
+                    seatingStarted = cs.time;
+                    seatingStopped = cs.time;
+                } else {
+                    seatingStarted = 0;
+                    seatingStopped = 0;
+                }
+            break;
+            """
+            if chair_state.Pressure.isSeated:
+                self.__currentState = SeatingFSMState.SeatingState.CONFIRM_SEATING
+                self.__seatingStarted = chair_state.timestamp
+                self.__seatingStopped = chair_state.timestamp
+            else:
+                self.__seatingStarted = chair_state.timestamp
+                self.__seatingStopped = chair_state.timestamp
+
+        elif self.__currentState == SeatingFSMState.SeatingState.CONFIRM_SEATING:
+            """
+            case SeatingState::CONFIRM_SEATING:
+                if (!cs.isSeated)
+                {
+                    currentState = SeatingState::INIT;
+                    seatingStarted = 0;
+                } else if((cs.time - seatingStarted) > SEATING_TIMEOUT) {
+                    seatingStarted = cs.time;
+                    currentState = SeatingState::SEATING_STARTED;
+                }
+                seatingStopped = cs.time;
+            break;
+            """
+            if not chair_state.Pressure.isSeated:
+                self.__currentState = SeatingFSMState.SeatingState.INIT
+            elif (chair_state.timestamp - self.__seatingStarted) > SeatingFSMState.SEATING_TIMEOUT:
+                self.__seatingStarted = chair_state.timestamp
+                self.__currentState = SeatingFSMState.SeatingState.SEATING_STARTED
+            self.__seatingStopped = chair_state.timestamp
+
+        elif self.__currentState == SeatingFSMState.SeatingState.SEATING_STARTED:
+            """
+            case SeatingState::SEATING_STARTED:
+                    currentState = SeatingState::CURRENTLY_SEATING;
+            break;
+            """
+            self.__event = 'Started'
+            self.__currentState = SeatingFSMState.SeatingState.CURRENTLY_SEATING
+
+        elif self.__currentState == SeatingFSMState.SeatingState.CURRENTLY_SEATING:
+            """
+            case SeatingState::CURRENTLY_SEATING:
+                if(!cs.isSeated) {
+                    currentState = SeatingState::CONFIRM_STOP_SEATING;
+                }
+                seatingStopped = cs.time;
+            break;
+            """
+            if not chair_state.Pressure.isSeated:
+                self.__currentState = SeatingFSMState.SeatingState.CONFIRM_STOP_SEATING
+            self.__seatingStopped = chair_state.timestamp
+
+        elif self.__currentState == SeatingFSMState.SeatingState.CONFIRM_STOP_SEATING:
+            """
+            case SeatingState::CONFIRM_STOP_SEATING:
+                if(cs.isSeated) {
+                    currentState = SeatingState::CURRENTLY_SEATING;
+                    seatingStopped = 0;
+                } else {
+                    if((cs.time - seatingStopped) > SEATING_TIMEOUT) {
+                        currentState = SeatingState::SEATING_STOPPED;
+                    }
+                }
+            break;
+            """
+            if chair_state.Pressure.isSeated:
+                self.__currentState = SeatingFSMState.SeatingState.CURRENTLY_SEATING
+                self.__seatingStopped = chair_state.timestamp
+            else:
+                if (chair_state.timestamp - self.__seatingStopped) > SeatingFSMState.SEATING_TIMEOUT:
+                    self.__currentState = SeatingFSMState.SeatingState.SEATING_STOPPED
+                    self.__seatingStopped = chair_state.timestamp
+
+        elif self.__currentState == SeatingFSMState.SeatingState.SEATING_STOPPED:
+            """
+            case SeatingState::SEATING_STOPPED:
+                currentState = SeatingState::INIT;
+            break;
+            """
+            self.__event = 'Stopped'
+            self.__currentState = SeatingFSMState.SeatingState.INIT
+        else:
+            # Invalid state
+            print('SeatingFSM, invalid state', self.__currentState)
+            self.reset()
+
+        self.__currentTime = chair_state.timestamp
 
 
 class SeatingFSM:
@@ -78,7 +219,7 @@ class SeatingFSM:
         self.chairState = state
 
     def update(self):
-        pass
+        self.state.update(self.chairState)
 
     def to_json(self):
         return self.state.to_json()
