@@ -5,61 +5,121 @@ from contextlib import AsyncExitStack, asynccontextmanager
 from asyncio_mqtt import Client, MqttError
 from ChairState import ChairState, TravelInformation, AngleInformation, PressureInformation
 import json
+from enum import Enum, unique
 
-
-# TravelFSM: (fsm/travel)
-# {
-#   "time": 1604434147,
-#   "elapsed": 0,
-#   "event": "Other",
-#   "stateNum": 0,
-#   "stateName": "INIT"
-# }
 
 class TravelFSMState:
+
+    TRAVEL_START_TIMEOUT = 1
+    TRAVEL_STOP_TIMEOUT = 2
+    TRAVEL_THRESHOLD = 100
+
+    @classmethod
+    def travelStartTimeout(cls, timeout: int):
+        TravelFSMState.TRAVEL_START_TIMEOUT = timeout
+
+    @classmethod
+    def travelStopTimeout(cls, timeout: int):
+        TravelFSMState.TRAVEL_STOP_TIMEOUT = timeout
+
+    @classmethod
+    def travelThreshold(cls, threshold: int):
+        TravelFSMState.TRAVEL_THRESHOLD = threshold
+
+    @unique
+    class TravelState(Enum):
+        INIT = 0
+        WAITING_MOVEMENT = 1
+        TRAVEL_STARTED = 2
+        ON_THE_MOVE = 3
+        MOVEMENT_NOT_DETECTED = 4
+        TRAVEL_STOPPED = 5
+
+        @classmethod
+        def from_name(cls, name: str):
+            if name == TravelFSMState.TravelState.INIT.name:
+                return TravelFSMState.TravelState.INIT
+            elif name == TravelFSMState.TravelState.WAITING_MOVEMENT.name:
+                return TravelFSMState.TravelState.WAITING_MOVEMENT
+            elif name == TravelFSMState.TravelState.TRAVEL_STARTED.name:
+                return TravelFSMState.TravelState.TRAVEL_STARTED
+            elif name == TravelFSMState.TravelState.ON_THE_MOVE.name:
+                return TravelFSMState.TravelState.ON_THE_MOVE
+            elif name == TravelFSMState.TravelState.MOVEMENT_NOT_DETECTED.name:
+                return TravelFSMState.TravelState.MOVEMENT_NOT_DETECTED
+            elif name == TravelFSMState.TravelState.TRAVEL_STOPPED.name:
+                return TravelFSMState.TravelState.TRAVEL_STOPPED
+            else:
+                raise ValueError('{} is not a valid TravelState name'.format(name))
+
     def __init__(self):
-        self.type = 'TravelFSMState'
-        self.timestamp = int(datetime.now().timestamp())
-        self.elapsed = 0
-        self.event = "Other"
-        self.stateNum = 0
-        self.stateName = "INIT"
+        self.__type = 'TravelFSMState'
+        self.__event = 'Other'
+        self.__currentState = TravelFSMState.TravelState.INIT
+        self.__travelStartedTime = 0
+        self.__travelStoppedTime = 0
+        self.__lastTime = 0
+        self.__travelSum = 0
+        self.__currentTime = 0
+
+    def reset(self):
+        self.__event = 'Other'
+        self.__currentState = TravelFSMState.TravelState.INIT
+        self.__travelStartedTime = 0
+        self.__travelStoppedTime = 0
+        self.__lastTime = 0
+        self.__travelSum = 0
+        self.__currentTime = 0
 
     def to_dict(self):
         return {
-            'type': self.type,
-            'time': self.timestamp,
-            'elapsed': self.elapsed,
-            'event': self.event,
-            'stateNum': self.stateNum,
-            'stateName': self.stateName
+            'type': self.__type,
+            'time': self.getCurrentTime(),
+            'elapsed': self.getElapsedTime(),
+            'event': self.__event,
+            'stateNum': self.getCurrentState(),
+            'stateName': self.getCurrentStateName(),
+            'travelSum': self.__travelSum
         }
 
     def from_dict(self, values):
-        if 'type' in values and values['type'] == self.type:
+        if 'type' in values and values['type'] == self.__type:
             if 'time' in values:
-                self.timestamp = values['time']
+                self.__currentTime = values['time']
 
-            if 'elapsed' in values:
-                self.elapsed = values['elapsed']
+            if 'elapsed' in values and 'time' in values:
+                self.__travelStoppedTime = values['time']
+                self.__travelStartedTime = values['time'] - values['elapsed']
 
             if 'event' in values:
-                self.event = values['event']
+                self.__event = values['event']
 
             if 'stateNum' in values:
-                self.stateNum = values['event']
+                self.__currentState = values['stateNum']
 
-            if 'stateName' in values:
-                self.stateName = values['stateName']
+            if 'travelSum' in values:
+                self.__travelSum = values['travelSum']
+
             return True
         return False
 
-    def reset(self):
-        self.timestamp = int(datetime.now().timestamp())
-        self.elapsed = 0
-        self.event = "Other"
-        self.stateNum = 0
-        self.stateName = "INIT"
+    def getCurrentTime(self):
+        return self.__currentTime
+
+    def getCurrentStateName(self):
+        return self.__currentState.name
+
+    def getStartTime(self):
+        return self.__travelStartedTime
+
+    def getStopTime(self):
+        return self.__travelStoppedTime
+
+    def getCurrentState(self):
+        return self.__currentState.value
+
+    def getElapsedTime(self):
+        return self.__travelStoppedTime - self.__travelStartedTime
 
     def to_json(self):
         return json.dumps(self.to_dict())
@@ -67,6 +127,161 @@ class TravelFSMState:
     def from_json(self, data: str):
         values = json.loads(data)
         self.from_dict(values)
+
+    def update(self, chair_state: ChairState):
+
+        # Default = Other
+        self.__event = 'Other'
+
+        if self.__currentState == TravelFSMState.TravelState.INIT:
+            """
+            case TravelState::INIT:
+                if(cs.lastDistance > TRAVEL_THRESHOLD) {
+                    //La distance minimale est parcouru
+                    lastTime = cs.time;
+                    currentState = TravelState::WAITING_MOVEMENT;
+                } else {
+                    //La distance minimale n'est pas parcouru
+                    travelStartedTime = 0;
+                    travelStoppedTime = 0;
+                }
+            break;
+            """
+            # Simplified code
+            if chair_state.Travel.lastDistance > TravelFSMState.TRAVEL_THRESHOLD:
+                self.__currentState = TravelFSMState.TravelState.WAITING_MOVEMENT
+
+            self.__lastTime = chair_state.timestamp
+            self.__travelStartedTime = 0
+            self.__travelStoppedTime = 0
+            self.__travelSum = 0
+
+        elif self.__currentState == TravelFSMState.TravelState.WAITING_MOVEMENT:
+            """
+            case TravelState::WAITING_MOVEMENT:
+                if((cs.time - lastTime) > 1) {
+                    //Deux secondes sont écoulé
+                    if(travelSum > TRAVEL_THRESHOLD) {
+                        //La distance minimale est parcouru
+                        currentState = TravelState::TRAVEL_STARTED;
+                        travelSum = 0;
+                    } else {
+                        //La distance minimale n'est pas parcouru
+                        currentState = TravelState::INIT;
+                        travelSum = 0;
+                    }
+                    lastTime = cs.time;
+                    
+                } else {
+                    //Pas passé le delai, on integre encore
+                    travelSum += cs.lastDistance;
+                }
+            break;
+            """
+            if chair_state.timestamp - self.__lastTime > 1:
+                if self.__travelSum > TravelFSMState.TRAVEL_THRESHOLD:
+                    self.__currentState = TravelFSMState.TravelState.TRAVEL_STARTED
+                    # Keep sum for next state(s)
+                    # self.__travelSum = 0
+                else:
+                    self.__currentState = TravelFSMState.TravelState.INIT
+                    # Is reinitialized in INIT
+                    # self.__travelSum = 0
+                self.__lastTime = chair_state.timestamp
+            else:
+                self.__travelSum += chair_state.Travel.lastDistance
+
+        elif self.__currentState == TravelFSMState.TravelState.TRAVEL_STARTED:
+            """
+            case TravelState::TRAVEL_STARTED:
+                currentState = TravelState::ON_THE_MOVE;
+                travelStartedTime = cs.time;
+                travelStoppedTime = cs.time;
+                //printf("Travel started at: %ld\n", travelStartedTime);
+            break;
+            """
+            self.__event = 'Started'
+            self.__currentState = TravelFSMState.TravelState.ON_THE_MOVE
+            self.__travelStartedTime = chair_state.timestamp
+            self.__travelStoppedTime = chair_state.timestamp
+
+        elif self.__currentState == TravelFSMState.TravelState.ON_THE_MOVE:
+            """
+            case TravelState::ON_THE_MOVE:
+                if(cs.lastDistance < 5) {
+                    lastTime = cs.time;
+                    travelStoppedTime = cs.time;
+                    currentState = TravelState::MOVEMENT_NOT_DETECTED;
+                } else {
+                    //printf("Last distance: %d\n", cs.lastDistance);
+                    travelStoppedTime = cs.time;
+                }
+            break;
+            """
+            if chair_state.Travel.lastDistance < 5:
+                self.__lastTime = chair_state.timestamp
+                # self.__travelStoppedTime = chair_state.timestamp
+                self.__currentState = TravelFSMState.TravelState.MOVEMENT_NOT_DETECTED
+
+            # Updated
+            # Increment stopped time and continue accumulating distance
+            self.__travelStoppedTime = chair_state.timestamp
+            self.__travelSum += chair_state.Travel.lastDistance
+
+        elif self.__currentState == TravelFSMState.TravelState.MOVEMENT_NOT_DETECTED:
+            """
+            case TravelState::MOVEMENT_NOT_DETECTED:
+                if((cs.time-lastTime) > TRAVEL_STOP_TIMEOUT) {
+                    if(travelSum > 25) {
+                        //La distance minimale est parcouru
+                        currentState = TravelState::ON_THE_MOVE;
+                        travelSum = 0;
+                    } else {
+                        //La distance minimale n'est pas parcouru
+                        currentState = TravelState::TRAVEL_STOPPED;
+                        travelSum = 0;
+                    }
+                    lastTime = cs.time;
+                } else {
+                    //Pas passé le delai, on integre encore
+                    travelSum += cs.lastDistance;
+                    travelStoppedTime = cs.time;
+                }
+            break;
+            """
+            if (chair_state.timestamp - self.__lastTime) > TravelFSMState.TRAVEL_STOP_TIMEOUT:
+                if chair_state.Travel.lastDistance > 25:
+                    # Still moving...
+                    self.__currentState = TravelFSMState.TravelState.ON_THE_MOVE
+                    # Keep sum
+                    # self.__travelSum = 0
+                else:
+                    self.__currentState = TravelFSMState.TravelState.TRAVEL_STOPPED
+                    # Keep sum
+                    # self.__travelSum = 0
+                self.__lastTime = chair_state.timestamp
+
+            # Keep stopped time and continue travel sum
+            self.__travelSum += chair_state.Travel.lastDistance
+            self.__travelStoppedTime = chair_state.timestamp
+
+        elif self.__currentState == TravelFSMState.TravelState.TRAVEL_STOPPED:
+            """
+            case TravelState::TRAVEL_STOPPED:
+                currentState = TravelState::INIT;
+                //printf("Travel stopped at: %ld\n", travelStoppedTime);
+                //printf("Moved for: %ld\n", travelStoppedTime-travelStartedTime);
+            break;
+            """
+            self.__event = 'Stopped'
+            self.__currentState = TravelFSMState.TravelState.INIT
+        else:
+            # Invalid state
+            print('TravelFSM, invalid state', self.__currentState)
+            self.reset()
+
+        # Update time
+        self.__currentTime = chair_state.timestamp
 
 
 class TravelFSM:
@@ -78,7 +293,7 @@ class TravelFSM:
         self.chairState = state
 
     def update(self):
-        pass
+        self.state.update(self.chairState)
 
     def to_json(self):
         return self.state.to_json()
