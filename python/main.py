@@ -40,8 +40,8 @@ async def movit_main_original():
         tasks.add(task)
 
         # NotificationFSM
-        task = asyncio.create_task(notification_fsm_main())
-        tasks.add(task)
+        # task = asyncio.create_task(notification_fsm_main())
+        # tasks.add(task)
 
         # Wait for everything to complete (or fail due to, e.g., network errors)
         await asyncio.gather(*tasks)

@@ -9,61 +9,134 @@ from TravelFSM import TravelFSMState
 from SeatingFSM import SeatingFSMState
 
 import json
+from enum import Enum, unique
 
-
-# NotificationFSM: (fsm/notification)
-# {
-#   "time": 1604434147,
-#   "elapsed": 0,
-#   "event": "Other",
-#   "stateNum": 0,
-#   "stateName": "INIT"
-# }
 
 class NotificationFSMState:
+
+    SNOOZE_TIME = 5
+    MAX_SNOOZE = 2
+
+    @classmethod
+    def setSnoozeTime(cls, snooze_time: int):
+        NotificationFSMState.SNOOZE_TIME = snooze_time
+
+    @classmethod
+    def setMaxSnooze(cls, max_snooze: int):
+        NotificationFSMState.MAX_SNOOZE = max_snooze
+
+    class NotificationState(Enum):
+        INIT = 0
+        WAIT_PERIOD = 1
+        IN_TRAVEL = 2
+        WAITING_FOR_TILT = 3
+        TILT_SNOOZED = 4
+        NOTIFICATION_TILT_STARTED = 5
+        IN_TILT = 6
+        TILT_DURATION_OK = 7
+        NOTIFICATION_TILT_STOPPED = 8
+        IN_TRAVEL_ELAPSED = 9
+
+        @classmethod
+        def from_name(cls, name: str):
+            if name == NotificationFSMState.NotificationState.INIT.name:
+                return NotificationFSMState.NotificationState.INIT
+            elif name == NotificationFSMState.NotificationState.WAIT_PERIOD.name:
+                return NotificationFSMState.NotificationState.WAIT_PERIOD
+            elif name == NotificationFSMState.NotificationState.IN_TRAVEL.name:
+                return NotificationFSMState.NotificationState.IN_TRAVEL
+            elif name == NotificationFSMState.NotificationState.WAITING_FOR_TILT.name:
+                return NotificationFSMState.NotificationState.WAITING_FOR_TILT
+            elif name == NotificationFSMState.NotificationState.TILT_SNOOZED.name:
+                return NotificationFSMState.NotificationState.TILT_SNOOZED
+            elif name == NotificationFSMState.NotificationState.NOTIFICATION_TILT_STARTED.name:
+                return NotificationFSMState.NotificationState.NOTIFICATION_TILT_STARTED
+            elif name == NotificationFSMState.NotificationState.IN_TILT.name:
+                return NotificationFSMState.NotificationState.IN_TILT
+            elif name == NotificationFSMState.NotificationState.TILT_DURATION_OK.name:
+                return NotificationFSMState.NotificationState.TILT_DURATION_OK
+            elif name == NotificationFSMState.NotificationState.NOTIFICATION_TILT_STOPPED.name:
+                return NotificationFSMState.NotificationState.NOTIFICATION_TILT_STOPPED
+            elif name == NotificationFSMState.NotificationState.IN_TRAVEL_ELAPSED.name:
+                return NotificationFSMState.NotificationState.IN_TRAVEL_ELAPSED
+            else:
+                raise ValueError('{} is not a valid NotificationState name'.format(name))
+
     def __init__(self):
-        self.type = 'NotificationFSMState'
-        self.timestamp = int(datetime.now().timestamp())
-        self.elapsed = 0
-        self.event = "Other"
-        self.stateNum = 0
-        self.stateName = "INIT"
+        self.__type = 'NotificationFSMState'
+        self.__currentState = NotificationFSMState.NotificationState.INIT
+        self.__event = "Other"
+        self.__snoozeCount = 0
+        self.__startTime = 0
+        self.__stopTime = 0
+        self.__secondsCounter = 0
+        self.__currentTime = 0
+        self.__stopReason = ''
+
+    def reset(self):
+        self.__currentState = NotificationFSMState.NotificationState.INIT
+        self.__event = "Other"
+        self.__snoozeCount = 0
+        self.__startTime = 0
+        self.__stopTime = 0
+        self.__secondsCounter = 0
+        self.__currentTime = 0
+        self.__stopReason = ''
+
+    def getStartTime(self):
+        return self.__startTime
+
+    def getStopTime(self):
+        return self.__stopTime
+
+    def getCurrentState(self):
+        return self.__currentState.value
+
+    def getCurrentTime(self):
+        return self.__currentTime
+
+    def getCurrentStateName(self):
+        return self.__currentState.name
+
+    def getElapsed(self):
+        return self.__secondsCounter
 
     def to_dict(self):
         return {
-            'type': self.type,
-            'time': self.timestamp,
-            'elapsed': self.elapsed,
-            'event': self.event,
-            'stateNum': self.stateNum,
-            'stateName': self.stateName
+            'type': self.__type,
+            'time': self.getCurrentTime(),
+            'elapsed': self.getElapsed(),
+            'event': self.__event,
+            'stateNum': self.getCurrentState(),
+            'stateName': self.getCurrentStateName(),
+            'stopReason': self.__stopReason,
+            'snoozeCount': self.__snoozeCount
         }
 
     def from_dict(self, values):
-        if 'type' in values and values['type'] == self.type:
+        if 'type' in values and values['type'] == self.__type:
             if 'time' in values:
-                self.timestamp = values['time']
+                self.__currentTime = values['time']
 
             if 'elapsed' in values:
-                self.elapsed = values['elapsed']
+                self.__secondsCounter = values['elapsed']
 
             if 'event' in values:
-                self.event = values['event']
+                self.__event = values['event']
 
             if 'stateNum' in values:
-                self.stateNum = values['event']
+                self.__currentState = NotificationFSMState.NotificationState(values['stateNum'])
 
             if 'stateName' in values:
-                self.stateName = values['stateName']
+                if self.__currentState != NotificationFSMState.NotificationState.from_name(values['stateName']):
+                    print('NotificationFSMState - state mismatch')
+                    return False
+
+            if 'stopReason' in values:
+                self.__stopReason = values['stopReason']
+
             return True
         return False
-
-    def reset(self):
-        self.timestamp = int(datetime.now().timestamp())
-        self.elapsed = 0
-        self.event = "Other"
-        self.stateNum = 0
-        self.stateName = "INIT"
 
     def to_json(self):
         return json.dumps(self.to_dict())
@@ -71,6 +144,432 @@ class NotificationFSMState:
     def from_json(self, data: str):
         values = json.loads(data)
         self.from_dict(values)
+
+    def update(self, chair_state: ChairState, angle_state: AngleFSMState, travel_state: TravelFSMState,
+               seating_state: SeatingFSMState, enabled=False):
+        print('update')
+        if self.__currentState == NotificationFSMState.NotificationState.INIT:
+            """
+            case NotificationState::INIT:
+                stopReason = "Other";
+                snoozeCount = 0;
+                startTime = 0;
+                secondsCounter = 0;
+                stopTime = 0;
+                if(sFSM.getCurrentState() == static_cast<int>(SeatingState::CURRENTLY_SEATING) ) {
+                    startTime = cs.time;
+                    currentState = NotificationState::WAIT_PERIOD;
+                }
+    
+                if(!isEnable) {
+                    currentState = NotificationState::INIT;
+                    stopReason = "Other";
+                }
+
+            break;
+            """
+            self.__stopReason = 'Other'
+            self.__snoozeCount = 0
+            self.__startTime = 0
+            self.__secondsCounter = 0
+            self.__stopTime = 0
+
+            if seating_state.in_state(SeatingFSMState.SeatingState.CURRENTLY_SEATING):
+                self.__startTime = chair_state.timestamp
+                self.__currentState = NotificationFSMState.NotificationState.WAIT_PERIOD
+
+            # Not enabled? Go back to INIT state...
+            if not enabled:
+                self.__currentState = NotificationFSMState.NotificationState.INIT
+                self.__stopReason = 'Other'
+
+        elif self.__currentState == NotificationFSMState.NotificationState.WAIT_PERIOD:
+            """
+            case NotificationState::WAIT_PERIOD:
+                stopReason = "Other";
+                //La personne est en mouvement
+                if (tFSM.getCurrentState() == static_cast<int>(TravelState::ON_THE_MOVE)) {
+                    currentState = NotificationState::IN_TRAVEL;
+                }
+    
+                //La personne est assise
+                if(sFSM.getCurrentState() == static_cast<int>(SeatingState::CURRENTLY_SEATING) ||
+                        sFSM.getCurrentState() == static_cast<int>(SeatingState::CONFIRM_STOP_SEATING)) {
+                    if(currentTime != cs.time) {
+                        secondsCounter++;
+                        //printf ....*******************************************************************
+    
+    
+                        //Le temps d'attente pour une bascule est ecoule
+                        //DL Ou nous sommes deja en bascule
+                        if(secondsCounter >= aFSM.getTargetFrequency() || aFSM.getCurrentState() == static_cast<int>(AngleState::IN_TILT)) {
+                            currentState = NotificationState::NOTIFICATION_TILT_STARTED;
+                        }                                                                                                    
+                    }
+                } else {
+                    currentState = NotificationState::INIT;
+                }
+    
+                if(!isEnable) {
+                    currentState = NotificationState::INIT;
+                    stopReason = "USER_DISABLED";
+                }
+            break;
+            """
+            self.__stopReason = 'Other'
+            # Moving ?
+            if travel_state.in_state(TravelFSMState.TravelState.ON_THE_MOVE):
+                self.__currentState = NotificationFSMState.NotificationState.IN_TRAVEL
+
+            # isSeated?
+            if seating_state.in_state(SeatingFSMState.SeatingState.CURRENTLY_SEATING) or \
+                    seating_state.in_state(SeatingFSMState.SeatingState.CONFIRM_STOP_SEATING):
+                if self.__currentTime != chair_state.timestamp:
+                    self.__secondsCounter += 1
+
+                    # Waiting time for a tilt finished?
+                    if self.__secondsCounter > angle_state.getTargetFrequency() or \
+                            angle_state.in_state(AngleFSMState.AngleState.IN_TILT):
+                        self.__currentState = NotificationFSMState.NotificationState.NOTIFICATION_TILT_STARTED
+
+            else:
+                # Not seated.
+                self.__currentState = NotificationFSMState.NotificationState.INIT
+
+            # enabled?
+            if not enabled:
+                self.__stopReason = 'USER_DISABLED'
+                self.__currentState = NotificationFSMState.NotificationState.INIT
+
+        elif self.__currentState == NotificationFSMState.NotificationState.IN_TRAVEL:
+            """
+            case NotificationState::IN_TRAVEL:
+                stopReason = "Other";
+                if (tFSM.getCurrentState() == static_cast<int>(TravelState::ON_THE_MOVE)) {
+                    currentState = NotificationState::IN_TRAVEL;
+                } else {
+                    currentState = NotificationState::WAIT_PERIOD;
+                }
+                //Même en déplacement on est assis...
+                if(currentTime != cs.time) {
+                    secondsCounter++;
+                }
+    
+                //La personne n'est plus assise
+                if(!(sFSM.getCurrentState() == static_cast<int>(SeatingState::CURRENTLY_SEATING) || sFSM.getCurrentState() == static_cast<int>(SeatingState::CONFIRM_STOP_SEATING))) {
+                    currentState = NotificationState::INIT;
+                }
+    
+                if(!isEnable) {
+                    currentState = NotificationState::INIT;
+                    stopReason = "USER_DISABLED";
+                }
+            break;
+            """
+            self.__stopReason = 'Other'
+            if travel_state.in_state(TravelFSMState.TravelState.ON_THE_MOVE):
+                self.__currentState = NotificationFSMState.NotificationState.IN_TRAVEL
+            else:
+                self.__currentState = NotificationFSMState.NotificationState.WAIT_PERIOD
+
+            if chair_state.timestamp != self.__currentTime:
+                self.__secondsCounter += 1
+
+            # Not seated?
+            if not (seating_state.in_state(SeatingFSMState.SeatingState.CURRENTLY_SEATING) or
+                    seating_state.in_state(SeatingFSMState.SeatingState.CONFIRM_STOP_SEATING)):
+                self.__currentState = NotificationFSMState.NotificationState.INIT
+
+            # enabled?
+            if not enabled:
+                self.__stopReason = 'USER_DISABLED'
+                self.__currentState = NotificationFSMState.NotificationState.INIT
+
+        elif self.__currentState == NotificationFSMState.NotificationState.WAITING_FOR_TILT:
+            """
+            case NotificationState::WAITING_FOR_TILT:
+                stopReason = "Other";
+                secondsCounter = 0;
+                if(cs.button) {
+                    snoozeCount++;
+                    if(snoozeCount >= 4) {
+                        currentState = NotificationState::TILT_SNOOZED;
+                        stopReason = "SNOOZED_REQUESTED";
+                        secondsCounter = 0;
+                    }
+                } else {
+                    snoozeCount = 0;
+                }
+    
+                if (tFSM.getCurrentState() == static_cast<int>(TravelState::ON_THE_MOVE)) {
+                    currentState = NotificationState::IN_TRAVEL_ELAPSED;
+                    break;
+                }
+    
+                //La personne n'est plus assise
+                if(!(sFSM.getCurrentState() == static_cast<int>(SeatingState::CURRENTLY_SEATING) || sFSM.getCurrentState() == static_cast<int>(SeatingState::CONFIRM_STOP_SEATING))) {
+                    currentState = NotificationState::NOTIFICATION_TILT_STOPPED;
+                    stopReason = "NOT_SEATED";
+                    break;
+                }
+    
+                //Une bascule est détecté ou la personne était déja en bascule
+                if((aFSM.getCurrentState() == static_cast<int>(AngleState::ANGLE_STARTED)) || (aFSM.getCurrentState() == static_cast<int>(AngleState::IN_TILT))) {
+                    currentState = NotificationState::IN_TILT;
+                    stopReason = "TILT_BEGIN";
+                    secondsCounter = 0;
+                }
+    
+                if(!isEnable) {
+                    currentState = NotificationState::INIT;
+                    stopReason = "USER_DISABLED";
+                }
+
+            break;
+
+            """
+
+            self.__stopReason = 'Other'
+            self.__secondsCounter = 0
+            if chair_state.snoozeButton:
+                self.__snoozeCount += 1
+                if self.__snoozeCount >= 4:
+                    # 4 seconds press
+                    self.__currentState = NotificationFSMState.NotificationState.TILT_SNOOZED
+                    self.__stopReason = "SNOOZED_REQUESTED"
+                    self.__secondsCounter = 0
+            else:
+                self.__snoozeCount = 0
+
+            if travel_state.in_state(TravelFSMState.TravelState.ON_THE_MOVE):
+                self.__currentState = NotificationFSMState.NotificationState.IN_TRAVEL_ELAPSED
+                # TODO Best way?
+                self.__currentTime = chair_state.timestamp
+                return
+
+            if not (seating_state.in_state(SeatingFSMState.SeatingState.CURRENTLY_SEATING)
+                    or seating_state.in_state(SeatingFSMState.SeatingState.CONFIRM_STOP_SEATING)):
+                self.__currentState = NotificationFSMState.NotificationState.NOTIFICATION_TILT_STOPPED
+                self.__stopReason = 'NOT_SEATED'
+                # TODO Best way?
+                self.__currentTime = chair_state.timestamp
+                return
+
+            # Tilt detected?
+            if (angle_state.in_state(AngleFSMState.AngleState.ANGLE_STARTED)
+                    or angle_state.in_state(AngleFSMState.AngleState.IN_TILT)):
+                self.__currentState = NotificationFSMState.NotificationState.IN_TILT
+                self.__stopReason = 'TILT_BEGIN'
+                self.__secondsCounter = 0
+
+            # enabled?
+            if not enabled:
+                self.__stopReason = 'USER_DISABLED'
+                self.__currentState = NotificationFSMState.NotificationState.INIT
+
+        elif self.__currentState == NotificationFSMState.NotificationState.TILT_SNOOZED:
+            """
+            case NotificationState::TILT_SNOOZED:
+                stopReason = "Other";
+                if(currentTime != cs.time) {
+                    secondsCounter++;
+                    //Atteint le snooze time
+                    //DL ou la personne est deja en tilt
+                    if(secondsCounter >= SNOOZE_TIME || aFSM.getCurrentState() == static_cast<int>(AngleState::IN_TILT)) {
+                        currentState = NotificationState::WAITING_FOR_TILT;
+                        stopReason = "TILT_REQUESTED";
+                    }
+                }
+    
+                //La personne n'est plus assise
+                if(!(sFSM.getCurrentState() == static_cast<int>(SeatingState::CURRENTLY_SEATING) || sFSM.getCurrentState() == static_cast<int>(SeatingState::CONFIRM_STOP_SEATING))) {
+                    currentState = NotificationState::NOTIFICATION_TILT_STOPPED;
+                    stopReason = "NOT_SEATED";
+                }
+    
+                if(!isEnable) {
+                    currentState = NotificationState::INIT;
+                    stopReason = "USER_DISABLED";
+                }
+
+            break;
+            """
+            self.__stopReason = 'Other'
+            if self.__currentTime != chair_state.timestamp:
+                self.__secondsCounter += 1
+                if (self.__secondsCounter >= NotificationFSMState.SNOOZE_TIME or
+                        angle_state.in_state(AngleFSMState.AngleState.IN_TILT)):
+                    self.__currentState = NotificationFSMState.NotificationState.WAITING_FOR_TILT
+                    self.__stopReason = 'TILT_REQUESTED'
+
+            # Not seated?
+            if not (seating_state.in_state(SeatingFSMState.SeatingState.CURRENTLY_SEATING) or
+                    seating_state.in_state(SeatingFSMState.SeatingState.CONFIRM_STOP_SEATING)):
+                self.__currentState = NotificationFSMState.NotificationState.INIT
+                self.__stopReason = 'NOT_SEATED'
+
+            # enabled?
+            if not enabled:
+                self.__stopReason = 'USER_DISABLED'
+                self.__currentState = NotificationFSMState.NotificationState.INIT
+
+        elif self.__currentState == NotificationFSMState.NotificationState.NOTIFICATION_TILT_STARTED:
+            """
+            case NotificationState::NOTIFICATION_TILT_STARTED:
+                stopReason = "Other";
+                currentState = NotificationState::WAITING_FOR_TILT;
+                stopReason = "INITIAL_TILT_REQUESTED";
+            break;
+            """
+            self.__currentState = NotificationFSMState.NotificationState.WAITING_FOR_TILT
+            self.__stopReason = 'INITIAL_TILT_REQUESTED'
+
+        elif self.__currentState == NotificationFSMState.NotificationState.IN_TILT:
+            """
+            case NotificationState::IN_TILT:
+                stopReason = "Other";
+                //La personne n'est plus assise
+                if(!(sFSM.getCurrentState() == static_cast<int>(SeatingState::CURRENTLY_SEATING) || sFSM.getCurrentState() == static_cast<int>(SeatingState::CONFIRM_STOP_SEATING))) {
+                    currentState = NotificationState::NOTIFICATION_TILT_STOPPED;
+                    stopReason = "NOT_SEATED";
+                    break;
+                }
+    
+                if(currentTime != cs.time) {
+                    secondsCounter++;
+                }
+    
+                if((aFSM.getCurrentState() == static_cast<int>(AngleState::IN_TILT)) || (aFSM.getCurrentState() == static_cast<int>(AngleState::CONFIRM_STOP_ANGLE))) {
+                    if(aFSM.getTargetDuration() <= secondsCounter) {
+                        currentState = NotificationState::TILT_DURATION_OK;
+                    } else {
+                        currentState = NotificationState::IN_TILT;
+                    }
+                    //La bascule est terminée
+                } else if (aFSM.getCurrentState() == static_cast<int>(AngleState::ANGLE_STOPPED)) {
+                    currentState = NotificationState::NOTIFICATION_TILT_STOPPED;
+                    stopReason = "END_OF_TILT";
+                }
+    
+                if(!isEnable) {
+                    currentState = NotificationState::NOTIFICATION_TILT_STOPPED;
+                    stopReason = "USER_DISABLED";
+                }
+        
+            break;
+            """
+            # Not seated?
+            if not (seating_state.in_state(SeatingFSMState.SeatingState.CURRENTLY_SEATING) or
+                    seating_state.in_state(SeatingFSMState.SeatingState.CONFIRM_STOP_SEATING)):
+                self.__currentState = NotificationFSMState.NotificationState.NOTIFICATION_TILT_STOPPED
+                self.__stopReason = 'NOT_SEATED'
+                # TODO Do better?
+                self.__currentTime = chair_state.timestamp
+                return
+
+            if chair_state.timestamp != self.__currentTime:
+                self.__secondsCounter += 1
+
+            if (angle_state.in_state(AngleFSMState.AngleState.IN_TILT)
+                    or angle_state.in_state(AngleFSMState.AngleState.CONFIRM_STOP_ANGLE)):
+                if angle_state.getTargetDuration() <= self.__secondsCounter:
+                    self.__currentState = NotificationFSMState.NotificationState.TILT_DURATION_OK
+                else:
+                    self.__currentState = NotificationFSMState.NotificationState.IN_TILT
+            elif angle_state.in_state(AngleFSMState.AngleState.ANGLE_STOPPED):
+                self.__currentState = NotificationFSMState.NotificationState.NOTIFICATION_TILT_STOPPED
+                self.__stopReason = 'END_OF_TILT'
+
+            # enabled?
+            if not enabled:
+                self.__stopReason = 'USER_DISABLED'
+                self.__currentState = NotificationFSMState.NotificationState.INIT
+
+        elif self.__currentState == NotificationFSMState.NotificationState.TILT_DURATION_OK:
+            """
+            case NotificationState::TILT_DURATION_OK:
+                //La personne n'est plus assise
+                if(!(sFSM.getCurrentState() == static_cast<int>(SeatingState::CURRENTLY_SEATING) || sFSM.getCurrentState() == static_cast<int>(SeatingState::CONFIRM_STOP_SEATING))) {
+                    currentState = NotificationState::NOTIFICATION_TILT_STOPPED;
+                    stopReason = "NOT_SEATED";
+                    break;
+                }
+    
+                if(currentTime != cs.time) {
+                    secondsCounter++;
+                }
+    
+                if((aFSM.getCurrentState() == static_cast<int>(AngleState::IN_TILT)) || (aFSM.getCurrentState() == static_cast<int>(AngleState::CONFIRM_STOP_ANGLE))) {
+                    currentState = NotificationState::TILT_DURATION_OK;
+                    //La bascule est terminée
+                } else if (aFSM.getCurrentState() == static_cast<int>(AngleState::ANGLE_STOPPED)) {
+                    currentState = NotificationState::NOTIFICATION_TILT_STOPPED;
+                    stopReason = "END_OF_TILT_OK";
+                }
+    
+                if(!isEnable) {
+                    currentState = NotificationState::NOTIFICATION_TILT_STOPPED;
+                    stopReason = "USER_DISABLED";
+                }
+
+            break;
+            """
+            # Not seated?
+            if not (seating_state.in_state(SeatingFSMState.SeatingState.CURRENTLY_SEATING) or
+                    seating_state.in_state(SeatingFSMState.SeatingState.CONFIRM_STOP_SEATING)):
+                self.__currentState = NotificationFSMState.NotificationState.NOTIFICATION_TILT_STOPPED
+                self.__stopReason = 'NOT_SEATED'
+                # TODO Do better?
+                self.__currentTime = chair_state.timestamp
+                return
+
+            if chair_state.timestamp != self.__currentTime:
+                self.__secondsCounter += 1
+
+            if (angle_state.in_state(AngleFSMState.AngleState.IN_TILT) or
+                    angle_state.in_state(AngleFSMState.AngleState.CONFIRM_STOP_ANGLE)):
+                self.__currentState = NotificationFSMState.NotificationState.TILT_DURATION_OK
+            elif angle_state.in_state(AngleFSMState.AngleState.ANGLE_STOPPED):
+                self.__currentState = NotificationFSMState.NotificationState.NOTIFICATION_TILT_STOPPED
+                self.__stopReason = 'END_OF_TILT_OK'
+
+            # enabled?
+            if not enabled:
+                self.__stopReason = 'USER_DISABLED'
+                self.__currentState = NotificationFSMState.NotificationState.INIT
+
+        elif self.__currentState == NotificationFSMState.NotificationState.NOTIFICATION_TILT_STOPPED:
+            """
+            case NotificationState::NOTIFICATION_TILT_STOPPED:
+                stopReason = "NOTIFICATION_COMPLETE";
+                currentState = NotificationState::INIT;
+            break;
+            """
+            self.__stopReason = 'NOTIFICATION_COMPLETE'
+            self.__currentState = NotificationFSMState.NotificationState.INIT
+
+        elif self.__currentState == NotificationFSMState.NotificationState.IN_TRAVEL_ELAPSED:
+            """
+            case NotificationState::IN_TRAVEL_ELAPSED:
+                if (tFSM.getCurrentState() == static_cast<int>(TravelState::ON_THE_MOVE)) {
+                    currentState = NotificationState::IN_TRAVEL_ELAPSED;
+                } else {
+                    currentState = NotificationState::WAITING_FOR_TILT;
+                }
+            break;
+            """
+            if travel_state.in_state(TravelFSMState.TravelState.ON_THE_MOVE.value):
+                self.__currentState = NotificationFSMState.NotificationState.IN_TRAVEL_ELAPSED
+            else:
+                self.__currentState = NotificationFSMState.NotificationState.WAITING_FOR_TILT
+
+        else:
+            # Invalid state
+            print('NotificationFSM, invalid state', self.__currentState)
+            self.reset()
+
+        # Update time
+        self.__currentTime = chair_state.timestamp
 
 
 class NotificationFSM:
@@ -80,6 +579,18 @@ class NotificationFSM:
         self.angleState = AngleFSMState()
         self.travelState = TravelFSMState()
         self.seatingState = SeatingFSMState()
+        self.maxDeltaTime = 10  # secs
+        # Configuration values
+        self.snoozeTime = 5
+        self.notificationsEnabled = False
+        self.ledBlinkingEnabled = False
+        self.motorVibrationEnabled = False
+
+    def setParameters(self, enabled=False, ledBlink=False, motorVibrate=False, snoozeTime=5):
+        self.notificationsEnabled = enabled
+        self.ledBlinkingEnabled = ledBlink
+        self.motorVibrationEnabled = motorVibrate
+        self.snoozeTime = snoozeTime
 
     def setChairState(self, state: ChairState):
         self.chairState = state
@@ -94,7 +605,19 @@ class NotificationFSM:
         self.seatingState = state
 
     def update(self):
-        pass
+        # Verify timestamps
+        delta_angle_time = abs(self.chairState.timestamp - self.angleState.getCurrentTime())
+        delta_travel_time = abs(self.chairState.timestamp - self.travelState.getCurrentTime())
+        delta_seating_time = abs(self.chairState.timestamp - self.seatingState.getCurrentTime())
+
+        if delta_angle_time < self.maxDeltaTime and delta_travel_time < self.maxDeltaTime \
+                and delta_seating_time < self.maxDeltaTime:
+            self.state.update(self.chairState, self.angleState,
+                              self.travelState, self.seatingState, self.notificationsEnabled)
+        else:
+            print('NotificationFSM : Time mismatch angle_delta: {}, travel_delta: {}, seating_delta: {}'
+                  .format(delta_angle_time, delta_travel_time, delta_seating_time))
+            print('Will update later.')
 
     def to_json(self):
         return self.state.to_json()
@@ -152,6 +675,13 @@ async def connect_to_mqtt_server(config):
             task = asyncio.create_task(handle_seating_fsm_state(client, messages, fsm))
             tasks.add(task)
 
+            # Notification changes
+            await client.subscribe("config/notifications_settings")
+            manager = client.filtered_messages('config/notifications_settings')
+            messages = await stack.enter_async_context(manager)
+            task = asyncio.create_task(handle_config_notifications_settings(client, messages, fsm))
+            tasks.add(task)
+
             # Start periodic publish of chair state
             task = asyncio.create_task(publish_notification_fsm(client, fsm))
             tasks.add(task)
@@ -191,30 +721,59 @@ async def publish_notification_fsm(client, fsm: NotificationFSM):
 
 async def handle_sensors_chair_state(client, messages, fsm: NotificationFSM):
     async for message in messages:
-        state = ChairState()
-        state.from_json(message.payload.decode())
-        fsm.setChairState(state)
+        try:
+            state = ChairState()
+            state.from_json(message.payload.decode())
+            fsm.setChairState(state)
+        except Exception as e:
+            print(e)
+
+
+async def handle_config_notifications_settings(client, messages, fsm: NotificationFSM):
+    async for message in messages:
+        try:
+            parts = message.payload.decode().split(':')
+            if len(parts) == 4 and len(message.payload) > 3:
+                # get all info
+                enabled = int(parts[3])
+                leds = int(parts[0])
+                vibrate = int(parts[1])
+                snooze = int(parts[2])
+
+                # update parameters
+                fsm.setParameters(enabled == 1, leds == 1, vibrate == 1, snooze)
+        except Exception as e:
+            print(e)
 
 
 async def handle_angle_fsm_state(client, messages, fsm: NotificationFSM):
     async for message in messages:
-        state = AngleFSMState()
-        state.from_json(message.payload.decode())
-        fsm.setAngeState(state)
+        try:
+            state = AngleFSMState()
+            if state.from_json(message.payload.decode()):
+                fsm.setAngeState(state)
+        except Exception as e:
+            print(e)
 
 
 async def handle_travel_fsm_state(client, messages, fsm: NotificationFSM):
     async for message in messages:
-        state = TravelFSMState()
-        state.from_json(message.payload.decode())
-        fsm.setTravelState(state)
+        try:
+            state = TravelFSMState()
+            if state.from_json(message.payload.decode()):
+                fsm.setTravelState(state)
+        except Exception as e:
+            print(e)
 
 
 async def handle_seating_fsm_state(client, messages, fsm: NotificationFSM):
     async for message in messages:
-        state = SeatingFSMState()
-        state.from_json(message.payload.decode())
-        fsm.setSeatingState(state)
+        try:
+            state = SeatingFSMState()
+            if state.from_json(message.payload.decode()):
+                fsm.setSeatingState(state)
+        except Exception as e:
+            print(e)
 
 
 async def notification_fsm_main():

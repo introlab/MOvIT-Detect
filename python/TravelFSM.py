@@ -62,6 +62,9 @@ class TravelFSMState:
         self.__travelSum = 0
         self.__currentTime = 0
 
+    def in_state(self, state: TravelState):
+        return self.__currentState == state
+
     def reset(self):
         self.__event = 'Other'
         self.__currentState = TravelFSMState.TravelState.INIT
@@ -95,7 +98,12 @@ class TravelFSMState:
                 self.__event = values['event']
 
             if 'stateNum' in values:
-                self.__currentState = values['stateNum']
+                self.__currentState = TravelFSMState.TravelState(values['stateNum'])
+
+            if 'stateName' in values:
+                if self.__currentState != TravelFSMState.TravelState.from_name(values['stateName']):
+                    print('TravelFSMState - state mismatch')
+                    return False
 
             if 'travelSum' in values:
                 self.__travelSum = values['travelSum']
@@ -126,7 +134,7 @@ class TravelFSMState:
 
     def from_json(self, data: str):
         values = json.loads(data)
-        self.from_dict(values)
+        return self.from_dict(values)
 
     def update(self, chair_state: ChairState):
 
@@ -369,9 +377,12 @@ async def publish_travel_fsm(client, fsm):
 
 async def handle_sensors_chair_state(client, messages, fsm):
     async for message in messages:
-        state = ChairState()
-        state.from_json(message.payload.decode())
-        fsm.setChairState(state)
+        try:
+            state = ChairState()
+            state.from_json(message.payload.decode())
+            fsm.setChairState(state)
+        except Exception as e:
+            print(e)
 
 
 async def travel_fsm_main():

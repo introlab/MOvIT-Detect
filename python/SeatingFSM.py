@@ -23,17 +23,17 @@ class SeatingFSMState:
 
         @classmethod
         def from_name(cls, name: str):
-            if name == 'INIT':
+            if name == SeatingFSMState.SeatingState.INIT.name:
                 return SeatingFSMState.SeatingState.INIT
-            elif name == 'CONFIRM_SEATING':
+            elif name == SeatingFSMState.SeatingState.CONFIRM_SEATING.name:
                 return SeatingFSMState.SeatingState.CONFIRM_SEATING
-            elif name == 'SEATING_STARTED':
+            elif name == SeatingFSMState.SeatingState.SEATING_STARTED.name:
                 return SeatingFSMState.SeatingState.SEATING_STARTED
-            elif name == 'CURRENTLY_SEATING':
+            elif name == SeatingFSMState.SeatingState.CURRENTLY_SEATING.name:
                 return SeatingFSMState.SeatingState.CURRENTLY_SEATING
-            elif name == 'CONFIRM_STOP_SEATING':
+            elif name == SeatingFSMState.SeatingState.CONFIRM_STOP_SEATING.name:
                 return SeatingFSMState.SeatingState.CONFIRM_STOP_SEATING
-            elif name == 'SEATING_STOPPED':
+            elif name == SeatingFSMState.SeatingState.SEATING_STOPPED.name:
                 return SeatingFSMState.SeatingState.SEATING_STOPPED
             else:
                 raise ValueError('{} is not a valid SeatingState name'.format(name))
@@ -45,6 +45,9 @@ class SeatingFSMState:
         self.__seatingStarted = 0
         self.__seatingStopped = 0
         self.__currentTime = 0
+
+    def in_state(self, state: SeatingState):
+        return self.__currentState == state
 
     def getElapsedTime(self):
         return self.__seatingStopped - self.__seatingStarted
@@ -60,6 +63,9 @@ class SeatingFSMState:
 
     def getCurrentStateName(self):
         return self.__currentState.name
+
+    def getCurrentTime(self):
+        return self.__currentTime
 
     def to_dict(self):
         return {
@@ -84,7 +90,12 @@ class SeatingFSMState:
                 self.__event = values['event']
 
             if 'stateNum' in values:
-                self.__currentState = values['stateNum']
+                self.__currentState = SeatingFSMState.SeatingState(values['stateNum'])
+
+            if 'stateName' in values:
+                if self.__currentState != SeatingFSMState.SeatingState.from_name(values['stateName']):
+                    print('SeatingFSMState - state mismatch')
+                    return False
 
             return True
         return False
@@ -101,7 +112,7 @@ class SeatingFSMState:
 
     def from_json(self, data: str):
         values = json.loads(data)
-        self.from_dict(values)
+        return self.from_dict(values)
 
     def update(self, chair_state: ChairState):
 
@@ -295,9 +306,12 @@ async def publish_seating_fsm(client, fsm):
 
 async def handle_sensors_chair_state(client, messages, fsm):
     async for message in messages:
-        state = ChairState()
-        state.from_json(message.payload.decode())
-        fsm.setChairState(state)
+        try:
+            state = ChairState()
+            state.from_json(message.payload.decode())
+            fsm.setChairState(state)
+        except Exception as e:
+            print(e)
 
 
 async def seating_fsm_main():

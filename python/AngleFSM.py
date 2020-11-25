@@ -55,24 +55,24 @@ class AngleFSMState:
 
         @classmethod
         def from_name(cls, name: str):
-            if name == 'INIT':
+            if name == AngleFSMState.AngleState.INIT.name:
                 return AngleFSMState.AngleState.INIT
-            elif name == 'CONFIRM_ANGLE':
+            elif name == AngleFSMState.AngleState.CONFIRM_ANGLE.name:
                 return AngleFSMState.AngleState.CONFIRM_ANGLE
-            elif name == 'ANGLE_STARTED':
+            elif name == AngleFSMState.AngleState.ANGLE_STARTED.name:
                 return AngleFSMState.AngleState.ANGLE_STARTED
-            elif name == 'IN_TILT':
+            elif name == AngleFSMState.AngleState.IN_TILT.name:
                 return AngleFSMState.AngleState.IN_TILT
-            elif name == 'CONFIRM_STOP_ANGLE':
+            elif name == AngleFSMState.AngleState.CONFIRM_STOP_ANGLE.name:
                 return AngleFSMState.AngleState.CONFIRM_STOP_ANGLE
-            elif name == 'ANGLE_STOPPED':
+            elif name == AngleFSMState.AngleState.ANGLE_STOPPED.name:
                 return AngleFSMState.AngleState.ANGLE_STOPPED
             else:
                 raise ValueError('{} is not a valid AngleState name'.format(name))
 
     def __init__(self):
         self.__type = 'AngleFSMState'
-        self.__state = AngleFSMState.AngleState.INIT
+        self.__currentState = AngleFSMState.AngleState.INIT
         self.__event = 'Other'
         # internal variables
         self.__result = [0, 0, 0, 0, 0]
@@ -83,6 +83,21 @@ class AngleFSMState:
         self.__angleStarted = 0
         self.__angleStopped = 0
 
+    def reset(self):
+        self.__currentState = AngleFSMState.AngleState.INIT
+        self.__event = 'Other'
+        # internal variables
+        self.__result = [0, 0, 0, 0, 0]
+        self.__lastTime = 0
+        self.__sum = 0
+        self.__dataPoints = 0
+        self.__currentTime = 0
+        self.__angleStarted = 0
+        self.__angleStopped = 0
+
+    def in_state(self, state: AngleState):
+        return self.__currentState == state
+
     def getStartTime(self):
         return self.__angleStarted
 
@@ -90,13 +105,13 @@ class AngleFSMState:
         return self.__angleStopped
 
     def getCurrentState(self):
-        return self.__state.value
+        return self.__currentState.value
 
     def getElapsedTime(self):
         return self.__angleStopped - self.__angleStarted
 
     def getCurrentStateName(self):
-        return self.__state.name
+        return self.__currentState.name
 
     def getCurrentTime(self):
         return self.__currentTime
@@ -142,38 +157,27 @@ class AngleFSMState:
                 self.__event = values['event']
 
             if 'stateNum' in values:
-                self.__state = AngleFSMState.AngleState(values['stateNum'])
+                self.__currentState = AngleFSMState.AngleState(values['stateNum'])
 
             if 'stateName' in values:
-                if self.__state != AngleFSMState.AngleState.from_name(values['stateName']):
-                    print('State mismatch')
+                if self.__currentState != AngleFSMState.AngleState.from_name(values['stateName']):
+                    print('AngleFSMState - state mismatch')
+                    return False
             return True
         return False
-
-    def reset(self):
-        self.__state = AngleFSMState.AngleState.INIT
-        self.__event = 'Other'
-        # internal variables
-        self.__result = [0, 0, 0, 0, 0]
-        self.__lastTime = 0
-        self.__sum = 0
-        self.__dataPoints = 0
-        self.__currentTime = 0
-        self.__angleStarted = 0
-        self.__angleStopped = 0
 
     def to_json(self):
         return json.dumps(self.to_dict())
 
     def from_json(self, data: str):
         values = json.loads(data)
-        self.from_dict(values)
+        return self.from_dict(values)
 
     def update(self, chair_state: ChairState):
         # Default = Other
         self.__event = 'Other'
 
-        if self.__state == AngleFSMState.AngleState.INIT:
+        if self.__currentState == AngleFSMState.AngleState.INIT:
             """
                case AngleState::INIT:
                     if (cs.seatAngle >= ANGLE_THRESHOLD || cs.seatAngle <= REVERSE_ANGLE_THRESHOLD)
@@ -205,9 +209,9 @@ class AngleFSMState:
             if chair_state.Angle.seatAngle >= AngleFSMState.ANGLE_THRESHOLD \
                     or chair_state.Angle.seatAngle <= AngleFSMState.REVERSE_ANGLE_THRESHOLD:
                 # Change state
-                self.__state = AngleFSMState.AngleState.CONFIRM_ANGLE
+                self.__currentState = AngleFSMState.AngleState.CONFIRM_ANGLE
 
-        elif self.__state == AngleFSMState.AngleState.CONFIRM_ANGLE:
+        elif self.__currentState == AngleFSMState.AngleState.CONFIRM_ANGLE:
             """
                  case AngleState::CONFIRM_ANGLE:
                     if (cs.seatAngle < ANGLE_THRESHOLD && cs.seatAngle > REVERSE_ANGLE_THRESHOLD)
@@ -223,15 +227,15 @@ class AngleFSMState:
             """
             if AngleFSMState.ANGLE_THRESHOLD > chair_state.Angle.seatAngle > AngleFSMState.REVERSE_ANGLE_THRESHOLD:
                 # Go back to INIT state
-                self.__state = AngleFSMState.AngleState.INIT
+                self.__currentState = AngleFSMState.AngleState.INIT
             elif (chair_state.timestamp - self.__angleStarted) > self.ANGLE_TIMEOUT:
                 self.__angleStarted = chair_state.timestamp
                 # Go to ANGLE_STARTED
-                self.__state = AngleFSMState.AngleState.ANGLE_STARTED
+                self.__currentState = AngleFSMState.AngleState.ANGLE_STARTED
 
             self.__angleStopped = chair_state.timestamp
 
-        elif self.__state == AngleFSMState.AngleState.ANGLE_STARTED:
+        elif self.__currentState == AngleFSMState.AngleState.ANGLE_STARTED:
             """
             case AngleState::ANGLE_STARTED:
                 angleStarted = cs.time;
@@ -241,8 +245,8 @@ class AngleFSMState:
             self.__event = 'Started'
             self.__angleStarted = chair_state.timestamp
             self.__angleStopped = chair_state.timestamp
-            self.__state = AngleFSMState.AngleState.IN_TILT
-        elif self.__state == AngleFSMState.AngleState.IN_TILT:
+            self.__currentState = AngleFSMState.AngleState.IN_TILT
+        elif self.__currentState == AngleFSMState.AngleState.IN_TILT:
             """
             case AngleState::IN_TILT:
                 if ((cs.time - lastTime) >= 1)
@@ -298,11 +302,11 @@ class AngleFSMState:
             self.__sum += chair_state.Angle.seatAngle
 
             if AngleFSMState.ANGLE_THRESHOLD > chair_state.Angle.seatAngle > AngleFSMState.REVERSE_ANGLE_THRESHOLD:
-                self.__state = AngleFSMState.AngleState.CONFIRM_STOP_ANGLE
+                self.__currentState = AngleFSMState.AngleState.CONFIRM_STOP_ANGLE
 
             self.__angleStopped = chair_state.timestamp
 
-        elif self.__state == AngleFSMState.AngleState.CONFIRM_STOP_ANGLE:
+        elif self.__currentState == AngleFSMState.AngleState.CONFIRM_STOP_ANGLE:
             """
             case AngleState::CONFIRM_STOP_ANGLE:
                 if(cs.seatAngle >= ANGLE_THRESHOLD || cs.seatAngle <= REVERSE_ANGLE_THRESHOLD) {
@@ -318,22 +322,22 @@ class AngleFSMState:
             # Do not modify angle started or angle stopped here
             if chair_state.Angle.seatAngle >= AngleFSMState.ANGLE_THRESHOLD or \
                     chair_state.Angle.seatAngle <= AngleFSMState.REVERSE_ANGLE_THRESHOLD:
-                self.__state = AngleFSMState.AngleState.IN_TILT
+                self.__currentState = AngleFSMState.AngleState.IN_TILT
             else:
                 # Wait for timeout
                 if (chair_state.timestamp - self.__angleStopped) > AngleFSMState.ANGLE_TIMEOUT:
-                    self.__state = AngleFSMState.AngleState.ANGLE_STOPPED
+                    self.__currentState = AngleFSMState.AngleState.ANGLE_STOPPED
 
-        elif self.__state == AngleFSMState.AngleState.ANGLE_STOPPED:
+        elif self.__currentState == AngleFSMState.AngleState.ANGLE_STOPPED:
             """
             case AngleState::ANGLE_STOPPED:
                 currentState = AngleState::INIT;
             break;
             """
             self.__event = 'Stopped'
-            self.__state = AngleFSMState.AngleState.INIT
+            self.__currentState = AngleFSMState.AngleState.INIT
         else:
-            print('AngleFSM, invalid state', self.__state)
+            print('AngleFSM, invalid state', self.__currentState)
             self.reset()
 
         self.__currentTime = chair_state.timestamp
@@ -432,21 +436,27 @@ async def publish_angle_fsm(client, fsm):
 
 async def handle_goal_update_data(client, messages, fsm):
     async for message in messages:
-        parts = message.payload.decode().split(':')
-        if len(parts) == 3 and len(message.payload) > 2:
-            # get all info
-            frequency = int(parts[0])
-            duration = int(parts[1])
-            angle = int(parts[2])
-            # update parameters
-            AngleFSMState.setParameters(frequency, duration, angle)
+        try:
+            parts = message.payload.decode().split(':')
+            if len(parts) == 3 and len(message.payload) > 2:
+                # get all info
+                frequency = int(parts[0])
+                duration = int(parts[1])
+                angle = int(parts[2])
+                # update parameters
+                AngleFSMState.setParameters(frequency, duration, angle)
+        except Exception as e:
+            print(e)
 
 
 async def handle_sensors_chair_state(client, messages, fsm):
     async for message in messages:
-        state = ChairState()
-        state.from_json(message.payload.decode())
-        fsm.setChairState(state)
+        try:
+            state = ChairState()
+            state.from_json(message.payload.decode())
+            fsm.setChairState(state)
+        except Exception as e:
+            print(e)
 
 
 async def angle_fsm_main():
