@@ -291,11 +291,15 @@ void ChairManager::UpdateDevices()
     }
 
     _mosquittoBroker->SendSensorsData(sensorData);
+
+/*	
+
     _mosquittoBroker->SendChairState(chairState);
     _mosquittoBroker->SendAngleFSM(angleFSM);
     _mosquittoBroker->SendTravelFSM(travelFSM);
     _mosquittoBroker->SendSeatingFSM(seatingFSM);
     _mosquittoBroker->SendNotificationFSM(notificationFSM);
+*/
 
     ReadFromServer();
 
