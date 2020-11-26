@@ -203,10 +203,10 @@ class AngleInformation:
 
     def to_dict(self):
         return {
-            'mIMUAngle': float(self.mIMUAngle),
-            'fIMUAngle': float(self.fIMUAngle),
-            'seatAngle': float(self.seatAngle),
-            'angleOffset': float(self.angleOffset)
+            'mIMUAngle': float(format(self.mIMUAngle, '.2f')),     # float(self.mIMUAngle),
+            'fIMUAngle': float(format(self.fIMUAngle, '.2f')),     # float(self.fIMUAngle),
+            'seatAngle': float(format(self.seatAngle, '.2f')),     # float(self.seatAngle),
+            'angleOffset': float(format(self.angleOffset, '.2f'))  # float(self.angleOffset)
         }
 
     def from_dict(self, values: dict):

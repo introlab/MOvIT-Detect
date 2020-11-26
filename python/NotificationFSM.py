@@ -13,9 +13,18 @@ from enum import Enum, unique
 
 
 class NotificationFSMState:
-
+    NOTIFICATION_ENABLED = False
+    LED_BLINK = False
+    MOTOR_VIBRATION = False
     SNOOZE_TIME = 5
     MAX_SNOOZE = 2
+
+    @classmethod
+    def setParameters(cls, enabled=False, ledBlink=False, motorVibration=False, snoozeTime=5):
+        NotificationFSMState.NOTIFICATION_ENABLED = enabled
+        NotificationFSMState.LED_BLINK = ledBlink
+        NotificationFSMState.MOTOR_VIBRATION = motorVibration
+        NotificationFSMState.SNOOZE_TIME = snoozeTime
 
     @classmethod
     def setSnoozeTime(cls, snooze_time: int):
@@ -83,6 +92,9 @@ class NotificationFSMState:
         self.__currentTime = 0
         self.__stopReason = ''
 
+    def in_state(self, state: NotificationState):
+        return self.__currentState == state
+
     def getStartTime(self):
         return self.__startTime
 
@@ -110,7 +122,13 @@ class NotificationFSMState:
             'stateNum': self.getCurrentState(),
             'stateName': self.getCurrentStateName(),
             'stopReason': self.__stopReason,
-            'snoozeCount': self.__snoozeCount
+            'snoozeCount': self.__snoozeCount,
+            # Config information
+            'NOTIFICATION_ENABLED': NotificationFSMState.NOTIFICATION_ENABLED,
+            'LED_BLINK': NotificationFSMState.LED_BLINK,
+            'MOTOR_VIBRATION': NotificationFSMState.MOTOR_VIBRATION,
+            'SNOOZE_TIME': NotificationFSMState.SNOOZE_TIME,
+            'MAX_SNOOZE': NotificationFSMState.MAX_SNOOZE
         }
 
     def from_dict(self, values):
@@ -135,6 +153,22 @@ class NotificationFSMState:
             if 'stopReason' in values:
                 self.__stopReason = values['stopReason']
 
+            # Config
+            if 'NOTIFICATION_ENABLED' in values:
+                NotificationFSMState.NOTIFICATION_ENABLED = values['NOTIFICATION_ENABLED']
+
+            if 'LED_BLINK' in values:
+                NotificationFSMState.LED_BLINK = values['LED_BLINK']
+
+            if 'MOTOR_VIBRATION' in values:
+                NotificationFSMState.MOTOR_VIBRATION = values['MOTOR_VIBRATION']
+
+            if 'SNOOZE_TIME' in values:
+                NotificationFSMState.SNOOZE_TIME = values['SNOOZE_TIME']
+
+            if 'MAX_SNOOZE' in values:
+                NotificationFSMState.MAX_SNOOZE = values['MAX_SNOOZE']
+
             return True
         return False
 
@@ -147,7 +181,6 @@ class NotificationFSMState:
 
     def update(self, chair_state: ChairState, angle_state: AngleFSMState, travel_state: TravelFSMState,
                seating_state: SeatingFSMState, enabled=False):
-        print('update')
         if self.__currentState == NotificationFSMState.NotificationState.INIT:
             """
             case NotificationState::INIT:
@@ -575,22 +608,19 @@ class NotificationFSMState:
 class NotificationFSM:
     def __init__(self):
         self.state = NotificationFSMState()
+        # Keep only state number
+        self.lastNotificationState = -1
         self.chairState = ChairState()
         self.angleState = AngleFSMState()
         self.travelState = TravelFSMState()
         self.seatingState = SeatingFSMState()
         self.maxDeltaTime = 10  # secs
-        # Configuration values
-        self.snoozeTime = 5
-        self.notificationsEnabled = False
-        self.ledBlinkingEnabled = False
-        self.motorVibrationEnabled = False
+
+    def __repr__(self):
+        return "<NotificationFSM state: {}>".format(self.state.getCurrentStateName())
 
     def setParameters(self, enabled=False, ledBlink=False, motorVibrate=False, snoozeTime=5):
-        self.notificationsEnabled = enabled
-        self.ledBlinkingEnabled = ledBlink
-        self.motorVibrationEnabled = motorVibrate
-        self.snoozeTime = snoozeTime
+        NotificationFSMState.setParameters(enabled, ledBlink, motorVibrate, snoozeTime)
 
     def setChairState(self, state: ChairState):
         self.chairState = state
@@ -613,7 +643,8 @@ class NotificationFSM:
         if delta_angle_time < self.maxDeltaTime and delta_travel_time < self.maxDeltaTime \
                 and delta_seating_time < self.maxDeltaTime:
             self.state.update(self.chairState, self.angleState,
-                              self.travelState, self.seatingState, self.notificationsEnabled)
+                              self.travelState, self.seatingState, NotificationFSMState.NOTIFICATION_ENABLED)
+
         else:
             print('NotificationFSM : Time mismatch angle_delta: {}, travel_delta: {}, seating_delta: {}'
                   .format(delta_angle_time, delta_travel_time, delta_seating_time))
@@ -716,6 +747,89 @@ async def publish_notification_fsm(client, fsm: NotificationFSM):
 
         # print('publish chair state', chair_state)
         await client.publish('fsm/notification', fsm.to_json(), qos=2)
+
+        if NotificationFSMState.NOTIFICATION_ENABLED:
+
+            # Publish Alarm module information
+            if fsm.state.in_state(NotificationFSMState.NotificationState.WAITING_FOR_TILT):
+                if fsm.lastNotificationState != fsm.state.getCurrentState():
+                    # Change of state
+                    fsm.lastNotificationState = fsm.state.getCurrentState()
+                    # TURN OFF ALARM
+                    await client.publish('sensors/alarm/enabled', str(0))
+                else:
+                    if NotificationFSMState.LED_BLINK:
+                        # TURN ON ALTERNATED LED BLINK
+                        await client.publish('sensors/alarm/alternatingLedBlink', str(1))
+
+                    if NotificationFSMState.MOTOR_VIBRATION:
+                        # TURN ON DC MOTOR
+                        await client.publish('sensors/alarm/motorOn', str(1))
+                    else:
+                        # TURN OFF DC MOTOR
+                        await client.publish('sensors/alarm/motorOn', str(0))
+
+            elif fsm.state.in_state(NotificationFSMState.NotificationState.IN_TILT):
+                if fsm.lastNotificationState != fsm.state.getCurrentState():
+                    fsm.lastNotificationState = fsm.state.getCurrentState()
+                    # TURN OFF ALARM
+                    await client.publish('sensors/alarm/enabled', str(0))
+                else:
+                    if fsm.chairState.Angle.seatAngle < (fsm.angleState.ANGLE_TARGET - 2):
+                        # angle too low
+                        if NotificationFSMState.LED_BLINK:
+                            # TURN ON RED LED
+                            # TURN OFF GREEN LED
+                            # TURN OFF MOTOR
+                            await client.publish('sensors/alarm/redLedOn', str(1))
+                            await client.publish('sensors/alarm/greenLedOn', str(0))
+                            await client.publish('sensors/alarm/motorOn', str(0))
+                    elif fsm.chairState.Angle.seatAngle > (fsm.angleState.ANGLE_TARGET + 2):
+                        # angle too high
+                        if NotificationFSMState.LED_BLINK:
+                            # TURN OFF RED LED
+                            # TURN ON GREEN LED
+                            # TURN OFF MOTOR
+                            await client.publish('sensors/alarm/redLedOn', str(0))
+                            await client.publish('sensors/alarm/greenLedOn', str(1))
+                            await client.publish('sensors/alarm/motorOn', str(0))
+                    else:
+                        # angle ok
+                        if NotificationFSMState.LED_BLINK:
+                            # TURN ON RED LED
+                            # TURN ON GREEN LED
+                            # TURN OFF MOTOR
+                            await client.publish('sensors/alarm/redLedOn', str(1))
+                            await client.publish('sensors/alarm/greenLedOn', str(1))
+                            await client.publish('sensors/alarm/motorOn', str(0))
+
+            elif fsm.state.in_state(NotificationFSMState.NotificationState.TILT_DURATION_OK):
+                if fsm.lastNotificationState != fsm.state.getCurrentState():
+                    fsm.lastNotificationState = fsm.state.getCurrentState()
+                    # TURN OFF ALARM
+                    await client.publish('sensors/alarm/enabled', str(0))
+                else:
+                    if NotificationFSMState.LED_BLINK:
+                        # TURN ON BLINK GREEN
+                        await client.publish('sensors/alarm/greenLedBlink', str(1))
+
+                    if NotificationFSMState.MOTOR_VIBRATION:
+                        # TURN ON DC MOTOR
+                        await client.publish('sensors/alarm/motorOn', str(1))
+                    else:
+                        # TURN OFF DC MOTOR
+                        await client.publish('sensors/alarm/motorOn', str(0))
+            else:
+                # UPDATE LAST NOTIFICATION STATE
+                # TURN OFF ALARM
+                fsm.lastNotificationState = -1
+                await client.publish('sensors/alarm/enabled', str(0))
+        else:
+            # TURN OFF ALARM
+            fsm.lastNotificationState = -1
+            await client.publish('sensors/alarm/enabled', str(0))
+
+        # Wait next cycle
         await asyncio.sleep(1)
 
 
@@ -735,10 +849,10 @@ async def handle_config_notifications_settings(client, messages, fsm: Notificati
             parts = message.payload.decode().split(':')
             if len(parts) == 4 and len(message.payload) > 3:
                 # get all info
-                enabled = int(parts[3])
                 leds = int(parts[0])
                 vibrate = int(parts[1])
                 snooze = int(parts[2])
+                enabled = int(parts[3])
 
                 # update parameters
                 fsm.setParameters(enabled == 1, leds == 1, vibrate == 1, snooze)

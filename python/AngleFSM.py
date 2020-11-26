@@ -139,9 +139,16 @@ class AngleFSMState:
             'fifteenToThirty': self.__result[2],
             'thirtyToFourtyfive': self.__result[3],
             'fourtyfiveAndMore': self.__result[4],
-            'average': self.getAngleAverage(),
+            'average': float(format(self.getAngleAverage(), '.2f')),
             'requiredDuration': self.getTargetDuration(),
-            'requiredAngle': self.getTargetAngle()
+            'requiredAngle': self.getTargetAngle(),
+            # Config information
+            'ANGLE_TIMEOUT': AngleFSMState.ANGLE_TIMEOUT,
+            'ANGLE_THRESHOLD': AngleFSMState.ANGLE_THRESHOLD,
+            'REVERSE_ANGLE_THRESHOLD': AngleFSMState.REVERSE_ANGLE_THRESHOLD,
+            'ANGLE_TARGET': AngleFSMState.ANGLE_TARGET,
+            'ANGLE_DURATION': AngleFSMState.ANGLE_DURATION,
+            'ANGLE_FREQUENCY': AngleFSMState.ANGLE_FREQUENCY
         }
 
     def from_dict(self, values: dict):
@@ -163,6 +170,26 @@ class AngleFSMState:
                 if self.__currentState != AngleFSMState.AngleState.from_name(values['stateName']):
                     print('AngleFSMState - state mismatch')
                     return False
+
+            # Config
+            if 'ANGLE_TIMEOUT' in values:
+                AngleFSMState.ANGLE_TIMEOUT = values['ANGLE_TIMEOUT']
+
+            if 'ANGLE_THRESHOLD' in values:
+                AngleFSMState.ANGLE_THRESHOLD = values['ANGLE_THRESHOLD']
+
+            if 'REVERSE_ANGLE_THRESHOLD' in values:
+                AngleFSMState.REVERSE_ANGLE_THRESHOLD = values['REVERSE_ANGLE_THRESHOLD']
+
+            if 'ANGLE_TARGET' in values:
+                AngleFSMState.ANGLE_TARGET = values['ANGLE_TARGET']
+
+            if 'ANGLE_DURATION' in values:
+                AngleFSMState.ANGLE_DURATION = values['ANGLE_DURATION']
+
+            if 'ANGLE_FREQUENCY' in values:
+                AngleFSMState.ANGLE_FREQUENCY = values['ANGLE_FREQUENCY']
+
             return True
         return False
 

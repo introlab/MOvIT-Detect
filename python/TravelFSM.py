@@ -82,7 +82,11 @@ class TravelFSMState:
             'event': self.__event,
             'stateNum': self.getCurrentState(),
             'stateName': self.getCurrentStateName(),
-            'travelSum': self.__travelSum
+            'travelSum': self.__travelSum,
+            # Config information
+            'TRAVEL_START_TIMEOUT': TravelFSMState.TRAVEL_START_TIMEOUT,
+            'TRAVEL_STOP_TIMEOUT': TravelFSMState.TRAVEL_STOP_TIMEOUT,
+            'TRAVEL_THRESHOLD': TravelFSMState.TRAVEL_THRESHOLD
         }
 
     def from_dict(self, values):
@@ -107,6 +111,16 @@ class TravelFSMState:
 
             if 'travelSum' in values:
                 self.__travelSum = values['travelSum']
+
+            # Config
+            if 'TRAVEL_START_TIMEOUT' in values:
+                TravelFSMState.TRAVEL_START_TIMEOUT = values['TRAVEL_START_TIMEOUT']
+
+            if 'TRAVEL_STOP_TIMEOUT' in values:
+                TravelFSMState.TRAVEL_STOP_TIMEOUT = values['TRAVEL_STOP_TIMEOUT']
+
+            if 'TRAVEL_THRESHOLD' in values:
+                TravelFSMState.TRAVEL_THRESHOLD = values['TRAVEL_THRESHOLD']
 
             return True
         return False

@@ -74,7 +74,9 @@ class SeatingFSMState:
             'elapsed': self.getElapsedTime(),
             'event': self.__event,
             'stateNum': self.getCurrentState(),
-            'stateName': self.getCurrentStateName()
+            'stateName': self.getCurrentStateName(),
+            # Config information
+            'SEATING_TIMEOUT': SeatingFSMState.SEATING_TIMEOUT
         }
 
     def from_dict(self, values):
@@ -96,6 +98,9 @@ class SeatingFSMState:
                 if self.__currentState != SeatingFSMState.SeatingState.from_name(values['stateName']):
                     print('SeatingFSMState - state mismatch')
                     return False
+            # Config
+            if 'SEATING_TIMEOUT' in values:
+                SeatingFSMState.SEATING_TIMEOUT = values['SEATING_TIMEOUT']
 
             return True
         return False
