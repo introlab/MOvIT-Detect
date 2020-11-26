@@ -44,6 +44,15 @@ class MosquittoBroker : public mosqpp::mosquittopp
     bool offsetChanged();
     void setOffsetChanged(bool changed);
     void getOffsets(int *mIMUOffset, int *fIMUOffset);
+    
+    //DL Nov 26 2020 - new flags
+    bool getAlarmEnabled() {return _alarmEnabled;}
+    bool getAlarmAlternatingLedBlink() {return _alarmAlternatingLedBlink;}
+    bool getAlarmMotorOn() {return _alarmMotorOn;}
+    bool getAlarmRedLedOn() {return _alarmRedLedOn;}
+    bool getAlarmGreenLedOn() {return _alarmGreenLedOn;}
+    bool getAlarmGreenLedBlink() {return _alarmGreenLedBlink;}
+    
 
   private:
     void on_connect(int rc);
@@ -77,6 +86,15 @@ class MosquittoBroker : public mosqpp::mosquittopp
     bool _setAlarmOnNew = false;
     bool _wifiChanged = false;
     bool _GoalChanged = false;
+    
+    //DL Nov 26 2020 - new flags
+    bool _alarmEnabled = false;
+    bool _alarmAlternatingLedBlink = false;
+    bool _alarmMotorOn = false;
+    bool _alarmRedLedOn = false;
+    bool _alarmGreenLedOn = false;
+    bool _alarmGreenLedBlink = false;
+    
 };
 
 #endif // MOSQUITTO_BROKER_H

@@ -188,7 +188,48 @@ void ChairManager::UpdateDevices()
 {
     _deviceManager->Update();
     sensorData = _deviceManager->getSensorData();
+    
+    
+    //DL Modifierd Nov 26 2020, Update alarm state according to messages
+    //from the FSM (python)
+    if (_mosquittoBroker->getAlarmEnabled())
+    {
+        if (_mosquittoBroker->getAlarmAlternatingLedBlink()) {
+            _deviceManager->getAlarm()->TurnOnAlternatingBlinkAlarmThread();
+        }
+  
+        if (_mosquittoBroker->getAlarmGreenLedBlink()) {
+            _deviceManager->getAlarm()->TurnOnBlinkGreenAlarmThread();
+        }
+        
+        if (_mosquittoBroker->getAlarmRedLedOn()) {
+            _deviceManager->getAlarm()->TurnOnRedLed();
+        }
+        else {
+            _deviceManager->getAlarm()->TurnOffRedLed();
+        }
+        
+        if (_mosquittoBroker->getAlarmGreenLedOn()) {
+            _deviceManager->getAlarm()->TurnOnGreenLed();
+        }
+        else {
+            _deviceManager->getAlarm()->TurnOffGreenLed();
+        }
+        
+        if (_mosquittoBroker->getAlarmMotorOn()) {
+            _deviceManager->getAlarm()->TurnOnDCMotor();
+        }
+        else {
+            _deviceManager->getAlarm()->TurnOffDCMotor();
+        }
+    }
+    else {
+        _deviceManager->getAlarm()->TurnOffAlarm();
+    }
+    
+    
 
+#if 0
     chairState.time = sensorData.time;
     chairState.isSeated = verifyIfUserIsSeated();
     chairState.centerOfGravity = calculateCenterOfGravity(sensorData);
@@ -205,6 +246,8 @@ void ChairManager::UpdateDevices()
     int snoozeTime;
 
     _mosquittoBroker->getNotificationSettings(&blinkEnable, &vibrationEnable, &snoozeTime, &enabled);
+
+
 
     if(notificationFSM.getSnoozeTime() != snoozeTime) {
         notificationFSM.setSnoozeTime(snoozeTime);
@@ -289,19 +332,20 @@ void ChairManager::UpdateDevices()
     } else {
         _deviceManager->getAlarm()->TurnOffAlarm();
     }
+    
+    
+#endif
 
     _mosquittoBroker->SendSensorsData(sensorData);
 
-/*	
-
+#if 0
     _mosquittoBroker->SendChairState(chairState);
     _mosquittoBroker->SendAngleFSM(angleFSM);
     _mosquittoBroker->SendTravelFSM(travelFSM);
     _mosquittoBroker->SendSeatingFSM(seatingFSM);
     _mosquittoBroker->SendNotificationFSM(notificationFSM);
-*/
-
     ReadFromServer();
+#endif
 
     //DL
     //displaySensorData(sensorData);

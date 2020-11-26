@@ -26,6 +26,15 @@ const char *NOTIFICATIONS_SETTINGS_TOPIC = "config/notifications_settings";
 const char *GOAL_CHANGED_TOPIC = "goal/update_data";
 
 
+//DL Nov 26 2020, new topics from python-fsm
+const char *ALARM_ENABLED =  "sensors/alarm/enabled";
+const char *ALARM_ALTERNATING_LED_BLINK = "sensors/alarm/alternatedLedBlink";
+const char *ALARM_MOTOR_ON = "sensors/alarm/motorOn";
+const char *ALARM_RED_LED_ON = "sensors/alarm/redLedOn";
+const char *ALARM_GREEN_LED_ON = "sensors/alarm/greenLedOn";
+const char *ALARM_GREEN_LED_BLINK = "sensors/alarm/greenLedBlink";
+
+
 
 /* Published Topics */
 const char *CURRENT_IS_WIFI_CONNECTED_TOPIC = "data/current_is_wifi_connected"; //Unused ?
@@ -94,6 +103,16 @@ void MosquittoBroker::on_connect(int rc)
         subscribe(NULL, CALIB_PRESSURE_MAT_TOPIC);
         subscribe(NULL, CALIB_IMU_TOPIC);
         subscribe(NULL, NOTIFICATIONS_SETTINGS_TOPIC);
+
+        //DL Nov 26 2020, subscribe to new alarm events
+        subscribe(NULL, ALARM_ENABLED);
+        subscribe(NULL, ALARM_ALTERNATING_LED_BLINK);
+        subscribe(NULL, ALARM_MOTOR_ON);
+        subscribe(NULL, ALARM_RED_LED_ON);
+        subscribe(NULL, ALARM_GREEN_LED_ON);
+        subscribe(NULL, ALARM_GREEN_LED_BLINK);
+        
+        //This will trigger a configuration update
         PublishMessage("status", "1", 1, true);
     }
 }
@@ -229,6 +248,96 @@ void MosquittoBroker::on_message(const mosquitto_message *msg)
             printf(" in NOTIFICATIONS_SETTINGS_TOPIC\n");
         }
     }
+    else if (topic == ALARM_ENABLED)
+    {
+        try
+        {
+            _alarmEnabled = std::stoi(message);
+            printf("Alarm enabled: %i \n",_alarmEnabled);
+            
+            //Safety reset all flags
+            _alarmAlternatingLedBlink = false;
+            _alarmGreenLedBlink = false;
+            _alarmMotorOn = false;
+            _alarmRedLedOn = false;
+            _alarmGreenLedOn = false;
+        }
+        catch (const std::exception &e)
+        {
+            _alarmEnabled = false;
+            
+            //Safety reset all flags
+            _alarmAlternatingLedBlink = false;
+            _alarmGreenLedBlink = false;
+            _alarmMotorOn = false;
+            _alarmRedLedOn = false;
+            _alarmGreenLedOn = false;
+        }
+    }
+    else if (topic == ALARM_ALTERNATING_LED_BLINK)
+    {
+        try
+        {
+            _alarmAlternatingLedBlink = std::stoi(message);
+            printf("Alarm Alternating Led Blink: %i \n",_alarmAlternatingLedBlink);
+        }
+        catch (const std::exception &e)
+        {
+            _alarmAlternatingLedBlink = false;
+        }
+        
+    }
+    else if (topic == ALARM_MOTOR_ON)
+    {
+        try
+        {
+            _alarmMotorOn = std::stoi(message);
+            printf("Alarm Motor On: %i \n",_alarmMotorOn);
+        }
+        catch (const std::exception &e)
+        {
+            _alarmMotorOn = false;
+        }
+    }
+    else if (topic == ALARM_RED_LED_ON)
+    {
+        try
+        {
+            _alarmRedLedOn = std::stoi(message);
+            printf("Alarm Red Led On: %i \n",_alarmRedLedOn);
+        }
+        catch (const std::exception &e)
+        {
+            _alarmRedLedOn = false;
+        }
+    }
+    else if (topic == ALARM_GREEN_LED_ON)
+    {
+        try
+        {
+            _alarmGreenLedOn = std::stoi(message);
+            printf("Alarm Green Led On: %i \n",_alarmGreenLedOn);
+        }
+        catch (const std::exception &e)
+        {
+            _alarmGreenLedOn = false;
+        }
+        
+    }
+    else if (topic == ALARM_GREEN_LED_BLINK)
+    {
+        try
+        {
+            _alarmGreenLedBlink = std::stoi(message);
+            printf("Alarm Green Led Blink: %i \n",_alarmGreenLedBlink);
+        }
+        catch (const std::exception &e)
+        {
+            _alarmGreenLedBlink = false;
+        }
+        
+    }
+    
 }
 
 void MosquittoBroker::SendHeartbeat(const std::string datetime)

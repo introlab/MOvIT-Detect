@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
     //Alarm testalarm;
     //testalarm.TurnOnRedLed();    
     //testalarm.TurnOnAlternatingBlinkAlarmThread();
-//    system("clear");
+    //system("clear");
     printHeader();
 
     while (1)
@@ -89,13 +89,13 @@ int main(int argc, char *argv[])
 	alarm(30); //Alarm in 30 secs
         start = std::chrono::high_resolution_clock::now();
 
-	    printf("ReadFromServer()\n");
-        chairManager.ReadFromServer();
+	//printf("ReadFromServer()\n");
+        //chairManager.ReadFromServer();
 
-	    printf("UpdateDevices()\n");
+	printf("UpdateDevices()\n");
         chairManager.UpdateDevices();
 
-	    //printf("CheckNotification() \n"); //Does nothing?
+	//printf("CheckNotification() \n"); //Does nothing?
         //chairManager.CheckNotification();
 
         stop = std::chrono::high_resolution_clock::now();
