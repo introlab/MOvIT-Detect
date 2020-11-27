@@ -1,0 +1,8 @@
+{
+  "server": {
+    "hostname": "192.168.3.214",
+    "port": 1883,
+    "username": "admin",
+    "password": "movitplus"
+  }
+}
