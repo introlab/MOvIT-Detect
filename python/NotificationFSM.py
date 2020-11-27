@@ -758,6 +758,9 @@ async def publish_notification_fsm(client, fsm: NotificationFSM):
                     # TURN OFF ALARM
                     await client.publish('sensors/alarm/enabled', str(0))
                 else:
+                    # TURN ON ALARM
+                    await client.publish('sensors/alarm/enabled', str(1))
+
                     if NotificationFSMState.LED_BLINK:
                         # TURN ON ALTERNATED LED BLINK
                         await client.publish('sensors/alarm/alternatingLedBlink', str(1))
@@ -775,6 +778,9 @@ async def publish_notification_fsm(client, fsm: NotificationFSM):
                     # TURN OFF ALARM
                     await client.publish('sensors/alarm/enabled', str(0))
                 else:
+                    # TURN ON ALARM
+                    await client.publish('sensors/alarm/enabled', str(1))
+
                     if fsm.chairState.Angle.seatAngle < (fsm.angleState.ANGLE_TARGET - 2):
                         # angle too low
                         if NotificationFSMState.LED_BLINK:
@@ -809,6 +815,9 @@ async def publish_notification_fsm(client, fsm: NotificationFSM):
                     # TURN OFF ALARM
                     await client.publish('sensors/alarm/enabled', str(0))
                 else:
+                    # TURN ON ALARM
+                    await client.publish('sensors/alarm/enabled', str(1))
+
                     if NotificationFSMState.LED_BLINK:
                         # TURN ON BLINK GREEN
                         await client.publish('sensors/alarm/greenLedBlink', str(1))
