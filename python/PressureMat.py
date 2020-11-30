@@ -1,5 +1,6 @@
 import json
 import numpy as np
+from datetime import datetime
 '''
 Generic pressure mat implementation.
 Derive from this class as needed.
@@ -12,6 +13,7 @@ class PressureMat:
         self.values = np.zeros(nb_sensors)
         self.offsets = np.zeros(nb_sensors)
         self.coordinates = np.array([np.zeros(2) for i in range(nb_sensors)])
+        self.last_update = datetime.now()
 
         # Call init functions
         self.init_coordinates()
@@ -42,6 +44,7 @@ class PressureMat:
         cop, value_sum = self.calculate_center_of_pressure()
         result = {
             'name': self.__class__.__name__,
+            'timestamp': int(self.last_update.timestamp()),
             'values': self.values.tolist(),
             'offsets': self.offsets.tolist(),
             'coordinates': self.coordinates.tolist(),
@@ -77,7 +80,7 @@ class DefaultPressurePlate(PressureMat):
         self.coordinates[8] = [-4.0, -4.0]
 
     def init_values(self):
-        self.values = np.ones(self.nb_sensors)
+        self.values = np.zeros(self.nb_sensors)
 
     def update(self):
         # Read sensor
