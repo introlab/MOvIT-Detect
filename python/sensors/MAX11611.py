@@ -10,6 +10,7 @@ class MAX11611:
         # I2C channel 1 is connected to the GPIO pins
         self.bus = SMBus(self.channel)
         self.config()
+        self.adc_count = 9
 
     def config(self):
         """
@@ -56,13 +57,13 @@ class MAX11611:
 
     def read_adc(self):
         # Read all 16 channels (2 bytes each)
-        msg = i2c_msg.read(self.address, 32)
+        msg = i2c_msg.read(self.address, self.adc_count * 2)
         self.bus.i2c_rdwr(msg)
 
         values = [x for x in msg]
         analog = list()
 
-        for i in range(16):
+        for i in range(self.adc_count):
             an = (values[2*i] & 0x03 << 8) | (values[2*i + 1])
             analog.append(an)
     
