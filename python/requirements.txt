@@ -3,3 +3,4 @@ asyncio-mqtt
 aiofiles
 requests
 numpy
+smbus2
