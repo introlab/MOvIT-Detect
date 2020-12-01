@@ -30,7 +30,10 @@ class PressureMat:
         pass
 
     def update(self):
-        pass
+        self.last_update = datetime.now()
+
+    def connected(self):
+        return False
 
     def calculate_center_of_pressure(self):
         value_sum = np.sum(self.values)
@@ -45,6 +48,7 @@ class PressureMat:
         result = {
             'name': self.__class__.__name__,
             'timestamp': int(self.last_update.timestamp()),
+            'connected': self.connected(),
             'values': self.values.tolist(),
             'offsets': self.offsets.tolist(),
             'coordinates': self.coordinates.tolist(),
@@ -53,7 +57,7 @@ class PressureMat:
         return json.dumps(result)
 
 
-class DefaultPressurePlate(PressureMat):
+class TestPressurePlate(PressureMat):
     def __init__(self):
         PressureMat.__init__(self, 9)
 
@@ -89,7 +93,7 @@ class DefaultPressurePlate(PressureMat):
 
 if __name__ == "__main__":
     # Testing Mat
-    mat = DefaultPressurePlate()
+    mat = TestPressurePlate()
     print(mat.calculate_center_of_pressure())
     print(mat.to_json())
 

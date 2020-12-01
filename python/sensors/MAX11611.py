@@ -58,17 +58,22 @@ class MAX11611:
         return False
 
     def read_adc(self):
-        # Read all 16 channels (2 bytes each)
-        msg = i2c_msg.read(self.address, self.adc_count * 2)
-        self.bus.i2c_rdwr(msg)
 
-        temp = [x for x in msg]
-    
-        for i in range(self.adc_count):
-            an = (temp[2*i] & 0x03 << 8) | (temp[2*i + 1])
-            self.values[i] = an
-    
+        if self.connected():
+            # Read all 16 channels (2 bytes each)
+            msg = i2c_msg.read(self.address, self.adc_count * 2)
+            self.bus.i2c_rdwr(msg)
+
+            temp = [x for x in msg]
+        
+            for i in range(self.adc_count):
+                an = (temp[2*i] & 0x03 << 8) | (temp[2*i + 1])
+                self.values[i] = an
+        else:
+            self.values = np.zeros(self.adc_count)
+        
         return self.values
+
 
     def get_values(self):
         return self.values
