@@ -1,5 +1,6 @@
 from smbus2 import SMBus, i2c_msg
 import time
+import numpy as np
 
 
 class MAX11611:
@@ -11,6 +12,7 @@ class MAX11611:
         self.bus = SMBus(self.channel)
         self.config()
         self.adc_count = 9
+        self.values = np.zeros(self.adc_count)
 
     def config(self):
         """
@@ -60,14 +62,16 @@ class MAX11611:
         msg = i2c_msg.read(self.address, self.adc_count * 2)
         self.bus.i2c_rdwr(msg)
 
-        values = [x for x in msg]
-        analog = list()
-
-        for i in range(self.adc_count):
-            an = (values[2*i] & 0x03 << 8) | (values[2*i + 1])
-            analog.append(an)
+        temp = [x for x in msg]
     
-        return analog
+        for i in range(self.adc_count):
+            an = (temp[2*i] & 0x03 << 8) | (temp[2*i + 1])
+            self.values[i] = an
+    
+        return self.values
+
+    def get_values(self):
+        return self.values
 
 if __name__ == "__main__":
 
