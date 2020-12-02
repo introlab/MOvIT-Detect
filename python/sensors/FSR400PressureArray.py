@@ -2,7 +2,8 @@ from PressureMat import PressureMat
 from MAX11611 import MAX11611
 import numpy as np
 import time
-
+import paho.mqtt.client as mqtt
+import json
 
 class FSR400PressureArray(PressureMat):
     def __init__(self):
@@ -54,13 +55,24 @@ class FSR400PressureArray(PressureMat):
 
 
 if __name__ == "__main__":
+    
+    with open('sensors/config.json', mode='r') as f:
+        data = f.read()
+        config = json.loads(data)
+        server_config = config['server']
+        print(config)
+
     mat = FSR400PressureArray()
 
+    # Create MQTT client
+    client = mqtt.Client('FSR400PressureArray MQTT Client')
+    client.username_pw_set(server_config['username'], server_config['password'])
+    client.connect(host=server_config['hostname'], port=server_config['port'])
+    
     while True:    
         
         if mat.connected():
             mat.update()
 
-        print(mat.calculate_center_of_pressure())
-        print(mat.to_json())
+        client.publish('sensors/pressure', mat.to_json())
         time.sleep(1)
