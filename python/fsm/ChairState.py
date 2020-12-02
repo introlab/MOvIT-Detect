@@ -7,67 +7,7 @@ from contextlib import AsyncExitStack, asynccontextmanager
 from random import randrange
 from asyncio_mqtt import Client, MqttError
 import json
-
 '''
-Raw Data: (sensors/rawData)
-{
-  "time": 1604434062,
-  "ToFSensor": {
-    "connected": 0,
-    "range": 260
-  },
-  "flowSensor": {
-    "connected": 0,
-    "travelX": 0,
-    "travelY": 0
-  },
-  "alarmSensor": {
-    "connected": 0,
-    "redLedOn": 0,
-    "redLedBlink": 0,
-    "greenLedOn": 0,
-    "greenLedBlink": 0,
-    "alternatingLedBlink": 0,
-    "motorOn": 0,
-    "buttonPressed": 0
-  },
-  "pressureMat": {
-    "threshold": 0,
-    "connected": 0,
-    "calibrated": 0,
-    "matData": [
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0
-    ]
-  },
-  "mIMU": {
-    "connected": 0,
-    "calibrated": 0,
-    "accX": 0,
-    "accY": 0,
-    "accZ": 0,
-    "gyroX": 0,
-    "gyroY": 0,
-    "gyroZ": 0
-  },
-  "fIMU": {
-    "connected": 0,
-    "calibrated": 0,
-    "accX": 0,
-    "accY": 0,
-    "accZ": 0,
-    "gyroX": 0,
-    "gyroY": 0,
-    "gyroZ": 0
-  }
-}
 ChairState: (sensors/chairState)
 {
   "time": 1604434107,
@@ -108,12 +48,6 @@ ChairState: (sensors/chairState)
   }
 }
 
-
-
-
-
-
-
 topic:  config/angle_new_offset
 Offset angle to be stored in the database.
 
@@ -144,6 +78,7 @@ class TravelInformation:
 
 class PressureInformation:
     def __init__(self):
+        self.sensorName = 'default'
         self.isSeated = False
         self.centerOfGravity = {'x': float(0.0), 'y': float(0.0)}
         self.centerOfGravityValue = float(0.0)
@@ -154,9 +89,11 @@ class PressureInformation:
         self.centerOfGravityQ4 = {'x': float(0.0), 'y': float(0.0)}
 
     def reset(self):
+        self.sensorName = 'default'
         self.isSeated = False
         self.centerOfGravity = {'x': float(0.0), 'y': float(0.0)}
         self.centerOfGravityValue = float(0.0)
+        # TODO Center of gravity per quadrant should be removed
         self.centerOfGravityQ1 = {'x': float(0.0), 'y': float(0.0)}
         self.centerOfGravityQ2 = {'x': float(0.0), 'y': float(0.0)}
         self.centerOfGravityQ3 = {'x': float(0.0), 'y': float(0.0)}
@@ -164,19 +101,24 @@ class PressureInformation:
 
     def to_dict(self):
         return {
+            'sensorName': self.sensorName,
             'isSeated': int(self.isSeated),
             'centerOfGravity': self.centerOfGravity,
             'centerOfGravityValue': self.centerOfGravityValue,
+            # TODO Center of gravity per quadrant should be removed
             'centerOfGravityPerQuadrant': [self.centerOfGravityQ1, self.centerOfGravityQ2,
                                            self.centerOfGravityQ3, self.centerOfGravityQ4]
         }
 
     def from_dict(self, values: dict):
+        if 'sensorName' in values:
+            self.sensorName = values['sensorName']
         if 'isSeated' in values:
             self.isSeated = values['isSeated']
         if 'centerOfGravity' in values:
             self.centerOfGravity = values['centerOfGravity']
         if 'centerOfGravityPerQuadrant' in values:
+            # TODO Center of gravity per quadrant should be removed
             if len(values['centerOfGravityPerQuadrant']) == 4:
                 self.centerOfGravityQ1['x'] = values['centerOfGravityPerQuadrant'][0]['x']
                 self.centerOfGravityQ1['y'] = values['centerOfGravityPerQuadrant'][0]['y']
@@ -372,6 +314,24 @@ class ChairState:
         if 'alarmSensor' in values and values['alarmSensor']['connected']:
             self.snoozeButton = values['alarmSensor']['buttonPressed']
 
+    def update_pressure_data(self, values: dict):
+        # Reset values
+        self.Pressure.reset()
+
+        if 'name' in values:
+            self.Pressure.sensorName = values['name']
+
+        if 'cop' in values:
+            self.Pressure.centerOfGravity['x'] = values['cop']['x']
+            self.Pressure.centerOfGravity['y'] = values['cop']['y']
+            self.Pressure.centerOfGravityValue = values['cop']['sum']
+
+        if 'timestamp' in values:
+            self.timestamp = max(values['timestamp'], self.timestamp)
+
+        # TODO LOOK FOR THRESHOLD
+        self.Pressure.isSeated = (self.Pressure.centerOfGravityValue > 0.0)
+
 
 async def connect_to_mqtt_server(config):
     async with AsyncExitStack() as stack:
@@ -416,10 +376,18 @@ async def connect_to_mqtt_server(config):
             # Subscribe to topic(s)
             # 🤔 Note that we subscribe *after* starting the message
             # loggers. Otherwise, we may miss retained messages.
-            await client.subscribe("sensors/rawData")
-            manager = client.filtered_messages('sensors/rawData')
+            # TODO replace rawdata by individual topics
+            # await client.subscribe("sensors/rawData")
+            # manager = client.filtered_messages('sensors/rawData')
+            # messages = await stack.enter_async_context(manager)
+            # task = asyncio.create_task(handle_sensors_rawData(client, messages, chair_state))
+            # tasks.add(task)
+
+            # Subscribe to pressure sensors
+            await client.subscribe("sensors/pressure")
+            manager = client.filtered_messages('sensors/pressure')
             messages = await stack.enter_async_context(manager)
-            task = asyncio.create_task(handle_sensors_rawData(client, messages, chair_state))
+            task = asyncio.create_task(handle_sensors_pressure(client, messages, chair_state))
             tasks.add(task)
 
             # Start periodic publish of chair state
@@ -446,10 +414,90 @@ async def log_messages(messages, template):
 
 
 async def handle_sensors_rawData(client, messages, chair_state: ChairState):
+    """
+    Raw Data: (sensors/rawData)
+    {
+      "time": 1604434062,
+      "ToFSensor": {
+        "connected": 0,
+        "range": 260
+      },
+      "flowSensor": {
+        "connected": 0,
+        "travelX": 0,
+        "travelY": 0
+      },
+      "alarmSensor": {
+        "connected": 0,
+        "redLedOn": 0,
+        "redLedBlink": 0,
+        "greenLedOn": 0,
+        "greenLedBlink": 0,
+        "alternatingLedBlink": 0,
+        "motorOn": 0,
+        "buttonPressed": 0
+      },
+      "pressureMat": {
+        "threshold": 0,
+        "connected": 0,
+        "calibrated": 0,
+        "matData": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "mIMU": {
+        "connected": 0,
+        "calibrated": 0,
+        "accX": 0,
+        "accY": 0,
+        "accZ": 0,
+        "gyroX": 0,
+        "gyroY": 0,
+        "gyroZ": 0
+      },
+      "fIMU": {
+        "connected": 0,
+        "calibrated": 0,
+        "accX": 0,
+        "accY": 0,
+        "accZ": 0,
+        "gyroX": 0,
+        "gyroY": 0,
+        "gyroZ": 0
+      }
+    }
+    :param client:
+    :param messages:
+    :param chair_state:
+    :return:
+    """
     async for message in messages:
         # print('rawData', message.payload.decode())
         values = json.loads(message.payload.decode())
         chair_state.updateRawData(values)
+
+
+async def handle_sensors_pressure(client, messages, chair_state: ChairState):
+    """
+
+    :param client:
+    :param messages:
+    :param chair_state:
+    :return:
+    """
+    async for message in messages:
+        # print('pressure', message.payload.decode())
+        values = json.loads(message.payload.decode())
+        print(values)
+        chair_state.update_pressure_data(values)
 
 
 async def cancel_tasks(tasks):
