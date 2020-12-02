@@ -73,7 +73,6 @@ if __name__ == "__main__":
         
         if mat.connected():
             mat.update()
-            print(mat.to_json())
             client.publish('sensors/pressure', mat.to_json())
 
         time.sleep(1)

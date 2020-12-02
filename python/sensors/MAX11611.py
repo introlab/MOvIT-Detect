@@ -84,6 +84,7 @@ if __name__ == "__main__":
     while True:
         if adc.connected():
             values = adc.read_adc()
+            print(values)
         else:
             print('Not connected')
             adc.config()
