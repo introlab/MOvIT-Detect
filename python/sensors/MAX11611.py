@@ -67,7 +67,7 @@ class MAX11611:
             temp = [x for x in msg]
         
             for i in range(self.adc_count):
-                an = (temp[2*i] & 0x03 << 8) | (temp[2*i + 1])
+                an = int(temp[2*i] & 0x03) << 8 | int(temp[2*i + 1])
                 self.values[i] = an
         else:
             self.values = np.zeros(self.adc_count)
@@ -84,7 +84,6 @@ if __name__ == "__main__":
     while True:
         if adc.connected():
             values = adc.read_adc()
-            print(values)
         else:
             print('Not connected')
             adc.config()
