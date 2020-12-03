@@ -98,14 +98,22 @@ class pca9536:
     def get_green_led(self):
         return (self.outputs_state() >> pca9536.IO_GREEN_LED) & 0x01
 
+    def toggle_green_led(self):
+        self.set_green_led(not self.get_green_led())
+
     def set_red_led(self, enabled):
         self.digitalWrite(pca9536.IO_RED_LED, int(enabled))
 
     def get_red_led(self):
         return (self.outputs_state() >> pca9536.IO_RED_LED) & 0x01
 
+    def toggle_red_led(self):
+        self.set_red_led(not self.get_red_led())
+
     def get_button(self):
         return self.digitalRead(pca9536.IO_PUSH_BUTTON)
+
+    
 
 
 if __name__ == "__main__":
@@ -114,16 +122,11 @@ if __name__ == "__main__":
     while True:
         print('button:',  pca.get_button())
         time.sleep(1)
-        pca.set_green_led(1)
-        pca.set_red_led(1)
+        pca.toggle_green_led()
+        pca.toggle_red_led()
         pca.set_motor(1)
         print('motor:',  pca.get_motor())
         print('green_led:',  pca.get_green_led())
         print('red_led:',  pca.get_red_led())
         time.sleep(1)
         pca.set_motor(0)
-        pca.set_green_led(0)
-        pca.set_red_led(0)
-        print('motor:',  pca.get_motor())
-        print('green_led:',  pca.get_green_led())
-        print('red_led:',  pca.get_red_led())
