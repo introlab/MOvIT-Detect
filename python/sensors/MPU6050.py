@@ -56,19 +56,9 @@ class mpu6050:
     def __init__(self, address, bus=1):
         self.address = address
         self.bus = smbus.SMBus(bus)
-
-        if self.connected():
-            # Wake up the MPU-6050 since it starts in sleep mode
-            self.bus.write_byte_data(self.address, self.PWR_MGMT_1, 0x00)
-
-            # Setup RANGE
-            self.set_accel_range(mpu6050.ACCEL_RANGE_2G)
-            self.set_gyro_range(mpu6050.GYRO_RANGE_250DEG)
-        else:
-            print('Not connected!')
+        self.reset()
 
     # I2C communication methods
-
     def read_i2c_word(self, register):
         """Read two i2c registers and combine them.
         register -- the first register to read from.
@@ -100,6 +90,7 @@ class mpu6050:
 
             return actual_temp
         else:
+            print('mpu6050.get_temp not connected addr:', self.address)
             return 0
 
     def connected(self):
@@ -115,6 +106,17 @@ class mpu6050:
         # Default = not found
         return False
 
+    def reset(self):
+        if self.connected():
+            # Wake up the MPU-6050 since it starts in sleep mode
+            self.bus.write_byte_data(self.address, self.PWR_MGMT_1, 0x00)
+
+            # Setup RANGE
+            self.set_accel_range(mpu6050.ACCEL_RANGE_2G)
+            self.set_gyro_range(mpu6050.GYRO_RANGE_250DEG)
+        else:
+            print('mpu6050.reset not connected addr:', self.address)
+
     def set_accel_range(self, accel_range):
         """Sets the range of the accelerometer to range.
         accel_range -- the range to set the accelerometer to. Using a
@@ -126,6 +128,8 @@ class mpu6050:
 
             # Write the new range to the ACCEL_CONFIG register
             self.bus.write_byte_data(self.address, self.ACCEL_CONFIG, accel_range)
+        else:
+            print('mpu6050.set_accel_range not connected addr:', self.address)
 
     def read_accel_range(self, raw = False):
         """Reads the range the accelerometer is set to.
@@ -151,6 +155,7 @@ class mpu6050:
                 else:
                     return -1
         else:
+            print('mpu6050.read_accel_range not connected addr:', self.address)
             return -1
 
     def get_accel_data(self, g = False):
@@ -191,6 +196,7 @@ class mpu6050:
                 z = z * self.GRAVITIY_MS2
                 return {'x': x, 'y': y, 'z': z}
         else:
+            print('mpu6050.get_accel_data not connected addr:', self.address)
             return {'x': 0, 'y': 0, 'z': 0}
 
     def set_gyro_range(self, gyro_range):
@@ -204,6 +210,8 @@ class mpu6050:
 
             # Write the new range to the ACCEL_CONFIG register
             self.bus.write_byte_data(self.address, self.GYRO_CONFIG, gyro_range)
+        else:
+             print('mpu6050.set_gyro_range not connected addr:', self.address)
 
     def read_gyro_range(self, raw = False):
         """Reads the range the gyroscope is set to.
@@ -229,6 +237,7 @@ class mpu6050:
                 else:
                     return -1
         else:
+            print('mpu6050.read_gyro_range not connected addr:', self.address)
             return -1
 
     def get_gyro_data(self):
@@ -261,12 +270,13 @@ class mpu6050:
 
             return {'x': x, 'y': y, 'z': z}
         else:
+            print('mpu6050.get_gyro_data not connected addr:', self.address)
             return {'x': 0, 'y': 0, 'z': 0}
 
-    def get_all_data(self):
+    def get_all_data(self, raw=False):
         """Reads and returns all the available data."""
         temp = self.get_temp()
-        accel = self.get_accel_data()
+        accel = self.get_accel_data(raw)
         gyro = self.get_gyro_data()
 
         return [accel, gyro, temp]

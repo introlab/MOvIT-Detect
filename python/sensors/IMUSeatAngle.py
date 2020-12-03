@@ -25,8 +25,15 @@ class IMUSeatAngle(SeatAngle):
         result = super().to_dict()   
 
         # Add IMU DATA
-        result['fixed_imu'] = {'accelerometers': self.fixed_imu_data[0], 'gyros': self.fixed_imu_data[1], 'temperature': self.fixed_imu_data[2]}
-        result['mobile_imu'] = {'accelerometers': self.mobile_imu_data[0], 'gyros': self.mobile_imu_data[1], 'temperature': self.mobile_imu_data[2]}
+        result['fixed_imu'] = {'connected': self.fixed_imu.connected(), 
+                            'accelerometers': self.fixed_imu_data[0], 
+                            'gyros': self.fixed_imu_data[1], 
+                            'temperature': self.fixed_imu_data[2]}
+
+        result['mobile_imu'] = {'connected': self.mobile_imu.connected(), 
+                            'accelerometers': self.mobile_imu_data[0], 
+                            'gyros': self.mobile_imu_data[1], 
+                            'temperature': self.mobile_imu_data[2]}
 
         return result
 
@@ -49,10 +56,18 @@ class IMUSeatAngle(SeatAngle):
         # will update timestampe
         super().update()
 
-        self.fixed_imu_data = self.fixed_imu.get_all_data()
-        self.mobile_imu_data = self.mobile_imu.get_all_data()
+        # Reset IMU every time ?
+        # This way we are sure the device is reinitialized if unplugged/plugged
+        self.fixed_imu.reset()
+        self.mobile_imu.reset()
 
-        self.seat_angle = self.calculate_angle()
+        self.fixed_imu_data = self.fixed_imu.get_all_data(raw=True)
+        self.mobile_imu_data = self.mobile_imu.get_all_data(raw=True)
+
+        if self.connected():
+            self.seat_angle = self.calculate_angle()
+        else:
+            self.seat_angle = 0
 
         return True
 
@@ -72,9 +87,6 @@ if __name__ == "__main__":
     client.connect(host=server_config['hostname'], port=server_config['port'])
     
     while True:    
-        
-        if angle.connected():
-            angle.update()
-            client.publish('sensors/angle', angle.to_json())
-
+        angle.update()     
+        client.publish('sensors/angle', angle.to_json())
         time.sleep(1)
