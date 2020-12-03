@@ -56,12 +56,16 @@ class mpu6050:
     def __init__(self, address, bus=1):
         self.address = address
         self.bus = smbus.SMBus(bus)
-        # Wake up the MPU-6050 since it starts in sleep mode
-        self.bus.write_byte_data(self.address, self.PWR_MGMT_1, 0x00)
 
-        # Setup RANGE
-        self.set_accel_range(mpu6050.ACCEL_RANGE_2G)
-        self.set_gyro_range(mpu6050.GYRO_RANGE_250DEG)
+        if self.connected():
+            # Wake up the MPU-6050 since it starts in sleep mode
+            self.bus.write_byte_data(self.address, self.PWR_MGMT_1, 0x00)
+
+            # Setup RANGE
+            self.set_accel_range(mpu6050.ACCEL_RANGE_2G)
+            self.set_gyro_range(mpu6050.GYRO_RANGE_250DEG)
+        else:
+            print('Not connected!')
 
     # I2C communication methods
 
@@ -87,24 +91,41 @@ class mpu6050:
         """Reads the temperature from the onboard temperature sensor of the MPU-6050.
         Returns the temperature in degrees Celcius.
         """
-        raw_temp = self.read_i2c_word(self.TEMP_OUT0)
+        if self.connected():
+            raw_temp = self.read_i2c_word(self.TEMP_OUT0)
 
-        # Get the actual temperature using the formule given in the
-        # MPU-6050 Register Map and Descriptions revision 4.2, page 30
-        actual_temp = (raw_temp / 340.0) + 36.53
+            # Get the actual temperature using the formule given in the
+            # MPU-6050 Register Map and Descriptions revision 4.2, page 30
+            actual_temp = (raw_temp / 340.0) + 36.53
 
-        return actual_temp
+            return actual_temp
+        else:
+            return 0
+
+    def connected(self):
+        # Verify if device is present
+        try:
+            # Will throw an exception if not found
+            self.bus.read_byte(self.address)
+            return True
+        except Exception as e:
+            print(e)
+            pass  # discard errors that we get when trying to read from empty address
+
+        # Default = not found
+        return False
 
     def set_accel_range(self, accel_range):
         """Sets the range of the accelerometer to range.
         accel_range -- the range to set the accelerometer to. Using a
         pre-defined range is advised.
         """
-        # First change it to 0x00 to make sure we write the correct value later
-        self.bus.write_byte_data(self.address, self.ACCEL_CONFIG, 0x00)
+        if self.connected():
+            # First change it to 0x00 to make sure we write the correct value later
+            self.bus.write_byte_data(self.address, self.ACCEL_CONFIG, 0x00)
 
-        # Write the new range to the ACCEL_CONFIG register
-        self.bus.write_byte_data(self.address, self.ACCEL_CONFIG, accel_range)
+            # Write the new range to the ACCEL_CONFIG register
+            self.bus.write_byte_data(self.address, self.ACCEL_CONFIG, accel_range)
 
     def read_accel_range(self, raw = False):
         """Reads the range the accelerometer is set to.
@@ -113,21 +134,24 @@ class mpu6050:
         If raw is False, it will return an integer: -1, 2, 4, 8 or 16. When it
         returns -1 something went wrong.
         """
-        raw_data = self.bus.read_byte_data(self.address, self.ACCEL_CONFIG)
+        if self.connected():
+            raw_data = self.bus.read_byte_data(self.address, self.ACCEL_CONFIG)
 
-        if raw is True:
-            return raw_data
-        elif raw is False:
-            if raw_data == self.ACCEL_RANGE_2G:
-                return 2
-            elif raw_data == self.ACCEL_RANGE_4G:
-                return 4
-            elif raw_data == self.ACCEL_RANGE_8G:
-                return 8
-            elif raw_data == self.ACCEL_RANGE_16G:
-                return 16
-            else:
-                return -1
+            if raw is True:
+                return raw_data
+            elif raw is False:
+                if raw_data == self.ACCEL_RANGE_2G:
+                    return 2
+                elif raw_data == self.ACCEL_RANGE_4G:
+                    return 4
+                elif raw_data == self.ACCEL_RANGE_8G:
+                    return 8
+                elif raw_data == self.ACCEL_RANGE_16G:
+                    return 16
+                else:
+                    return -1
+        else:
+            return -1
 
     def get_accel_data(self, g = False):
         """Gets and returns the X, Y and Z values from the accelerometer.
@@ -135,47 +159,51 @@ class mpu6050:
         If g is False, it will return the data in m/s^2
         Returns a dictionary with the measurement results.
         """
-        x = self.read_i2c_word(self.ACCEL_XOUT0)
-        y = self.read_i2c_word(self.ACCEL_YOUT0)
-        z = self.read_i2c_word(self.ACCEL_ZOUT0)
+        if self.connected():
+            x = self.read_i2c_word(self.ACCEL_XOUT0)
+            y = self.read_i2c_word(self.ACCEL_YOUT0)
+            z = self.read_i2c_word(self.ACCEL_ZOUT0)
 
-        accel_scale_modifier = None
-        accel_range = self.read_accel_range(True)
+            accel_scale_modifier = None
+            accel_range = self.read_accel_range(True)
 
-        if accel_range == self.ACCEL_RANGE_2G:
-            accel_scale_modifier = self.ACCEL_SCALE_MODIFIER_2G
-        elif accel_range == self.ACCEL_RANGE_4G:
-            accel_scale_modifier = self.ACCEL_SCALE_MODIFIER_4G
-        elif accel_range == self.ACCEL_RANGE_8G:
-            accel_scale_modifier = self.ACCEL_SCALE_MODIFIER_8G
-        elif accel_range == self.ACCEL_RANGE_16G:
-            accel_scale_modifier = self.ACCEL_SCALE_MODIFIER_16G
+            if accel_range == self.ACCEL_RANGE_2G:
+                accel_scale_modifier = self.ACCEL_SCALE_MODIFIER_2G
+            elif accel_range == self.ACCEL_RANGE_4G:
+                accel_scale_modifier = self.ACCEL_SCALE_MODIFIER_4G
+            elif accel_range == self.ACCEL_RANGE_8G:
+                accel_scale_modifier = self.ACCEL_SCALE_MODIFIER_8G
+            elif accel_range == self.ACCEL_RANGE_16G:
+                accel_scale_modifier = self.ACCEL_SCALE_MODIFIER_16G
+            else:
+                print("Unkown range - accel_scale_modifier set to self.ACCEL_SCALE_MODIFIER_2G")
+                accel_scale_modifier = self.ACCEL_SCALE_MODIFIER_2G
+
+            x = x / accel_scale_modifier
+            y = y / accel_scale_modifier
+            z = z / accel_scale_modifier
+
+            if g is True:
+                return {'x': x, 'y': y, 'z': z}
+            elif g is False:
+                x = x * self.GRAVITIY_MS2
+                y = y * self.GRAVITIY_MS2
+                z = z * self.GRAVITIY_MS2
+                return {'x': x, 'y': y, 'z': z}
         else:
-            print("Unkown range - accel_scale_modifier set to self.ACCEL_SCALE_MODIFIER_2G")
-            accel_scale_modifier = self.ACCEL_SCALE_MODIFIER_2G
-
-        x = x / accel_scale_modifier
-        y = y / accel_scale_modifier
-        z = z / accel_scale_modifier
-
-        if g is True:
-            return {'x': x, 'y': y, 'z': z}
-        elif g is False:
-            x = x * self.GRAVITIY_MS2
-            y = y * self.GRAVITIY_MS2
-            z = z * self.GRAVITIY_MS2
-            return {'x': x, 'y': y, 'z': z}
+            return {'x': 0, 'y': 0, 'z': 0}
 
     def set_gyro_range(self, gyro_range):
         """Sets the range of the gyroscope to range.
         gyro_range -- the range to set the gyroscope to. Using a pre-defined
         range is advised.
         """
-        # First change it to 0x00 to make sure we write the correct value later
-        self.bus.write_byte_data(self.address, self.GYRO_CONFIG, 0x00)
+        if self.connected():
+            # First change it to 0x00 to make sure we write the correct value later
+            self.bus.write_byte_data(self.address, self.GYRO_CONFIG, 0x00)
 
-        # Write the new range to the ACCEL_CONFIG register
-        self.bus.write_byte_data(self.address, self.GYRO_CONFIG, gyro_range)
+            # Write the new range to the ACCEL_CONFIG register
+            self.bus.write_byte_data(self.address, self.GYRO_CONFIG, gyro_range)
 
     def read_gyro_range(self, raw = False):
         """Reads the range the gyroscope is set to.
@@ -184,50 +212,56 @@ class mpu6050:
         If raw is False, it will return 250, 500, 1000, 2000 or -1. If the
         returned value is equal to -1 something went wrong.
         """
-        raw_data = self.bus.read_byte_data(self.address, self.GYRO_CONFIG)
+        if self.connected():
+            raw_data = self.bus.read_byte_data(self.address, self.GYRO_CONFIG)
 
-        if raw is True:
-            return raw_data
-        elif raw is False:
-            if raw_data == self.GYRO_RANGE_250DEG:
-                return 250
-            elif raw_data == self.GYRO_RANGE_500DEG:
-                return 500
-            elif raw_data == self.GYRO_RANGE_1000DEG:
-                return 1000
-            elif raw_data == self.GYRO_RANGE_2000DEG:
-                return 2000
-            else:
-                return -1
+            if raw is True:
+                return raw_data
+            elif raw is False:
+                if raw_data == self.GYRO_RANGE_250DEG:
+                    return 250
+                elif raw_data == self.GYRO_RANGE_500DEG:
+                    return 500
+                elif raw_data == self.GYRO_RANGE_1000DEG:
+                    return 1000
+                elif raw_data == self.GYRO_RANGE_2000DEG:
+                    return 2000
+                else:
+                    return -1
+        else:
+            return -1
 
     def get_gyro_data(self):
         """Gets and returns the X, Y and Z values from the gyroscope.
         Returns the read values in a dictionary.
         """
-        x = self.read_i2c_word(self.GYRO_XOUT0)
-        y = self.read_i2c_word(self.GYRO_YOUT0)
-        z = self.read_i2c_word(self.GYRO_ZOUT0)
+        if self.connected():
+            x = self.read_i2c_word(self.GYRO_XOUT0)
+            y = self.read_i2c_word(self.GYRO_YOUT0)
+            z = self.read_i2c_word(self.GYRO_ZOUT0)
 
-        gyro_scale_modifier = None
-        gyro_range = self.read_gyro_range(True)
+            gyro_scale_modifier = None
+            gyro_range = self.read_gyro_range(True)
 
-        if gyro_range == self.GYRO_RANGE_250DEG:
-            gyro_scale_modifier = self.GYRO_SCALE_MODIFIER_250DEG
-        elif gyro_range == self.GYRO_RANGE_500DEG:
-            gyro_scale_modifier = self.GYRO_SCALE_MODIFIER_500DEG
-        elif gyro_range == self.GYRO_RANGE_1000DEG:
-            gyro_scale_modifier = self.GYRO_SCALE_MODIFIER_1000DEG
-        elif gyro_range == self.GYRO_RANGE_2000DEG:
-            gyro_scale_modifier = self.GYRO_SCALE_MODIFIER_2000DEG
+            if gyro_range == self.GYRO_RANGE_250DEG:
+                gyro_scale_modifier = self.GYRO_SCALE_MODIFIER_250DEG
+            elif gyro_range == self.GYRO_RANGE_500DEG:
+                gyro_scale_modifier = self.GYRO_SCALE_MODIFIER_500DEG
+            elif gyro_range == self.GYRO_RANGE_1000DEG:
+                gyro_scale_modifier = self.GYRO_SCALE_MODIFIER_1000DEG
+            elif gyro_range == self.GYRO_RANGE_2000DEG:
+                gyro_scale_modifier = self.GYRO_SCALE_MODIFIER_2000DEG
+            else:
+                print("Unkown range - gyro_scale_modifier set to self.GYRO_SCALE_MODIFIER_250DEG")
+                gyro_scale_modifier = self.GYRO_SCALE_MODIFIER_250DEG
+
+            x = x / gyro_scale_modifier
+            y = y / gyro_scale_modifier
+            z = z / gyro_scale_modifier
+
+            return {'x': x, 'y': y, 'z': z}
         else:
-            print("Unkown range - gyro_scale_modifier set to self.GYRO_SCALE_MODIFIER_250DEG")
-            gyro_scale_modifier = self.GYRO_SCALE_MODIFIER_250DEG
-
-        x = x / gyro_scale_modifier
-        y = y / gyro_scale_modifier
-        z = z / gyro_scale_modifier
-
-        return {'x': x, 'y': y, 'z': z}
+            return {'x': 0, 'y': 0, 'z': 0}
 
     def get_all_data(self):
         """Reads and returns all the available data."""
