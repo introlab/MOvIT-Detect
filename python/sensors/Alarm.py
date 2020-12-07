@@ -9,6 +9,7 @@ import json
 
 class AlarmState:
     def __init__(self):
+        self.connected = False
         self.enabled = False
         self.isGreenAlarmOn = False
         self.isRedAlarmOn = False
@@ -20,6 +21,7 @@ class AlarmState:
         self.isButtonOn = False
 
     def reset(self):
+        self.connected = False
         self.enabled = False
         self.isGreenAlarmOn = False
         self.isRedAlarmOn = False
@@ -32,6 +34,7 @@ class AlarmState:
 
     def to_dict(self):
         return {
+            'connected': self.connected,
             'enabled': self.enabled,
             'isGreenAlarmOn': self.isGreenAlarmOn,
             'isRedAlarmOn': self.isRedAlarmOn,
@@ -43,8 +46,43 @@ class AlarmState:
             'isButtonOn': self.isButtonOn
         }
 
+    def from_dict(self, values: dict):
+        if 'connected' in values:
+            self.connected = values['connected']
+                
+        if 'enabled' in values:
+            self.connected = values['enabled']
+
+        if 'isGreenAlarmOn' in values:
+            self.connected = values['isGreenAlarmOn']
+
+        if 'isRedAlarmOn' in values:
+            self.connected = values['isRedAlarmOn']
+                
+        if 'isBlinkRedAlarmOn' in values:
+            self.connected = values['isBlinkRedAlarmOn']
+
+        if 'isBlinkGreenAlarmOn' in values:
+            self.connected = values['isBlinkGreenAlarmOn']
+
+        if 'isBlinkLedsAlarmOn' in values:
+            self.connected = values['isBlinkLedsAlarmOn']
+
+        if 'isAlternatingAlarmOn' in values:
+            self.connected = values['isAlternatingAlarmOn']
+                
+        if 'isMotorAlarmOn' in values:
+            self.connected = values['isMotorAlarmOn']
+
+        if 'isButtonOn' in values:
+            self.connected = values['isButtonOn']
+
     def to_json(self):
         return json.dumps(self.to_dict())
+
+    def from_json(self, data: str):
+        values = json.loads(data)
+        self.from_dict(values)
 
 
 async def connect_to_mqtt_server(config):
@@ -193,7 +231,7 @@ async def handle_alarm_red_led_blink(client, messages, pca: pca9536, state: Alar
             # print('handle_alarm_red_led_blink', enabled)
             # Update state
             state.isRedAlarmOn = False
-            state.isBlinkRedAlarmOn = True
+            state.isBlinkRedAlarmOn = enabled
             state.isBlinkLedsAlarmOn = False
             state.isAlternatingAlarmOn = False
         except Exception as e:
@@ -250,6 +288,7 @@ async def alarm_loop(client, pca: pca9536, state: AlarmState):
     # 10 Hz
     while True:
         if pca.connected():
+            state.connected = True
             if state.enabled:
                 # Motor
                 if state.isMotorAlarmOn:
@@ -260,7 +299,7 @@ async def alarm_loop(client, pca: pca9536, state: AlarmState):
                 # Red LED
                 if state.isRedAlarmOn:
                     pca.set_red_led(1)
-                elif state.isBlinkRedAlarmOn: 
+                elif state.isBlinkRedAlarmOn or state.isBlinkLedsAlarmOn: 
                     pca.toggle_red_led()
                 elif state.isAlternatingAlarmOn:
                     pca.toggle_red_led()
@@ -270,7 +309,7 @@ async def alarm_loop(client, pca: pca9536, state: AlarmState):
                 # Green LED
                 if state.isGreenAlarmOn:
                     pca.set_green_led(1)
-                elif state.isBlinkGreenAlarmOn: 
+                elif state.isBlinkGreenAlarmOn or state.isBlinkLedsAlarmOn: 
                     pca.toggle_green_led()
                 elif state.isAlternatingAlarmOn:
                     # Green led = inverse than red led
