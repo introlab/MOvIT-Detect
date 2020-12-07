@@ -288,7 +288,6 @@ async def alarm_loop(client, pca: pca9536, state: AlarmState):
             state.isButtonOn = pca.get_button()
         else:
             state.reset()
-            state.isButtonOn = pca.get_button()
             pca.reset()
 
         # Publish state
