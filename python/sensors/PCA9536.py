@@ -31,6 +31,7 @@ class pca9536:
             return True
         except Exception as e:
             print(e)
+            self.reset()
             pass  # discard errors that we get when trying to read from empty address
 
         # Default = not found
