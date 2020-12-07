@@ -39,15 +39,15 @@ class pca9536:
 
     def reset(self):
         # initialize registers
-        if self.connected():
-            # Polarity not inverted
-            self.bus.write_byte_data(self.address, pca9536.REG_POLARITY, 0x00)
+        # if self.connected():
+        # Polarity not inverted
+        self.bus.write_byte_data(self.address, pca9536.REG_POLARITY, 0x00)
 
-            # Set pins input/output 
-            self.bus.write_byte_data(self.address, pca9536.REG_CONFIG, 0xF2)
+        # Set pins input/output 
+        self.bus.write_byte_data(self.address, pca9536.REG_CONFIG, 0xF2)
 
-            # Set outputs
-            self.write_outputs(0x00)
+        # Set outputs
+        self.write_outputs(0x00)
 
     def inputs_state(self):
         if self.connected():
