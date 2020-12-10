@@ -9,6 +9,7 @@ import json
 
 class AlarmState:
     def __init__(self):
+        self.timestamp = int(datetime.now().timestamp())
         self.connected = False
         self.enabled = False
         self.isGreenAlarmOn = False
@@ -21,6 +22,7 @@ class AlarmState:
         self.isButtonOn = False
 
     def reset(self):
+        self.timestamp = int(datetime.now().timestamp())
         self.connected = False
         self.enabled = False
         self.isGreenAlarmOn = False
@@ -32,8 +34,13 @@ class AlarmState:
         self.isMotorAlarmOn = False
         self.isButtonOn = False
 
+    def update(self, connected=False):
+        self.timestamp = int(datetime.now().timestamp())
+        self.connected = connected
+
     def to_dict(self):
         return {
+            'timestamp': self.timestamp,
             'connected': self.connected,
             'enabled': self.enabled,
             'isGreenAlarmOn': self.isGreenAlarmOn,
@@ -47,6 +54,9 @@ class AlarmState:
         }
 
     def from_dict(self, values: dict):
+        if 'timestamp' in values:
+            self.timestamp = values['timestamp']
+
         if 'connected' in values:
             self.connected = values['connected']
                 
@@ -287,8 +297,11 @@ async def cancel_tasks(tasks):
 async def alarm_loop(client, pca: pca9536, state: AlarmState):
     # 10 Hz
     while True:
-        if pca.connected():
-            state.connected = True
+
+        connected = pca.connected()
+        state.update(connected)
+
+        if connected:
             if state.enabled:
                 # Motor
                 if state.isMotorAlarmOn:
