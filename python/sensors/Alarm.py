@@ -171,7 +171,7 @@ async def connect_to_mqtt_server(config):
             task = asyncio.create_task(handle_alarm_green_led_blink(client, messages, pca, state))
             tasks.add(task)
 
-            # Start periodic publish of chair state
+            # Start periodic publish of alarm state
             task = asyncio.create_task(alarm_loop(client, pca, state))
             tasks.add(task)
 
