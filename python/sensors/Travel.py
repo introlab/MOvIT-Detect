@@ -13,7 +13,7 @@ class TravelState:
         self.connected = False
         self.isMoving = False
         self.lastDistance = 0
-        self.errors = 0
+        self.error_count = 0
 
     def reset(self):
         self.timestamp = int(datetime.now().timestamp())
