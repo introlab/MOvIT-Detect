@@ -74,7 +74,6 @@ class NotificationFSMState:
     def __init__(self):
         self.__type = 'NotificationFSMState'
         self.__currentState = NotificationFSMState.NotificationState.INIT
-        self.__event = "Other"
         self.__snoozeCount = 0
         self.__startTime = 0
         self.__stopTime = 0
@@ -84,7 +83,6 @@ class NotificationFSMState:
 
     def reset(self):
         self.__currentState = NotificationFSMState.NotificationState.INIT
-        self.__event = "Other"
         self.__snoozeCount = 0
         self.__startTime = 0
         self.__stopTime = 0
@@ -118,10 +116,9 @@ class NotificationFSMState:
             'type': self.__type,
             'time': self.getCurrentTime(),
             'elapsed': self.getElapsed(),
-            'event': self.__event,
+            'event': self.__stopReason,
             'stateNum': self.getCurrentState(),
             'stateName': self.getCurrentStateName(),
-            'stopReason': self.__stopReason,
             'snoozeCount': self.__snoozeCount,
             # Config information
             'NOTIFICATION_ENABLED': NotificationFSMState.NOTIFICATION_ENABLED,
@@ -138,9 +135,6 @@ class NotificationFSMState:
 
             if 'elapsed' in values:
                 self.__secondsCounter = values['elapsed']
-
-            if 'event' in values:
-                self.__event = values['event']
 
             if 'stateNum' in values:
                 self.__currentState = NotificationFSMState.NotificationState(values['stateNum'])
