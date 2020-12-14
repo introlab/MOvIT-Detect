@@ -4,3 +4,6 @@ aiofiles
 requests
 numpy
 smbus2
+spidev
+RPi.GPIO
+wiringpi
