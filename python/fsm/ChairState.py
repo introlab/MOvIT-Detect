@@ -56,20 +56,25 @@ Offset angle to be stored in the database.
 
 class TravelInformation:
     def __init__(self):
+        self.sensorName = 'default'
         self.isMoving = False
         self.lastDistance = float(0.0)
 
     def reset(self):
+        self.sensorName = 'default'
         self.isMoving = False
         self.lastDistance = float(0.0)
 
     def to_dict(self):
         return {
+            'sensorName': self.sensorName,
             'isMoving': int(self.isMoving),
             'lastDistance': self.lastDistance
         }
 
     def from_dict(self, values: dict):
+        if 'sensorName' in values:
+            self.sensorName = values['sensorName']
         if 'isMoving' in values:
             self.isMoving = values['isMoving']
         if 'lastDistance' in values:
@@ -132,12 +137,14 @@ class PressureInformation:
 
 class AngleInformation:
     def __init__(self):
+        self.sensorName = 'default'
         self.mIMUAngle = 0.0
         self.fIMUAngle = 0.0
         self.seatAngle = 0.0
         self.angleOffset = 0.0
 
     def reset(self):
+        self.sensorName = 'default'
         self.mIMUAngle = 0.0
         self.fIMUAngle = 0.0
         self.seatAngle = 0.0
@@ -145,6 +152,7 @@ class AngleInformation:
 
     def to_dict(self):
         return {
+            'sensorName': self.sensorName,
             'mIMUAngle': float(format(self.mIMUAngle, '.2f')),     # float(self.mIMUAngle),
             'fIMUAngle': float(format(self.fIMUAngle, '.2f')),     # float(self.fIMUAngle),
             'seatAngle': float(format(self.seatAngle, '.2f')),     # float(self.seatAngle),
@@ -152,6 +160,8 @@ class AngleInformation:
         }
 
     def from_dict(self, values: dict):
+        if 'sensorName' in values:
+            self.sensorName = values['sensorName']
         if 'mIMUAngle' in values:
             self.mIMUAngle = values['mIMUAngle']
         if 'fIMUAngle' in values:
@@ -332,6 +342,46 @@ class ChairState:
         # TODO LOOK FOR THRESHOLD
         self.Pressure.isSeated = (self.Pressure.centerOfGravityValue > 0.0)
 
+    def update_angle_data(self, values: dict):
+        # Reset values
+        self.Angle.reset()
+
+        if 'name' in values:
+            self.Angle.sensorName = values['name']
+
+        if 'timestamp' in values:
+            self.timestamp = max(values['timestamp'], self.timestamp)
+
+        connected = False
+        if 'connected' in values:
+            connected = values['connected']
+
+        if 'seat_angle' in values and connected:
+            self.Angle.seatAngle = values['seat_angle']
+
+        if 'seat_angle_offset' in values and connected:
+            self.Angle.angleOffset = values['seat_angle_offset']
+
+    def update_travel_data(self, values: dict):
+        # Reset values
+        self.Travel.reset()
+
+        if 'sensorName' in values:
+            self.Travel.sensorName = values['sensorName']
+
+        if 'timestamp' in values:
+            self.timestamp = max(values['timestamp'], self.timestamp)
+
+        connected = False
+        if 'connected' in values:
+            connected = values['connected']
+
+        if 'lastDistance' in values and connected:
+            self.Travel.lastDistance = values['lastDistance']
+
+        if 'isMoving' in values and connected:
+            self.Travel.isMoving = values['isMoving']
+
 
 async def connect_to_mqtt_server(config):
     async with AsyncExitStack() as stack:
@@ -388,6 +438,20 @@ async def connect_to_mqtt_server(config):
             manager = client.filtered_messages('sensors/pressure')
             messages = await stack.enter_async_context(manager)
             task = asyncio.create_task(handle_sensors_pressure(client, messages, chair_state))
+            tasks.add(task)
+
+            # Subscribe to angle sensors
+            await client.subscribe("sensors/angle")
+            manager = client.filtered_messages('sensors/angle')
+            messages = await stack.enter_async_context(manager)
+            task = asyncio.create_task(handle_sensors_angle(client, messages, chair_state))
+            tasks.add(task)
+
+            # Subscribe to travel sensors
+            await client.subscribe("sensors/travel")
+            manager = client.filtered_messages('sensors/travel')
+            messages = await stack.enter_async_context(manager)
+            task = asyncio.create_task(handle_sensors_travel(client, messages, chair_state))
             tasks.add(task)
 
             # Start periodic publish of chair state
@@ -496,8 +560,35 @@ async def handle_sensors_pressure(client, messages, chair_state: ChairState):
     async for message in messages:
         # print('pressure', message.payload.decode())
         values = json.loads(message.payload.decode())
-        print(values)
         chair_state.update_pressure_data(values)
+
+
+async def handle_sensors_angle(client, messages, chair_state: ChairState):
+    """
+
+    :param client:
+    :param messages:
+    :param chair_state:
+    :return:
+    """
+    async for message in messages:
+        # print('angle', message.payload.decode())
+        values = json.loads(message.payload.decode())
+        chair_state.update_angle_data(values)
+
+
+async def handle_sensors_travel(client, messages, chair_state: ChairState):
+    """
+
+    :param client:
+    :param messages:
+    :param chair_state:
+    :return:
+    """
+    async for message in messages:
+        # print('angle', message.payload.decode())
+        values = json.loads(message.payload.decode())
+        chair_state.update_travel_data(values)
 
 
 async def cancel_tasks(tasks):
