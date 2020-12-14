@@ -52,6 +52,7 @@ class TravelState:
 
     def to_dict(self):
         return {
+            'sensorName': 'PMW3901',
             'timestamp': self.timestamp,
             'connected': self.connected,
             'isMoving': self.isMoving,
@@ -148,7 +149,7 @@ async def travel_loop(client, travel: PMW3901, state: TravelState):
         state.update(travel)
         # Publish state
         print('publishing', state.to_json())
-        await client.publish('sensors/travel/state', state.to_json())
+        await client.publish('sensors/travel', state.to_json())
 
         # Wait next cycle, 1Hz
         await asyncio.sleep(1)
