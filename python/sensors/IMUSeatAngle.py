@@ -72,8 +72,15 @@ class IMUSeatAngle(SeatAngle):
         return True
 
 if __name__ == "__main__":
+
+
+    import os
+
+    abspath = os.path.abspath(__file__)
+    dname = os.path.dirname(abspath)
+    os.chdir(dname)
     
-    with open('sensors/config.json', mode='r') as f:
+    with open('config.json', mode='r') as f:
         data = f.read()
         config = json.loads(data)
         server_config = config['server']

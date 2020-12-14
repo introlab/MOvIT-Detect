@@ -56,7 +56,14 @@ class FSR400PressureArray(PressureMat):
 
 if __name__ == "__main__":
     
-    with open('sensors/config.json', mode='r') as f:
+
+    import os
+
+    abspath = os.path.abspath(__file__)
+    dname = os.path.dirname(abspath)
+    os.chdir(dname)
+
+    with open('config.json', mode='r') as f:
         data = f.read()
         config = json.loads(data)
         server_config = config['server']

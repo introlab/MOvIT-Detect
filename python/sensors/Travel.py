@@ -158,7 +158,7 @@ async def travel_main():
     reconnect_interval = 3  # [seconds]
 
     # Read config file
-    async with aiofiles.open('sensors/config.json', mode='r') as f:
+    async with aiofiles.open('config.json', mode='r') as f:
         data = await f.read()
         config = json.loads(data)
 
@@ -174,5 +174,10 @@ async def travel_main():
 
 
 if __name__ == "__main__":
+    import os
+    abspath = os.path.abspath(__file__)
+    dname = os.path.dirname(abspath)
+    os.chdir(dname)
+
     # main task
     asyncio.run(travel_main())
