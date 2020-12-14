@@ -74,7 +74,7 @@ class NotificationFSMState:
     def __init__(self):
         self.__type = 'NotificationFSMState'
         self.__currentState = NotificationFSMState.NotificationState.INIT
-        self.__event = "Other-2"
+        self.__event = "Other"
         self.__snoozeCount = 0
         self.__startTime = 0
         self.__stopTime = 0
@@ -84,7 +84,7 @@ class NotificationFSMState:
 
     def reset(self):
         self.__currentState = NotificationFSMState.NotificationState.INIT
-        self.__event = "Other-2"
+        self.__event = "Other"
         self.__snoozeCount = 0
         self.__startTime = 0
         self.__stopTime = 0

@@ -382,6 +382,16 @@ class ChairState:
         if 'isMoving' in values and connected:
             self.Travel.isMoving = values['isMoving']
 
+    def update_alarm_data(self, values: dict):
+        connected = False
+        self.snoozeButton = False
+
+        if 'connected' in values:
+            connected = values['connected']
+        if connected:
+            if 'isButtonOn' in values:
+                self.snoozeButton = values['isButtonOn']
+
 
 async def connect_to_mqtt_server(config):
     async with AsyncExitStack() as stack:
@@ -452,6 +462,13 @@ async def connect_to_mqtt_server(config):
             manager = client.filtered_messages('sensors/travel')
             messages = await stack.enter_async_context(manager)
             task = asyncio.create_task(handle_sensors_travel(client, messages, chair_state))
+            tasks.add(task)
+
+            # Subscribe to alarm sensors
+            await client.subscribe("sensors/alarm/state")
+            manager = client.filtered_messages('sensors/alarm/state')
+            messages = await stack.enter_async_context(manager)
+            task = asyncio.create_task(handle_sensors_alarm(client, messages, chair_state))
             tasks.add(task)
 
             # Start periodic publish of chair state
@@ -586,9 +603,23 @@ async def handle_sensors_travel(client, messages, chair_state: ChairState):
     :return:
     """
     async for message in messages:
-        # print('angle', message.payload.decode())
+        # print('travel', message.payload.decode())
         values = json.loads(message.payload.decode())
         chair_state.update_travel_data(values)
+
+
+async def handle_sensors_alarm(client, messages, chair_state: ChairState):
+    """
+
+    :param client:
+    :param messages:
+    :param chair_state:
+    :return:
+    """
+    async for message in messages:
+        # print('alarm', message.payload.decode())
+        values = json.loads(message.payload.decode())
+        chair_state.update_alarm_data(values)
 
 
 async def cancel_tasks(tasks):
