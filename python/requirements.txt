@@ -3,7 +3,10 @@ asyncio-mqtt
 aiofiles
 requests
 numpy
+scipy
+matplotlib
 smbus2
 spidev
 RPi.GPIO
 wiringpi
+configparser

@@ -41,6 +41,5 @@ if __name__ == "__main__":
         for process in process_list:
             # print(process)
             pass
-        
         # Wait for 1 sec
         time.sleep(1)

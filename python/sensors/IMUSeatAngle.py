@@ -4,7 +4,10 @@ import numpy as np
 import time
 import paho.mqtt.client as mqtt
 import json
+import configparser
+import os
 import math
+from lib_movit_sensors.AngleAnalysis import AngleAnalysis 
 
 class IMUSeatAngle(SeatAngle):
     def __init__(self):
@@ -53,7 +56,7 @@ class IMUSeatAngle(SeatAngle):
         return math.atan2(y, x) * (180.0 / math.pi)
 
     def update(self) -> float:
-        # will update timestampe
+        # will update timestamp
         super().update()
 
         # Reset IMU every time ?
@@ -64,36 +67,112 @@ class IMUSeatAngle(SeatAngle):
         self.fixed_imu_data = self.fixed_imu.get_all_data(raw=True)
         self.mobile_imu_data = self.mobile_imu.get_all_data(raw=True)
 
-        if self.connected():
-            self.seat_angle = self.calculate_angle()
-        else:
-            self.seat_angle = 0
+        # if self.connected():
+        #     self.seat_angle = self.calculate_angle()
+        # else:
+        #     self.seat_angle = 0
 
         return True
 
+
+def createClient(clientName,config):
+    #create client connected to mqtt broker
+    
+    #create new instance
+    print("MQTT creating new instance named : "+clientName)
+    client = mqtt.Client(clientName) 
+    
+    #set username and password
+    print("MQTT setting  password")
+    client.username_pw_set(username=config.get('MQTT','usr'),password=config.get('MQTT','pswd'))
+    
+    #connection to broker
+    broker_address=config.get('MQTT','broker_address')
+    print("MQTT connecting to broker : "+broker_address)
+    client.connect(broker_address) #connect to broker
+    
+    return client
+
+
 if __name__ == "__main__":
-
-
-    import os
-
+    
+    # Make sure working directory is the directory with the current file
     abspath = os.path.abspath(__file__)
     dname = os.path.dirname(abspath)
     os.chdir(dname)
-    
-    with open('config.json', mode='r') as f:
-        data = f.read()
-        config = json.loads(data)
-        server_config = config['server']
-        print(config)
 
-    angle = IMUSeatAngle()
+    ############
+    # import config file
+    config = configparser.ConfigParser()
 
-    # Create MQTT client
-    client = mqtt.Client('IMUSeatAngle MQTT Client')
-    client.username_pw_set(server_config['username'], server_config['password'])
-    client.connect(host=server_config['hostname'], port=server_config['port'])
+    print("opening configuration file : config.cfg")
+    ret = config.read('config.cfg')
+
+    ############
+    # connect to mqtt broker
+    client = createClient("LoggerAngle", config)
+
+
+    aa = AngleAnalysis()
+
+    # Start calibration
+    aa.intializeIMU(client, config)
+
+    imu = IMUSeatAngle()
+
+
+
+
+    while not aa.askAtZero:
+        pass
+        time.sleep(0.1)
+    else:
+        try:
+            input("Please, set the Seat at Zero\n")
+        except (Exception, KeyboardInterrupt):
+            pass
+        finally:
+            print("Seat at Zero !")
+            aa.isAtZero = True
+
+    while aa.askAtZero:
+        imu.update()
+        client.publish(config.get('MQTT', 'topic_publish'), imu.to_json())
+        time.sleep(1)
+
+    while not aa.askInclined:
+        pass
+        time.sleep(0.1)
+    else:
+        try:
+            input("Please, Tilt the Seat\n")
+        except (Exception, KeyboardInterrupt):
+            pass
+        finally:
+            aa.isInclined = True
+            print("Seat is Tilted !")
     
-    while True:    
-        angle.update()     
-        client.publish('sensors/angle', angle.to_json())
+    while aa.askInclined:
+        imu.update()
+        client.publish(config.get('MQTT', 'topic_publish'), imu.to_json())
+        time.sleep(1)
+
+
+    # Wait for calibration calculation
+    while not aa.isRotWorld:
+        time.sleep(1)
+    else:
+        aa.startGetAngle(client, config)
+
+    # Main loop
+    while True:
+        imu.update()
+        client.publish(config.get('MQTT', 'topic_publish'), imu.to_json())
+        # Publish real angle value
+        # client.publish('sensors/angle', angle.to_json())
+        result = aa.getAngleAnalysis()
+
+        imu.seat_angle = result['angleSiege']
+        client.publish('sensors/angle', imu.to_json())
+
         time.sleep(1)
