@@ -1,7 +1,20 @@
-# Requirements
+# System Requirements
 
 * Python 3.6+
 
+
+Enable SPI, I2C on Raspberry Pi using raspi-config:
+```bash
+# Run raspi-config
+sudo raspi-config
+
+# --> Go to 3 - Interface Options
+#   --> Enable P3 - SPI
+#   --> Enable P5 - I2C   
+```
+
+
+Install system requirements with:
 ```bash
 # Install python packages
 sudo apt-get install python3 python3-venv
@@ -9,7 +22,7 @@ sudo apt-get install python3 python3-venv
 
 # Installation
 
-Create python virtual environment, enable it and install requirements
+Create a Python virtual environment, enable it and install requirements:
 ```bash
 # Create venv (only once)
 python3 -m venv venv
