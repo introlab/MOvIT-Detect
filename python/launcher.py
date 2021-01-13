@@ -47,7 +47,7 @@ if __name__ == "__main__":
     sensors_path = '/sensors'
     process_list.append(launch_process('Alarm.py', os.path.dirname(os.path.abspath(__file__))  + sensors_path, *process_args))
     process_list.append(launch_process('Travel.py', os.path.dirname(os.path.abspath(__file__)) + sensors_path, *process_args))
-    # process_list.append(launch_process('IMUSeatAngle.py', os.path.dirname(os.path.abspath(__file__)) + sensors_path, *process_args))
+    process_list.append(launch_process('IMUSeatAngle.py', os.path.dirname(os.path.abspath(__file__)) + sensors_path, *process_args))
     process_list.append(launch_process('FSR400PressureArray.py', os.path.dirname(os.path.abspath(__file__)) + sensors_path, *process_args))
 
 

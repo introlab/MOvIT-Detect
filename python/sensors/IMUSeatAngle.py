@@ -130,56 +130,60 @@ if __name__ == "__main__":
     imu = IMUSeatAngle()
 
 
-    while not aa.askAtZero:
-        pass
-        time.sleep(0.1)
-    else:
-        try:
-            input("Please, set the Seat at Zero\n")
-        except (Exception, KeyboardInterrupt):
-            pass
-        finally:
-            print("Seat at Zero !")
-            aa.isAtZero = True
+    # while not aa.askAtZero:
+    #     pass
+    #     time.sleep(0.1)
+    # else:
+    #     try:
+    #         input("Please, set the Seat at Zero\n")
+    #     except (Exception, KeyboardInterrupt):
+    #         pass
+    #     finally:
+    #         print("Seat at Zero !")
+    #         aa.isAtZero = True
 
-    while aa.askAtZero:
-        imu.update()
-        client.publish(config.get('MQTT', 'topic_publish'), imu.to_json())
-        time.sleep(1)
+    # while aa.askAtZero:
+    #     imu.update()
+    #     client.publish(config.get('MQTT', 'topic_publish'), imu.to_json())
+    #     time.sleep(1)
 
-    while not aa.askInclined:
-        pass
-        time.sleep(0.1)
-    else:
-        try:
-            input("Please, Tilt the Seat\n")
-        except (Exception, KeyboardInterrupt):
-            pass
-        finally:
-            aa.isInclined = True
-            print("Seat is Tilted !")
+    # while not aa.askInclined:
+    #     pass
+    #     time.sleep(0.1)
+    # else:
+    #     try:
+    #         input("Please, Tilt the Seat\n")
+    #     except (Exception, KeyboardInterrupt):
+    #         pass
+    #     finally:
+    #         aa.isInclined = True
+    #         print("Seat is Tilted !")
     
-    while aa.askInclined:
-        imu.update()
-        client.publish(config.get('MQTT', 'topic_publish'), imu.to_json())
-        time.sleep(1)
+    # while aa.askInclined:
+    #     imu.update()
+    #     client.publish(config.get('MQTT', 'topic_publish'), imu.to_json())
+    #     time.sleep(1)
 
 
-    # Wait for calibration calculation
-    while not aa.isRotWorld:
-        time.sleep(1)
-    else:
-        aa.startGetAngle(client, config)
+    # # Wait for calibration calculation
+    # while not aa.isRotWorld:
+    #     time.sleep(1)
+    # else:
+    #     aa.startGetAngle(client, config)
 
     # Main loop
     while True:
         imu.update()
         client.publish(config.get('MQTT', 'topic_publish'), imu.to_json())
+        
+        # result = aa.getAngleAnalysis()
+        # imu.seat_angle = result['angleSiege']
+
+        # Debug for now (old stuff)
+        imu.seat_angle = imu.calculate_angle()
+
         # Publish real angle value
         # client.publish('sensors/angle', angle.to_json())
-        result = aa.getAngleAnalysis()
-
-        imu.seat_angle = result['angleSiege']
         client.publish('sensors/angle', imu.to_json())
 
         time.sleep(1)

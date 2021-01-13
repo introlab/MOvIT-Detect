@@ -148,7 +148,7 @@ async def travel_loop(client, travel: PMW3901, state: TravelState):
     while True:
         state.update(travel)
         # Publish state
-        print('publishing', state.to_json())
+        # print('publishing', state.to_json())
         await client.publish('sensors/travel', state.to_json())
 
         # Wait next cycle, 1Hz

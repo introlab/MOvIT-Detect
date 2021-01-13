@@ -144,8 +144,8 @@ class NotificationFSMState:
                     print('NotificationFSMState - state mismatch')
                     return False
 
-            if 'stopReason' in values:
-                self.__stopReason = values['stopReason']
+            if 'event' in values:
+                self.__stopReason = values['event']
 
             # Config
             if 'NOTIFICATION_ENABLED' in values:
@@ -485,6 +485,8 @@ class NotificationFSMState:
         
             break;
             """
+
+            self.__stopReason = 'Other'
             # Not seated?
             if not (seating_state.in_state(SeatingFSMState.SeatingState.CURRENTLY_SEATING) or
                     seating_state.in_state(SeatingFSMState.SeatingState.CONFIRM_STOP_SEATING)):
