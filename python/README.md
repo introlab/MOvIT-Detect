@@ -2,6 +2,10 @@
 
 * Python 3.6+
 
+```bash
+# Install python packages
+sudo apt-get install python3 python3-venv
+```
 
 # Installation
 
