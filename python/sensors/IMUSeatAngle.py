@@ -4,6 +4,7 @@ import numpy as np
 import time
 import paho.mqtt.client as mqtt
 import json
+import argparse
 import configparser
 import os
 import math
@@ -96,17 +97,25 @@ def createClient(clientName,config):
 
 if __name__ == "__main__":
     
-    # Make sure working directory is the directory with the current file
+    # Make sure current path is this file path
+    import os
+
     abspath = os.path.abspath(__file__)
     dname = os.path.dirname(abspath)
     os.chdir(dname)
+
+    # Look for arguments
+    argument_parser = argparse.ArgumentParser(description='IMUSeatAngle')
+    argument_parser.add_argument('--config', type=str, help='Specify config file', default='../config.cfg')
+    args = argument_parser.parse_args()
+
 
     ############
     # import config file
     config = configparser.ConfigParser()
 
-    print("opening configuration file : config.cfg")
-    ret = config.read('config.cfg')
+    print('opening configuration file :', args.config)
+    ret = config.read(args.config)
 
     ############
     # connect to mqtt broker
@@ -119,8 +128,6 @@ if __name__ == "__main__":
     aa.intializeIMU(client, config)
 
     imu = IMUSeatAngle()
-
-
 
 
     while not aa.askAtZero:

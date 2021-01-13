@@ -4,6 +4,8 @@ import numpy as np
 import time
 import paho.mqtt.client as mqtt
 import json
+import argparse
+import configparser
 
 class FSR400PressureArray(PressureMat):
     def __init__(self):
@@ -56,18 +58,32 @@ class FSR400PressureArray(PressureMat):
 
 if __name__ == "__main__":
     
-
+    # Make sure current path is this file path
     import os
-
     abspath = os.path.abspath(__file__)
     dname = os.path.dirname(abspath)
     os.chdir(dname)
 
-    with open('config.json', mode='r') as f:
-        data = f.read()
-        config = json.loads(data)
-        server_config = config['server']
-        print(config)
+    # Look for arguments
+    argument_parser = argparse.ArgumentParser(description='FSR400PressureArray')
+    argument_parser.add_argument('--config', type=str, help='Specify config file', default='../config.cfg')
+    args = argument_parser.parse_args()
+
+
+    config_parser = configparser.ConfigParser()
+
+    print("Opening configuration file : ", args.config)
+    read_ok = config_parser.read(args.config)
+
+    if not len(read_ok):
+        print('Cannot load config file', args.config)
+        exit(-1)
+
+    # Setup config dict
+    server_config = {'hostname': config_parser.get('MQTT','broker_address'), 
+                    'port': int(config_parser.get('MQTT','broker_port')),
+                    'username': config_parser.get('MQTT','usr'), 
+                    'password': config_parser.get('MQTT','pswd') }
 
     mat = FSR400PressureArray()
 

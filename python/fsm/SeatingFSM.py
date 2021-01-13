@@ -319,14 +319,9 @@ async def handle_sensors_chair_state(client, messages, fsm):
             print(e)
 
 
-async def seating_fsm_main():
+async def seating_fsm_main(config: dict):
     print('seating_fsm_main')
     reconnect_interval = 3  # [seconds]
-
-    # Read config file
-    async with aiofiles.open('config.json', mode='r') as f:
-        data = await f.read()
-        config = json.loads(data)
 
     while True:
         try:
@@ -338,6 +333,37 @@ async def seating_fsm_main():
 
 
 if __name__ == "__main__":
+    # Make sure current path is this file path
+    import os
+    import argparse
+    import configparser
+    abspath = os.path.abspath(__file__)
+    dname = os.path.dirname(abspath)
+    os.chdir(dname)
+
+    # Look for arguments
+    argument_parser = argparse.ArgumentParser(description='SeatingFSM')
+    argument_parser.add_argument('--config', type=str, help='Specify config file', default='../config.cfg')
+    args = argument_parser.parse_args()
+
+
+    config_parser = configparser.ConfigParser()
+
+    print("Opening configuration file : ", args.config)
+    read_ok = config_parser.read(args.config)
+
+    if not len(read_ok):
+        print('Cannot load config file', args.config)
+        exit(-1)
+
+    # Setup config dict
+    server_config = {'hostname': config_parser.get('MQTT','broker_address'), 
+                    'port': int(config_parser.get('MQTT','broker_port')),
+                    'username': config_parser.get('MQTT','usr'), 
+                    'password': config_parser.get('MQTT','pswd') }
+
+    config = {'server': server_config}
+
     # main task
-    asyncio.run(seating_fsm_main())
+    asyncio.run(seating_fsm_main(config))
 
