@@ -1,5 +1,5 @@
-from PressureMat import PressureMat
-from MAX11611 import MAX11611
+from  PressureMat import PressureMat
+from  MAX11611 import MAX11611
 import numpy as np
 import time
 import paho.mqtt.client as mqtt
@@ -53,7 +53,12 @@ class FSR400PressureArray(PressureMat):
         
         # Read sensor
         if self.connected():
+            # Always reconfigure device
+            self.adc.config()
+            # Read data
             self.values = self.adc.read_adc()
+        else:
+            self.values = np.zeros(self.array_size)
 
 
 if __name__ == "__main__":
@@ -93,9 +98,8 @@ if __name__ == "__main__":
     client.connect(host=server_config['hostname'], port=server_config['port'])
     
     while True:    
-        
-        if mat.connected():
-            mat.update()
-            client.publish('sensors/pressure', mat.to_json())
-
+        # Always update
+        mat.update()
+        client.publish('sensors/pressure', mat.to_json())
+        # Wait for next cycle
         time.sleep(1)
