@@ -8,22 +8,48 @@ import argparse
 import configparser
 import os
 import math
-from lib_movit_sensors.AngleAnalysis import AngleAnalysis 
+from lib_movit_sensors.AngleAnalysis import AngleAnalysis
+from enum import Enum, unique
+
+@unique
+class IMUSeatAngleState(Enum):
+    INIT = 0
+    IMU_ERROR = 1
+    CHECK_CALIBRATION_VALID = 2
+    CALIBRATION_WAIT_ZERO_TRIG = 3
+    CALIBRATION_RUNNING_ZERO = 4
+    CALIBRATION_WAIT_INCLINED_TRIG = 5
+    CALIBRATION_RUNNING_INCLINED = 6
+    CALIBRATION_WAIT_ROT_WORLD_CALC = 7
+    CALIBRATION_DONE = 8
+    RUNNING_CALIBRATED = 9
 
 class IMUSeatAngle(SeatAngle):
+
     def __init__(self):
         SeatAngle.__init__(self)
         self.fixed_imu = mpu6050(address=0x68)
         self.mobile_imu = mpu6050(address=0x69)
-        self.fixed_imu_data = self.fixed_imu.get_all_data()
-        self.mobile_imu_data = self.mobile_imu.get_all_data()
+        self.fixed_imu_data = self.fixed_imu.get_all_data(raw=True)
+        self.mobile_imu_data = self.mobile_imu.get_all_data(raw=True)
+        self.aa = AngleAnalysis()
+        self.state = IMUSeatAngleState.INIT
 
 
     def connected(self) -> bool:
         return self.fixed_imu.connected() and self.mobile_imu.connected()
     
     def calibrated(self):
-        return False
+        return self.state == IMUSeatAngleState.RUNNING_CALIBRATED
+
+    def calib_trigger(self):
+        if self.state == IMUSeatAngleState.CALIBRATION_WAIT_ZERO_TRIG:
+            self.state = IMUSeatAngleState.CALIBRATION_RUNNING_ZERO
+        elif self.state == IMUSeatAngleState.CALIBRATION_WAIT_INCLINED_TRIG:
+            self.state = IMUSeatAngleState.CALIBRATION_RUNNING_INCLINED
+        else:
+            # Trigger when in another state will start a new calibration
+            self.state = IMUSeatAngleState.CALIBRATION_RUNNING_ZERO
 
     def to_dict(self) -> dict:
         result = super().to_dict()   
@@ -38,6 +64,9 @@ class IMUSeatAngle(SeatAngle):
                             'accelerometers': self.mobile_imu_data[0], 
                             'gyros': self.mobile_imu_data[1], 
                             'temperature': self.mobile_imu_data[2]}
+
+        result['state'] = {'stateNumber': self.state.value, 
+                        'stateName': self.state.name}
 
         return result
 
@@ -68,12 +97,63 @@ class IMUSeatAngle(SeatAngle):
         self.fixed_imu_data = self.fixed_imu.get_all_data(raw=True)
         self.mobile_imu_data = self.mobile_imu.get_all_data(raw=True)
 
-        # if self.connected():
-        #     self.seat_angle = self.calculate_angle()
-        # else:
-        #     self.seat_angle = 0
+        # default value, not ready!
+        self.seat_angle = 0
 
-        return True
+        # State machine here
+        if not self.connected():
+            self.state = IMUSeatAngleState.IMU_ERROR
+        else:    
+            # We are connected...
+            if self.state == IMUSeatAngleState.INIT:
+                # Next step is to verify calib
+                self.state = IMUSeatAngleState.CHECK_CALIBRATION_VALID
+                
+            elif self.state == IMUSeatAngleState.IMU_ERROR:
+                # Was in error (disconnected), go back to INIT state
+                self.state = IMUSeatAngleState.INIT
+                
+            elif self.state == IMUSeatAngleState.CHECK_CALIBRATION_VALID:
+                # TODO read file, if not valid wait for calib trigger
+                # self.state = IMUSeatAngleState.CALIBRATION_DONE
+            
+                # If calibration not ready, wait for trigger...
+                self.state = IMUSeatAngleState.CALIBRATION_WAIT_ZERO_TRIG
+            
+            elif self.state == IMUSeatAngleState.CALIBRATION_WAIT_ZERO_TRIG:
+                # Wait trigger, must receive a MQTT signal on 'config/calib_imu'
+                pass
+            elif self.state == IMUSeatAngleState.CALIBRATION_RUNNING_ZERO:
+                # TODO WAIT FOR ENOUGH DATA TO ZERO CALIBRATION
+                self.state = IMUSeatAngleState.CALIBRATION_WAIT_INCLINED_TRIG
+            elif self.state == IMUSeatAngleState.CALIBRATION_WAIT_INCLINED_TRIG:
+                # Wait trigger, must receive a MQTT signal on 'config/calib_imu'
+                pass
+            elif self.state == IMUSeatAngleState.CALIBRATION_RUNNING_INCLINED:
+                # TODO WAIT FOR ENOUGH DATA TO INCLINED CALIBRATION
+
+                # TODO START CALCULATION OF ROTATION MATRIX
+                self.state = IMUSeatAngleState.CALIBRATION_WAIT_ROT_WORLD_CALC
+
+            elif self.state == IMUSeatAngleState.CALIBRATION_WAIT_ROT_WORLD_CALC:
+                # TODO WAIT FOR CALCULATION DONE
+                
+                # GO TO CALIBRATION DONE 
+                self.state = IMUSeatAngleState.CALIBRATION_DONE
+
+            elif self.state == IMUSeatAngleState.CALIBRATION_DONE:
+                # TODO SAVE CALIBRATION FILE
+
+                # GO TO RUNNING MODE
+                self.state = IMUSeatAngleState.RUNNING_CALIBRATED
+
+            elif self.state == IMUSeatAngleState.RUNNING_CALIBRATED:
+                # TODO SEAT CALCULATION
+                # FOR NOW OLD CALCULATION
+                self.seat_angle = self.calculate_angle()
+
+    
+        return self.seat_angle
 
 
 def createClient(clientName,config):
@@ -121,11 +201,12 @@ if __name__ == "__main__":
     # connect to mqtt broker
     client = createClient("LoggerAngle", config)
 
+    # Will start background thread for async messages read/write
+    client.loop_start()
 
-    aa = AngleAnalysis()
-
+    # aa = AngleAnalysis()
     # Start calibration
-    aa.intializeIMU(client, config)
+    # aa.intializeIMU(client, config)
 
     imu = IMUSeatAngle()
 
@@ -171,16 +252,40 @@ if __name__ == "__main__":
     # else:
     #     aa.startGetAngle(client, config)
 
+    def on_message(client, userdata: IMUSeatAngle, message):
+        print(client, userdata, message)
+        if message.topic == 'config/calib_imu':
+            imu.calib_trigger()
+
+    # Set userdata
+    client.user_data_set(imu)
+
+    # Set callback
+    client.on_message = on_message
+
+    # Subscribe to calibration topics
+    client.subscribe('config/calib_imu')
+    
+
     # Main loop
     while True:
-        imu.update()
-        client.publish(config.get('MQTT', 'topic_publish'), imu.to_json())
+
+        
+
+
+
+        # Read messages from MQTT
+        # client.
+
+
+        
+        #client.publish(config.get('MQTT', 'topic_publish'), imu.to_json())
         
         # result = aa.getAngleAnalysis()
         # imu.seat_angle = result['angleSiege']
 
-        # Debug for now (old stuff)
-        imu.seat_angle = imu.calculate_angle()
+        # Update angle (depending on state...)
+        imu.seat_angle = imu.update()
 
         # Publish real angle value
         # client.publish('sensors/angle', angle.to_json())
