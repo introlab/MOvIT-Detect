@@ -583,7 +583,13 @@ class AngleAnalysis(RotWorld):
         self.askMeasuringRealTime = False
 
         if self.isRotWorld:
-            x = threading.Thread(target=self.getAngle, args=(clientMQTT, config,))
+
+            # Create another client here...
+            client = self.createClient("AngleAnalysis", config)
+            client.loop_start()
+
+            # x = threading.Thread(target=self.getAngle, args=(clientMQTT, config,))
+            x = threading.Thread(target=self.getAngle, args=(client, config,))
             x.start()
         else:
             print("IMU not calibrated")
