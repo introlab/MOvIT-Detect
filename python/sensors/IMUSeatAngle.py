@@ -39,6 +39,10 @@ class IMUSeatAngle(SeatAngle):
     def connected(self) -> bool:
         return self.fixed_imu.connected() and self.mobile_imu.connected()
     
+    def initialize_angle_analysis(self, client, config):
+        self.aa.intializeIMU(client, config)
+
+
     def calibrated(self):
         return self.state == IMUSeatAngleState.RUNNING_CALIBRATED
 
@@ -85,7 +89,7 @@ class IMUSeatAngle(SeatAngle):
         # Convert radians to degrees
         return math.atan2(y, x) * (180.0 / math.pi)
 
-    def update(self) -> float:
+    def update(self, client, config) -> float:
         # will update timestamp
         super().update()
 
@@ -99,6 +103,8 @@ class IMUSeatAngle(SeatAngle):
 
         # default value, not ready!
         self.seat_angle = 0
+
+        client.publish(config.get('MQTT', 'topic_publish'), self.to_json())
 
         # State machine here
         if not self.connected():
@@ -124,16 +130,19 @@ class IMUSeatAngle(SeatAngle):
                 # Wait trigger, must receive a MQTT signal on 'config/calib_imu'
                 pass
             elif self.state == IMUSeatAngleState.CALIBRATION_RUNNING_ZERO:
-                # TODO WAIT FOR ENOUGH DATA TO ZERO CALIBRATION
-                self.state = IMUSeatAngleState.CALIBRATION_WAIT_INCLINED_TRIG
+                # WAIT FOR ENOUGH DATA TO ZERO CALIBRATION
+                self.aa.isAtZero = True
+                if not self.aa.askAtZero:
+                    self.state = IMUSeatAngleState.CALIBRATION_WAIT_INCLINED_TRIG
+
             elif self.state == IMUSeatAngleState.CALIBRATION_WAIT_INCLINED_TRIG:
                 # Wait trigger, must receive a MQTT signal on 'config/calib_imu'
                 pass
             elif self.state == IMUSeatAngleState.CALIBRATION_RUNNING_INCLINED:
                 # TODO WAIT FOR ENOUGH DATA TO INCLINED CALIBRATION
-
-                # TODO START CALCULATION OF ROTATION MATRIX
-                self.state = IMUSeatAngleState.CALIBRATION_WAIT_ROT_WORLD_CALC
+                self.aa.isInclined = True
+                if not self.aa.askInclined:
+                    self.state = IMUSeatAngleState.CALIBRATION_WAIT_ROT_WORLD_CALC
 
             elif self.state == IMUSeatAngleState.CALIBRATION_WAIT_ROT_WORLD_CALC:
                 # TODO WAIT FOR CALCULATION DONE
@@ -204,11 +213,8 @@ if __name__ == "__main__":
     # Will start background thread for async messages read/write
     client.loop_start()
 
-    # aa = AngleAnalysis()
-    # Start calibration
-    # aa.intializeIMU(client, config)
-
     imu = IMUSeatAngle()
+    imu.initialize_angle_analysis(client,config)
 
 
     # while not aa.askAtZero:
@@ -285,7 +291,7 @@ if __name__ == "__main__":
         # imu.seat_angle = result['angleSiege']
 
         # Update angle (depending on state...)
-        imu.seat_angle = imu.update()
+        imu.seat_angle = imu.update(client, config)
 
         # Publish real angle value
         # client.publish('sensors/angle', angle.to_json())

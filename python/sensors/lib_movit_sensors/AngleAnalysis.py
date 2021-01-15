@@ -433,6 +433,26 @@ class AngleAnalysis(RotWorld):
         self.paramIMU=paramIMU()
         pass
 
+    def createClient(self, clientName,config):
+        import paho.mqtt.client as mqtt
+        #create client connected to mqtt broker
+        
+        #create new instance
+        print("MQTT creating new instance named : "+clientName)
+        client = mqtt.Client(clientName) 
+        
+        #set username and password
+        print("MQTT setting  password")
+        client.username_pw_set(username=config.get('MQTT','usr'),password=config.get('MQTT','pswd'))
+        
+        #connection to broker
+        broker_address=config.get('MQTT','broker_address')
+        print("MQTT connecting to broker : "+broker_address)
+        client.connect(broker_address) #connect to broker
+
+        return client
+
+
     def intializeIMU(self, clientMQTT, config):
         self.isGetInitIMU = False
         self.isRotWorld = False
@@ -440,7 +460,13 @@ class AngleAnalysis(RotWorld):
         # x = threading.Thread(target=self.getCalibrationIMU, args=(clientMQTT,config,))
         # x.start()
 
-        x = threading.Thread(target=self.calibrateIMU, args=(clientMQTT, config,))
+        # Create another client here...
+        client = self.createClient("AngleAnalysis", config)
+        client.loop_start()
+
+        # x = threading.Thread(target=self.calibrateIMU, args=(clientMQTT, config,))
+        # USING NEW CLIENT!
+        x = threading.Thread(target=self.calibrateIMU, args=(client, config,))
         x.start()
 
     def calibrateIMU(self, clientMQTT, config):
@@ -495,7 +521,8 @@ class AngleAnalysis(RotWorld):
         # end the loop after getting n IMU measures
         n = config.getint('AngleAnalysis', 'calibrationPeriod')
         while len(clientMQTT.fixedIMU) < n and len(clientMQTT.mobileIMU) < n:
-            pass
+            import time
+            time.sleep(0.1)
         else:
             clientMQTT.loop_stop()
             clientMQTT.unsubscribe(topic_websocket)
@@ -518,7 +545,9 @@ class AngleAnalysis(RotWorld):
         # get IMU measures when seat at zero
         self.askAtZero = True
         while not self.isAtZero:
-            pass
+            # pass
+            import time
+            time.sleep(0.1)
         else:
             fixedIMU_Zero, mobileIMU_Zero = self.loopGetIMU(clientMQTT, config)
             self.askAtZero = False
@@ -527,7 +556,9 @@ class AngleAnalysis(RotWorld):
         # get IMU measures when seat is inclined
         self.askInclined = True
         while not self.isInclined:
-            pass
+            # pass
+            import time
+            time.sleep(0.1)
         else:
             fixedIMU_Inclined, mobileIMU_Inclined = self.loopGetIMU(clientMQTT, config)
             self.askInclined = False
@@ -577,7 +608,9 @@ class AngleAnalysis(RotWorld):
         self.askMeasuringRealTime = True
         while self.askMeasuringRealTime:
             if len(clientMQTT.fixedIMU) < 1 and len(clientMQTT.mobileIMU) < 1:
-                pass
+                # pass
+                import time
+                time.sleep(0.1)
             else:
                 fixedIMU_Inclined = np.array(clientMQTT.fixedIMU)
                 mobileIMU_Inclined = np.array(clientMQTT.mobileIMU)
