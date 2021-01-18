@@ -38,7 +38,7 @@ class IMUSeatAngle(SeatAngle):
 
     def connected(self) -> bool:
         return self.fixed_imu.connected() and self.mobile_imu.connected()
-    
+
     def initialize_angle_analysis(self, client, config):
         self.aa.intializeIMU(client, config)
 
@@ -124,6 +124,7 @@ class IMUSeatAngle(SeatAngle):
                 if self.aa.isRotWorld:
                     self.state = IMUSeatAngleState.CALIBRATION_DONE
                 else:
+                    self.initialize_angle_analysis(client,config)
                     # If calibration not ready, wait for trigger...
                     self.state = IMUSeatAngleState.CALIBRATION_WAIT_ZERO_TRIG
             
@@ -158,7 +159,7 @@ class IMUSeatAngle(SeatAngle):
                 self.aa.isAtZero = False
                 self.aa.isInclined = False
 
-                self.aa.saveToJson()
+                # self.aa.saveToJson()
                 self.aa.startGetAngle(client, config)
 
                 # GO TO RUNNING MODE
@@ -173,6 +174,7 @@ class IMUSeatAngle(SeatAngle):
                 # FOR NOW OLD CALCULATION
                 # self.seat_angle = self.calculate_angle()
 
+        print('State: ', self.state.name)
         return self.seat_angle
 
 
@@ -227,7 +229,7 @@ if __name__ == "__main__":
     imu = IMUSeatAngle()
 
     # TODO This is forcing calibration for now.
-    imu.initialize_angle_analysis(client,config)
+    # imu.initialize_angle_analysis(client,config)
 
 
     # while not aa.askAtZero:

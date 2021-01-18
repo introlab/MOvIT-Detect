@@ -401,10 +401,10 @@ class RotWorld(paramIMU):
                     print(data)
 
                     self.Cterrain = np.matrix(data["C"]["terrain"])
-                    self.Facc_offset = data["offsets"]["Facc"]
-                    self.Fgyr_offset = data["offsets"]["Fgyr"]
-                    self.Macc_offset = data["offsets"]["Macc"]
-                    self.Mgyr_offset = data["offsets"]["Mgyr"]
+                    self.Facc_offset = np.matrix(data["offsets"]["Facc"])
+                    self.Fgyr_offset = np.matrix(data["offsets"]["Fgyr"])
+                    self.Macc_offset = np.matrix(data["offsets"]["Macc"])
+                    self.Mgyr_offset = np.matrix(data["offsets"]["Mgyr"])
 
                     self.Cfixe = np.matrix(data["C"]["fixe"])
                     self.Cmobile = np.matrix(data["C"]["mobile"])
