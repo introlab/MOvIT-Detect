@@ -323,6 +323,11 @@ class RotWorld(paramIMU):
         print(self.getRotWorld())
         self.saveToJson()
 
+        self.computeAngle(self.Facc_Zero,
+                          self.Fgyr_Zero,
+                          self.Macc_Zero,
+                          self.Mgyr_Zero)
+
         self.computeAngle(self.Facc_Inclined,
                           self.Fgyr_Inclined,
                           self.Macc_Inclined,
@@ -486,7 +491,7 @@ class AngleAnalysis(RotWorld):
         m_gx = info['mobile_imu']['gyros']['x']
         m_gy = info['mobile_imu']['gyros']['y']
         m_gz = info['mobile_imu']['gyros']['z']
-        #             mimu  = (time, m_ax, m_ay, m_az, m_gx, m_gy, m_gz)
+        # mimu  = (time, m_ax, m_ay, m_az, m_gx, m_gy, m_gz)
         client.mobileIMU.append([m_ax, m_ay, m_az, m_gx, m_gy, m_gz])
 
         # print(client.mobileIMU_zero)
@@ -497,7 +502,7 @@ class AngleAnalysis(RotWorld):
         f_gx = info['fixed_imu']['gyros']['x']
         f_gy = info['fixed_imu']['gyros']['y']
         f_gz = info['fixed_imu']['gyros']['z']
-        #             fimu  = (time, f_ax, f_ay, f_az, f_gx, f_gy, f_gz)
+        # fimu  = (time, f_ax, f_ay, f_az, f_gx, f_gy, f_gz)
         client.fixedIMU.append([f_ax, f_ay, f_az, f_gx, f_gy, f_gz])
 
         print(len(client.fixedIMU))
@@ -570,7 +575,8 @@ class AngleAnalysis(RotWorld):
         mobileIMU_Inclined = np.array(mobileIMU_Inclined)
 
         ##
-        paramIMU.__init__(self)
+        # paramIMU.__init__(self)
+        RotWorld.__init__(self)
         self.storeParam(fixedIMU_Zero=fixedIMU_Zero,
                    mobileIMU_Zero=mobileIMU_Zero,
                    fixedIMU_Inclined=fixedIMU_Inclined,
