@@ -228,50 +228,8 @@ if __name__ == "__main__":
 
     imu = IMUSeatAngle()
 
-    # TODO This is forcing calibration for now.
+    # This is forcing calibration.
     # imu.initialize_angle_analysis(client,config)
-
-
-    # while not aa.askAtZero:
-    #     pass
-    #     time.sleep(0.1)
-    # else:
-    #     try:
-    #         input("Please, set the Seat at Zero\n")
-    #     except (Exception, KeyboardInterrupt):
-    #         pass
-    #     finally:
-    #         print("Seat at Zero !")
-    #         aa.isAtZero = True
-
-    # while aa.askAtZero:
-    #     imu.update()
-    #     client.publish(config.get('MQTT', 'topic_publish'), imu.to_json())
-    #     time.sleep(1)
-
-    # while not aa.askInclined:
-    #     pass
-    #     time.sleep(0.1)
-    # else:
-    #     try:
-    #         input("Please, Tilt the Seat\n")
-    #     except (Exception, KeyboardInterrupt):
-    #         pass
-    #     finally:
-    #         aa.isInclined = True
-    #         print("Seat is Tilted !")
-    
-    # while aa.askInclined:
-    #     imu.update()
-    #     client.publish(config.get('MQTT', 'topic_publish'), imu.to_json())
-    #     time.sleep(1)
-
-
-    # # Wait for calibration calculation
-    # while not aa.isRotWorld:
-    #     time.sleep(1)
-    # else:
-    #     aa.startGetAngle(client, config)
 
     def on_message(client, userdata: IMUSeatAngle, message):
         print(client, userdata, message)
@@ -290,20 +248,6 @@ if __name__ == "__main__":
 
     # Main loop
     while True:
-
-        
-
-
-
-        # Read messages from MQTT
-        # client.
-
-
-        
-        #client.publish(config.get('MQTT', 'topic_publish'), imu.to_json())
-        
-        # result = aa.getAngleAnalysis()
-        # imu.seat_angle = result['angleSiege']
 
         # Update angle (depending on state...)
         imu.seat_angle = imu.update(client, config)
