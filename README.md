@@ -33,7 +33,7 @@ ___
   - [2.1. Installation de git et Python3](#21-installation-de-git-et-python3)
   - [2.2. Téléchargement du code source de MOvIT-Detect](#22-telechargement-du-code-source-de-movit-detect)
   - [2.3. Installation de l'environnement Python virtuel](#23-installation-de-lenvironnement-python-virtuel)
-  - [2.4. Démarrage du programme (acquisition et machines d'états)](#24-demarrage-du-programme)
+  - [2.4. Démarrage du programme (acquisition et machines d'états)](#24-d%C3%A9marrage-du-programme-acquisition-et-machines-d%C3%A9tats)
 - [3. Explication du code](#3-explication-du-code)
   - [3.1. Machines à états finis](#31-machines-%c3%a0-%c3%a9tats-finis)
       - [Machine à états des bascules](#machine-%c3%a0-%c3%a9tats-des-bascules)
