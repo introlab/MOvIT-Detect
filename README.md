@@ -31,7 +31,7 @@ ___
       - [Vérification de la date et heure](#v%c3%a9rification-de-la-date-et-heure)
 - [2. Installation de MOvIt-Detect](#2-installation-de-movit-detect)
   - [2.1. Installation de git et Python3](#21-installation-de-git-et-python3)
-  - [2.2. Téléchargement du code source de MOvIT-Detect](#22-telechargement-du-code-source-de-movit-detect)
+  - [2.2. Téléchargement du code source de MOvIT-Detect](#22-t%C3%A9l%C3%A9chargement-du-code-source-de-movit-detect)
   - [2.3. Installation de l'environnement Python virtuel](#23-installation-de-lenvironnement-python-virtuel)
   - [2.4. Démarrage du programme (acquisition et machines d'états)](#24-d%C3%A9marrage-du-programme-acquisition-et-machines-d%C3%A9tats)
 - [3. Explication du code](#3-explication-du-code)
