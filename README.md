@@ -205,20 +205,20 @@ python3 launcher.py
 
 # 3. Explication du code
 ## 3.1. Machines à états finis
-Le système embarqué est régi par différente machine à états finis _(fsm / finite state machines)_. Voici le détail de chacune d'entre elle :
+Le système embarqué est régi par différente machine à états finis _(fsm / finite state machines)_. Le processus [_ChairState_](python/fsm/ChairState.py) transmet les données aux autres machines d'états en fonction des données de capteur qui sont transmises par le protocole MQTT. Voici le détail de chacune d'entre elle :
 
-#### Machine à états des bascules
+#### [Machine à états des bascules](python/fsm/AngleFSM.py)
 La machine à état fini de détection de bascule permet de générer des événements de bascules lorsque le fauteuil quitte la zone de détection de -5° à 10°. Voici le schéma de cette machine a état fini.
 ![images](images/AngleFSM.png)
 
-#### Machine à états des déplacements
+#### [Machine à états des déplacements](python/fsm/TravelFSM.py)
 La machine à état fini de détection de déplacement détecte lorsque le fauteuil a subi un déplacement sur une certaine distance et généré un événement de déplacement. Voici le schéma de cette machine à état fini.
 ![images](images/TravelFSM.png)
 
-#### Machine à états de détection de présence
+#### [Machine à états de détection de présence](python/fsm/SeatingFSM.py)
 La machine a états finis de détection de présence, détecte lorsqu'une personne est assise sur le fauteuil. Elle permet d'éviter au possible les fausses détections. Voici le schéma de cette machine à état fini.
 ![images](images/SeatingFSM.png)
 
-#### Machine à états des notifications
+#### [Machine à états des notifications](python/fsm/NotificationFSM.py)
 La machine à état fini des notifications permet de générer des notifications de bascule après un certain temps que la personne est assise sur le fauteuil, elle gère aussi les mises en veille de bascule. Voici le schéma de cette machine à états fini.
 ![images](images/NotificationFSM.png)
