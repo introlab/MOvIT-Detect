@@ -186,6 +186,17 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+## 2.3 Démarrage du programme (acquisition et machines d'états)
+Tous les modules peuvent être démarrés par un simple exécutable qui lance tout les sous modules:
+```bash
+# Aller dans le bon répertoire
+cd ~/MOvITPlus/MOvIT-Detect/python
+# Configure l'environnement virtuel
+source source venv/bin/activate
+# Lancer l'exécutable
+python3 launcher.py
+```
+
 <br>
 <br>
 
