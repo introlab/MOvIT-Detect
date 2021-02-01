@@ -47,19 +47,19 @@ Il faut, pour commencer, activer le port I²C et le port SPI du Raspberry Pi. Po
 sudo raspi-config
 ```
 #### Activation I²C
-Activation du I²C avec raspa-config
+Activation du I²C avec raspi-config
 - Option 5
 - Option P5
 - Choisir Yes
 
 #### Activation SPI
-Activation du SPI avec raspa-config
+Activation du SPI avec raspi-config
 - Option 5
 - Option P4
 - Choisir Yes
 
 #### Expend FileSystem (Optionel)
-Expending FileSystem avec raspa-config
+Expending FileSystem avec raspi-config
 - Option 7
 - Option A1
 
