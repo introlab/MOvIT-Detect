@@ -28,11 +28,7 @@ ___
   - [2.1. Installation de GitHub](#21-installation-de-github)
   - [2.2. Installation de librairies](#22-installation-de-librairies)
   - [2.3. Installation de MOvIT-Detect](#23-installation-de-movit-detect)
-      - [Compilation de la librairie bcm2835](#compilation-de-la-librairie-bcm2835)
-      - [Compilation de MOvIT-Detect](#compilation-de-movit-detect)
       - [Exécution de MOvIT-Detect](#ex%c3%a9cution-de-movit-detect)
-  - [2.4. Cross-compilation](#24-cross-compilation)
-      - [Utiliraire de cross-compilation](#utiliraire-de-cross-compilation)
 - [3. Explication du code](#3-explication-du-code)
   - [3.1. Machines à états finis](#31-machines-%c3%a0-%c3%a9tats-finis)
       - [Machine à états des bascules](#machine-%c3%a0-%c3%a9tats-des-bascules)
@@ -146,7 +142,6 @@ else
 fi
 ```
 
-
 #### Vérification de la date et heure
 On détermine la date et l'heure a l'aide de la commande `date` cette commande retourne la date et l'heure, voici la sortie de ce système:
 ```bash
@@ -167,20 +162,28 @@ sudo hwclock -w
 Notes:
 Février 2021 : Tout le code fonctionne maintenant sur Python (v3.6+). Il n'es plus nécessaire de compiler quoi que ce soit. 
 
-
-## 2.1. Installation de git et python
+## 2.1. Installation de git et Python3
 Si _git_ n'est pas installé, il faut exécuter cette commande : 
 ```bash
-sudo apt-get install -y git `
+sudo apt-get install -y git python3 python3-venv`
 ```
 
-
-> Ancienne dernière commande : `sudo apt-get install -y libmosquitto-dev libmosquittopp-dev libssl-dev automake`
-## 2.3. Installation de MOvIT-Detect
-Il faut ensuite cloner ce répertoire et y accéder:
+## 2.2 Téléchargement du code source de MOvIT-Detect
+Dans le répertoire MOvITPlus à la racine de l'utilisateur "pi" :
 ```bash
-git clone https://github.com/introlab/MOvIT-Detect.git
-cd MOvIT-Detect
+git clone https://github.com/introlab/MOvIT-Detect.git --recurse-submodules
+```
+
+## 2.2 Installation de l'environnement Python virtuel
+
+Allez dans le répertoire MOvIT-Detect/python et faites:
+```bash
+# Création de l'environnement venv (une fois seulement)
+python3 -m venv venv
+# Activation de venv
+source venv/bin/activate
+# Installation des requis Python locaux
+pip install -r requirements.txt
 ```
 
 <br>
