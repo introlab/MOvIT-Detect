@@ -30,10 +30,10 @@ ___
       - [RTC MCP79410](#rtc-mcp79410)
       - [Vérification de la date et heure](#v%c3%a9rification-de-la-date-et-heure)
 - [2. Installation de MOvIt-Detect](#2-installation-de-movit-detect)
-  - [2.1. Installation de GitHub](#21-installation-de-github)
-  - [2.2. Installation de librairies](#22-installation-de-librairies)
-  - [2.3. Installation de MOvIT-Detect](#23-installation-de-movit-detect)
-      - [Exécution de MOvIT-Detect](#ex%c3%a9cution-de-movit-detect)
+  - [2.1. Installation de git et Python3](#21-installation-de-git-et-python3)
+  - [2.2. Téléchargement du code source de MOvIT-Detect](#22-telechargement-du-code-source-de-movit-detect)
+  - [2.3. Installation de l'environnement Python virtuel](#23-installation-de-lenvironnement-python-virtuel)
+  - [2.4. Démarrage du programme (acquisition et machines d'états)](#24-demarrage-du-programme)
 - [3. Explication du code](#3-explication-du-code)
   - [3.1. Machines à états finis](#31-machines-%c3%a0-%c3%a9tats-finis)
       - [Machine à états des bascules](#machine-%c3%a0-%c3%a9tats-des-bascules)
@@ -177,7 +177,7 @@ Dans le répertoire MOvITPlus à la racine de l'utilisateur "pi" :
 git clone https://github.com/introlab/MOvIT-Detect.git --recurse-submodules
 ```
 
-## 2.2 Installation de l'environnement Python virtuel
+## 2.3 Installation de l'environnement Python virtuel
 
 Allez dans le répertoire MOvIT-Detect/python et faites:
 ```bash
@@ -189,7 +189,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## 2.3 Démarrage du programme (acquisition et machines d'états)
+## 2.4 Démarrage du programme (acquisition et machines d'états)
 Tous les modules peuvent être démarrés par un simple exécutable qui lance tout les sous modules:
 ```bash
 # Aller dans le bon répertoire
