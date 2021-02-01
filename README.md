@@ -11,6 +11,11 @@ MOvIT-Detect est la partie capteur du projet MOvIT+ et elle prend en charge diff
 | Optical Flow SensorPMW3901 | Calcul la distance en deltaX et deltaY de son changement de position, permet de savoir si le fauteuil est en mouvement, et de quelle distance celui-ci c'est déplacé | SPI | X |
 
 > Le guide _Configuration du système_ devrait avoir été suivit avant de procéder à cette installation.
+
+## Notes:
+
+> Février 2021 : Tout le code fonctionne maintenant sur Python (v3.6+). Il n'es plus nécessaire de compiler quoi que ce soit. 
+
 ___
 ## Table des matières :
 - [MOvIT-Detect](#movit-detect)
@@ -159,8 +164,6 @@ sudo hwclock -w
 ```
 
 # 2. Installation de MOvIt-Detect
-Notes:
-Février 2021 : Tout le code fonctionne maintenant sur Python (v3.6+). Il n'es plus nécessaire de compiler quoi que ce soit. 
 
 ## 2.1. Installation de git et Python3
 Si _git_ n'est pas installé, il faut exécuter cette commande : 
