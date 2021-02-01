@@ -152,7 +152,7 @@ On détermine la date et l'heure a l'aide de la commande `date` cette commande r
 ```bash
 Wed 16 Jan 14:43:42 EST 2019
 ```
-Si la date est incorrecte, il faut changer de TimeZone, voici comment procédé, a l'aide de l'utilitaire `raspa-config` il faut:
+Si la date est incorrecte, il faut changer de TimeZone, voici comment procédé, a l'aide de l'utilitaire `raspi-config` il faut:
 - Choisir l'option 4
 - Puis l'option I2
 - Choisir ensuite le bon TimeZone selon votre location
@@ -164,19 +164,17 @@ sudo hwclock -w
 ```
 
 # 2. Installation de MOvIt-Detect
-## 2.1. Installation de GitHub
-Si _git_ n'est pas installé, il faut exécuter cette commande : `sudo apt-get install -y git`
+Notes:
+Février 2021 : Tout le code fonctionne maintenant sur Python (v3.6+). Il n'es plus nécessaire de compiler quoi que ce soit. 
 
-## 2.2. Installation de librairies
-Il faut installer les libraires de mosquitto a afin de pouvoir utiliser le MQTT comme moyen de communication:
+
+## 2.1. Installation de git et python
+Si _git_ n'est pas installé, il faut exécuter cette commande : 
 ```bash
-wget http://repo.mosquitto.org/debian/mosquitto-repo.gpg.key
-sudo apt-key add mosquitto-repo.gpg.key
-cd /etc/apt/sources.list.d/
-sudo wget http://repo.mosquitto.org/debian/mosquitto-buster.list
-sudo apt-get update
-sudo apt-get install -y libkrb5-dev libzmq3-dev mosquitto-clients=1.6.4-0mosquitto1~buster1 libmosquitto1=1.6.4-0mosquitto1~buster1 mosquitto=1.6.4-0mosquitto1~buster1 libmosquitto-dev=1.6.4-0mosquitto1~buster1 libmosquittopp-dev=1.6.4-0mosquitto1~buster1 libmosquittopp1=1.6.4-0mosquitto1~buster1 --allow-downgrades
+sudo apt-get install -y git `
 ```
+
+
 > Ancienne dernière commande : `sudo apt-get install -y libmosquitto-dev libmosquittopp-dev libssl-dev automake`
 ## 2.3. Installation de MOvIT-Detect
 Il faut ensuite cloner ce répertoire et y accéder:
@@ -184,35 +182,6 @@ Il faut ensuite cloner ce répertoire et y accéder:
 git clone https://github.com/introlab/MOvIT-Detect.git
 cd MOvIT-Detect
 ```
-#### Compilation de la librairie bcm2835
-Il faut également la librairie _bcm2835_ pour communiquer avec les ports GPIO du processeur. Elle est disponible à la racine du projet :
-```bash
-cd bcm2835-1.60
-./configure
-make && sudo make check && sudo make install
-```
-> Il n'est pas recommendé de compiler cette partie de code directement sur l'appareil à cause du temps que le système prend pour accomplir cette tâche, soit plus de 10 minutes. Voir la section concernant la [cross-compilation](#cross-compilation)
-
-#### Compilation de MOvIT-Detect
-Pour compiler le projet, il suffit d'exécuter les lignes suivantes :
-```bash
-cd MOvIT-Detect/Movit-Pi
-make -f MakefilePI all # Utilisation du Makefile pour compilation directment sur le PI
-```
-> La compilation de ce code peut prendre 2 minutes. Voir la section concernant la [cross-compilation](#cross-compilation)
-
-#### Exécution de MOvIT-Detect
-L'exécutable sera alors créé dans le dossier Executables, sous le nom movit-pi. Le programme doit obligatoirement être exécuté avec sudo, autrement le système ne démarrera pas. Il est possible de démarrer le programme compilé avec la commande suivante:
-```bash
-sudo ./movit-pi
-```
-La sortie en console affiche l'état de chacun des capteurs, et des machines à états finis. L'état de connexion de chacun des capteurs est aussi présent.
-
-## 2.4. Cross-compilation
-Le projet contient deux Makefiles, soit MakefilePI, le fichier à utiliser pour compiler le projet directement sur le Raspberry Pi Zero W, ainsi qu'un autre nommé Makefile. Ce second Makefile est utilisé pour la Cross-Compilation. Celui-ci contient des fichiers avec un lien absolu qu'il faut remplacer avant de pouvoir l'utiliser.
-#### Utiliraire de cross-compilation
-L'utilitaire de cross-compilation utilisé est [celui-ci](https://github.com/raspberrypi/tools/tree/master/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf), soit celui proposé dans le répertoire GitHub de RaspberryPi. Il est utilisé en conjonction avec les librairies mosquitto-broker libmosquitto et bcm2835. (**\*\*Origine inconnue !?\*\***)
-___
 
 <br>
 <br>
