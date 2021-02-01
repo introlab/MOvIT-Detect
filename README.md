@@ -192,7 +192,7 @@ Tous les modules peuvent être démarrés par un simple exécutable qui lance to
 # Aller dans le bon répertoire
 cd ~/MOvITPlus/MOvIT-Detect/python
 # Configure l'environnement virtuel
-source source venv/bin/activate
+source venv/bin/activate
 # Lancer l'exécutable
 python3 launcher.py
 ```
