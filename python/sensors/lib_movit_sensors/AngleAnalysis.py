@@ -5,6 +5,7 @@ import numpy as np
 import math
 from scipy import signal
 from datetime import datetime
+import time
 import os
 
 
@@ -577,6 +578,7 @@ class AngleAnalysis(RotWorld):
         ##
         # paramIMU.__init__(self)
         RotWorld.__init__(self)
+        time.sleep(0.1)
         self.storeParam(fixedIMU_Zero=fixedIMU_Zero,
                    mobileIMU_Zero=mobileIMU_Zero,
                    fixedIMU_Inclined=fixedIMU_Inclined,
