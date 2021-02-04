@@ -458,26 +458,26 @@ class AngleAnalysis(RotWorld):
         return client
 
 
-    def intializeIMU(self, clientMQTT, config):
+    def intializeIMU(self, config):
         self.isGetInitIMU = False
         self.isRotWorld = False
+        self.askMeasuringRealTime = False
 
-        # x = threading.Thread(target=self.getCalibrationIMU, args=(clientMQTT,config,))
-        # x.start()
-
-        # Create another client here...
-        client = self.createClient("AngleAnalysis", config)
-        client.loop_start()
-
-        # x = threading.Thread(target=self.calibrateIMU, args=(clientMQTT, config,))
-        # USING NEW CLIENT!
-        x = threading.Thread(target=self.calibrateIMU, args=(client, config,))
+        x = threading.Thread(target=self.calibrateIMU, args=(config,))
         x.start()
 
-    def calibrateIMU(self, clientMQTT, config):
-        self.getCalibrationIMU(clientMQTT, config)
+    def calibrateIMU(self, config):
+        # Create another client here...
+        clientMQTT = self.createClient("AngleAnalysis_Calibration", config)
 
-        self.computeRotWorld()
+        try:
+            self.getCalibrationIMU(clientMQTT, config)
+
+            self.computeRotWorld()
+        except:
+            pass
+        finally:
+            clientMQTT.disconnect()
 
     @staticmethod
     def on_message_GetIMU(client, userdata, message):
@@ -584,23 +584,20 @@ class AngleAnalysis(RotWorld):
 
         self.isGetInitIMU = True
 
-    def startGetAngle(self, clientMQTT, config):
+    def startGetAngle(self, config):
         self.isMeasuringRealTime = False
         self.askMeasuringRealTime = False
 
         if self.isRotWorld:
-
-            # Create another client here...
-            client = self.createClient("AngleAnalysis", config)
-            client.loop_start()
-
             # x = threading.Thread(target=self.getAngle, args=(clientMQTT, config,))
-            x = threading.Thread(target=self.getAngle, args=(client, config,))
+            x = threading.Thread(target=self.getAngle, args=(config,))
             x.start()
         else:
             print("IMU not calibrated")
 
-    def getAngle(self, clientMQTT, config):
+    def getAngle(self, config):
+        # Create another client here...
+        clientMQTT = self.createClient("AngleAnalysis_RealTime", config)
 
         clientMQTT.on_message = self.on_message_GetIMU
 
@@ -618,38 +615,43 @@ class AngleAnalysis(RotWorld):
         clientMQTT.loop_start()
 
         self.askMeasuringRealTime = True
-        while self.askMeasuringRealTime:
-            if len(clientMQTT.fixedIMU) < 1 and len(clientMQTT.mobileIMU) < 1:
-                # pass
-                import time
-                time.sleep(0.1)
-            else:
-                fixedIMU_Inclined = np.array(clientMQTT.fixedIMU)
-                mobileIMU_Inclined = np.array(clientMQTT.mobileIMU)
-                clientMQTT.fixedIMU = []
-                clientMQTT.mobileIMU = []
 
-                ##
-                self.storeParam(fixedIMU_Inclined=fixedIMU_Inclined,
-                                  mobileIMU_Inclined=mobileIMU_Inclined)
+        try:
+            while self.askMeasuringRealTime:
+                if len(clientMQTT.fixedIMU) < 1 and len(clientMQTT.mobileIMU) < 1:
+                    # pass
+                    import time
+                    time.sleep(0.1)
+                else:
+                    fixedIMU_Inclined = np.array(clientMQTT.fixedIMU)
+                    mobileIMU_Inclined = np.array(clientMQTT.mobileIMU)
+                    clientMQTT.fixedIMU = []
+                    clientMQTT.mobileIMU = []
 
-                angleSiege = self.computeAngle(self.Facc_Inclined,
-                                               self.Fgyr_Inclined,
-                                               self.Macc_Inclined,
-                                               self.Mgyr_Inclined)
+                    ##
+                    self.storeParam(fixedIMU_Inclined=fixedIMU_Inclined,
+                                        mobileIMU_Inclined=mobileIMU_Inclined)
 
-                self.last_update = datetime.now()
-                self.angleSiege=angleSiege
+                    angleSiege = self.computeAngle(self.Facc_Inclined,
+                                                    self.Fgyr_Inclined,
+                                                    self.Macc_Inclined,
+                                                    self.Mgyr_Inclined)
 
-                print(angleSiege)
-                print(self.to_json())
+                    self.last_update = datetime.now()
+                    self.angleSiege=angleSiege
 
+                    print(angleSiege)
+                    print(self.to_json())
+
+                pass
+        except:
             pass
-        else:
+        finally:
             clientMQTT.loop_stop()
             clientMQTT.unsubscribe(topic_websocket)
             clientMQTT.fixedIMU = []
             clientMQTT.mobileIMU = []
+            clientMQTT.disconnect()
 
             self.isMeasuringRealTime = False
 
