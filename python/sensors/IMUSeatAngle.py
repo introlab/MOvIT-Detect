@@ -139,23 +139,31 @@ class IMUSeatAngle(SeatAngle):
             
             elif self.state == IMUSeatAngleState.CALIBRATION_WAIT_ZERO_TRIG:
                 # Wait trigger, must receive a MQTT signal on 'config/calib_imu'
+                if not self.aa.isCalibrationRunning:
+                    self.state = IMUSeatAngleState.CHECK_CALIBRATION_VALID
                 pass
             elif self.state == IMUSeatAngleState.CALIBRATION_RUNNING_ZERO:
                 # WAIT FOR ENOUGH DATA TO ZERO CALIBRATION
                 self.aa.isAtZero = True
                 self.aa.isInclined = False
-                if not self.aa.askAtZero:
+                if not self.aa.askAtZero and self.aa.isCalibrationRunning:
                     self.state = IMUSeatAngleState.CALIBRATION_WAIT_INCLINED_TRIG
+                elif not self.aa.isCalibrationRunning:
+                    self.state = IMUSeatAngleState.CHECK_CALIBRATION_VALID
 
             elif self.state == IMUSeatAngleState.CALIBRATION_WAIT_INCLINED_TRIG:
                 # Wait trigger, must receive a MQTT signal on 'config/calib_imu'
+                if not self.aa.isCalibrationRunning:
+                    self.state = IMUSeatAngleState.CHECK_CALIBRATION_VALID
                 pass
             elif self.state == IMUSeatAngleState.CALIBRATION_RUNNING_INCLINED:
                 # WAIT FOR ENOUGH DATA TO INCLINED CALIBRATION
                 self.aa.isAtZero = False
                 self.aa.isInclined = True
-                if not self.aa.askInclined:
+                if not self.aa.askInclined and self.aa.isCalibrationRunning:
                     self.state = IMUSeatAngleState.CALIBRATION_WAIT_ROT_WORLD_CALC
+                elif not self.aa.isCalibrationRunning:
+                    self.state = IMUSeatAngleState.CHECK_CALIBRATION_VALID
 
             elif self.state == IMUSeatAngleState.CALIBRATION_WAIT_ROT_WORLD_CALC:
                 # WAIT FOR CALCULATION DONE
@@ -191,8 +199,8 @@ def createClient(clientName,config):
     #create client connected to mqtt broker
     
     #create new instance
-    print("MQTT creating new instance named : "+clientName)
-    client = mqtt.Client(clientName) 
+    print("MQTT creating new instance named : "+str(clientName))
+    client = mqtt.Client(clientName)
     
     #set username and password
     print("MQTT setting  password")
@@ -227,41 +235,44 @@ if __name__ == "__main__":
 
     print('opening configuration file :', args.config)
     ret = config.read(args.config)
+    try:
+        ############
+        # connect to mqtt broker
+        client = createClient(None, config)
 
-    ############
-    # connect to mqtt broker
-    client = createClient("LoggerAngle", config)
+        # Will start background thread for async messages read/write
+        client.loop_start()
 
-    # Will start background thread for async messages read/write
-    client.loop_start()
+        imu = IMUSeatAngle()
 
-    imu = IMUSeatAngle()
+        # This is forcing calibration.
+        # imu.initialize_angle_analysis(config)
 
-    # This is forcing calibration.
-    # imu.initialize_angle_analysis(config)
+        def on_message(client, userdata: IMUSeatAngle, message):
+            print(client, userdata, message)
+            if message.topic == 'config/calib_imu':
+                imu.calib_trigger()
 
-    def on_message(client, userdata: IMUSeatAngle, message):
-        print(client, userdata, message)
-        if message.topic == 'config/calib_imu':
-            imu.calib_trigger()
+        # Set userdata
+        client.user_data_set(imu)
 
-    # Set userdata
-    client.user_data_set(imu)
+        # Set callback
+        client.on_message = on_message
 
-    # Set callback
-    client.on_message = on_message
-
-    # Subscribe to calibration topics
-    client.subscribe('config/calib_imu')
+        # Subscribe to calibration topics
+        client.subscribe('config/calib_imu')
     
+        # Main loop
+        while True:
 
-    # Main loop
-    while True:
+            # Update angle (depending on state...)
+            imu.seat_angle = imu.update(client, config)
 
-        # Update angle (depending on state...)
-        imu.seat_angle = imu.update(client, config)
+            # Publish real angle value
+            client.publish('sensors/angle', imu.to_json())
 
-        # Publish real angle value
-        client.publish('sensors/angle', imu.to_json())
-
-        time.sleep(1)
+            time.sleep(1)
+    except:
+        pass
+    finally:
+        client.disconnect()
