@@ -7,9 +7,23 @@ from scipy import signal
 from datetime import datetime
 import time
 import os
+from enum import Enum, unique
 
 
 import lib_movit_sensors.rmoutliers as rmo
+
+@unique
+class AngleAnalysisState(Enum):
+    INIT = 0
+    AA_ERROR = 1
+    CHECK_CALIBRATION_VALID = 2
+    CALIBRATION_WAIT_ZERO_TRIG = 3
+    CALIBRATION_RUNNING_ZERO = 4
+    CALIBRATION_WAIT_INCLINED_TRIG = 5
+    CALIBRATION_RUNNING_INCLINED = 6
+    CALIBRATION_WAIT_ROT_WORLD_CALC = 7
+    CALIBRATION_DONE = 8
+    CALIBRATION_TODO = 9
 
 
 class paramIMU:
@@ -85,25 +99,24 @@ class RotWorld(paramIMU):
         self.loadFromJson()
 
     def computeRotWorld(self):
-        # Localiser axe gravit� (approx)
-        Facc_mean = np.mean(self.Facc_Zero, axis=1)
-        Macc_mean = np.mean(self.Macc_Zero, axis=1)
-        FaxG = np.where(Facc_mean == np.amax(Facc_mean))[0][0]
-        MaxG = np.where(Macc_mean == np.amax(Macc_mean))[0][0]
-
-        Fgref = [0, 0, 0]
-        Fgref[FaxG] = 1
-
-        Mgref = [0, 0, 0]
-        Mgref[MaxG] = 1
-
         ##
         Facc_calibNoOut, facc_out = rmo.rmoutliers_percentiles(self.Facc_Zero, 1.645, 1.645)
         Macc_calibNoOut, macc_out = rmo.rmoutliers_percentiles(self.Macc_Zero, 1.645, 1.645)
         Fgyr_calibNoOut, fgyr_out = rmo.rmoutliers_percentiles(self.Fgyr_Zero, 1.645, 1.645)
         Mgyr_calibNoOut, mgyr_out = rmo.rmoutliers_percentiles(self.Mgyr_Zero, 1.645, 1.645)
 
-        # KL - 06nov: ajustement ax gravit�
+        # Localiser axe gravit� (approx)
+        Facc_mean = np.mean(Facc_calibNoOut, axis=1)
+        Macc_mean = np.mean(Macc_calibNoOut, axis=1)
+
+        def normVec(V):
+            v_norm = V / np.linalg.norm(V) #np.sqrt(np.dot(V,V))
+            return v_norm
+
+        Fgref = normVec(Facc_mean) #Facc_mean / np.dot(Facc_mean,Facc_mean)
+        Mgref = normVec(Macc_mean) #Macc_mean / np.dot(Macc_mean,Macc_mean)
+
+        # KL - 06nov: ajustement ax gravit�      
         Facc_offset = np.mean(Facc_calibNoOut, axis=1) - Fgref
         Macc_offset = np.mean(Macc_calibNoOut, axis=1) - Mgref
         Fgyr_offset = np.mean(Fgyr_calibNoOut, axis=1)
@@ -111,95 +124,87 @@ class RotWorld(paramIMU):
 
         # Remarque 1: ***Consid�rer le filtrage?***
         # Remarque 2: En calibrant comme �a, on assume que c'est du bruit de
-        # capteur et que ce n'Est pas une erreur d'alignement interne... mais
+        # capteur et que ce n'est pas une erreur d'alignement interne... mais
         # bon... on va tenter de palier � tout cela en faisant une certaine
         # it�ration...
 
         Macc_offset2 = [0, 0, 0]
         Mgyr_offset2 = [0, 0, 0]
 
-        ## search offsets
-        Cterrain = []
-        Cmobile = []
+        ##
         np.cosd = lambda x: np.cos(np.deg2rad(x))
         np.sind = lambda x: np.sin(np.deg2rad(x))
+
+        ## création de Cterrain
+        Cterrain = []
+        angTerrain = [0, 0, 0]
+        CterrainX = np.matrix([[1, 0, 0],
+                                [0, np.cosd(angTerrain[0]), -np.sind(angTerrain[0])],
+                                [0, np.sind(angTerrain[0]), np.cosd(angTerrain[0])]])
+        CterrainY = np.matrix([[np.cosd(angTerrain[1]), 0, np.sind(angTerrain[1])],
+                                [0, 1, 0],
+                                [-np.sind(angTerrain[1]), 0, np.cosd(angTerrain[1])]])
+        CterrainZ = np.matrix([[np.cosd(angTerrain[0]), -np.sind(angTerrain[0]), 0],
+                                [np.sind(angTerrain[0]), np.cosd(angTerrain[0]), 0],
+                                [0, 0, 1]])
+
+        Cterrain = CterrainX * CterrainY * CterrainZ
+
+        ## search offsets
+        Cmobile = []
 
         for icalib in range(20):
             Macc_offset = Macc_offset + Macc_offset2
             Mgyr_offset = Mgyr_offset + Mgyr_offset2
 
             ## Cr�ation de vecteurs de l'essai
-            angTerrain = [0, 0, 0]
-            CterrainX = np.matrix([[1, 0, 0],
-                                   [0, np.cosd(angTerrain[0]), -np.sind(angTerrain[0])],
-                                   [0, np.sind(angTerrain[0]), np.cosd(angTerrain[0])]])
-            CterrainY = np.matrix([[np.cosd(angTerrain[1]), 0, np.sind(angTerrain[1])],
-                                   [0, 1, 0],
-                                   [-np.sind(angTerrain[1]), 0, np.cosd(angTerrain[1])]])
-            CterrainZ = np.matrix([[np.cosd(angTerrain[0]), -np.sind(angTerrain[0]), 0],
-                                   [np.sind(angTerrain[0]), np.cosd(angTerrain[0]), 0],
-                                   [0, 0, 1]])
-
-            Cterrain = CterrainX * CterrainY * CterrainZ
-
-            # Facc = (Cterrain*self.initIMUParameters.Facc_Inclined).T - Facc_offset
-            # Macc = (Cterrain*self.initIMUParameters.Macc_Inclined).T - Macc_offset
-
-            # Fgyr = self.initIMUParameters.Fgyr_Inclined.T - Fgyr_offset
-            # Mgyr = self.initIMUParameters.Mgyr_Inclined.T - Mgyr_offset
-
             Facc_Zero = (Cterrain * self.Facc_Zero).T - Facc_offset
             Macc_Zero = (Cterrain * self.Macc_Zero).T - Macc_offset
 
-            Fgyr_Zero = self.Fgyr_Zero.T - Fgyr_offset
-            Mgyr_Zero = self.Mgyr_Zero.T - Mgyr_offset
+            # Fgyr_Zero = self.Fgyr_Zero.T - Fgyr_offset
+            # Mgyr_Zero = self.Mgyr_Zero.T - Mgyr_offset
 
-            Facc_Inclined = (Cterrain * self.Facc_Inclined).T - Facc_offset
+            # Facc_Inclined = (Cterrain * self.Facc_Inclined).T - Facc_offset
             Macc_Inclined = (Cterrain * self.Macc_Inclined).T - Macc_offset
 
-            Fgyr_Inclined = self.Fgyr_Inclined.T - Fgyr_offset
+            # Fgyr_Inclined = self.Fgyr_Inclined.T - Fgyr_offset
             Mgyr_Inclined = self.Mgyr_Inclined.T - Mgyr_offset
 
             ## CALIBRATION POSITIONNEMENT STATIQUE
 
-            # (1) D�finir la p�riode statique
-            #     figure
-            #     plot(fixed.time, Macc)
-            #     grid on grid minor
+            # (1) Mesure statique
 
-            Facc_stat = np.mean(Facc_Zero, axis=0)
+            # Facc_stat = np.mean(Facc_Zero, axis=0)
             Macc_stat = np.mean(Macc_Zero, axis=0)
 
             # (2) Inclinaison initiale des IMUs:
-
-            # ** IMU fixe **
-            theta = math.atan2(Facc_stat[0, 0], Facc_stat[0, 2])
-            C1_fixe = np.matrix([[np.cos(theta), 0, np.sin(theta)],
-                                 [0, 1, 0],
-                                 [-np.sin(theta), 0, np.cos(theta)]]).T
-
-            # Correction capteurs dans IMU fixe
-            # Facc_cor = (C1_fixe*Facc.T).T
-            # Fgyr_cor = (C1_fixe*Fgyr.T).T
-
-            Facc_Zero_cor = (C1_fixe * Facc_Zero.T).T
-            Fgyr_Zero_cor = (C1_fixe * Fgyr_Zero.T).T
-
-            Facc_Inclined_cor = (C1_fixe * Facc_Inclined.T).T
-            Fgyr_Inclined_cor = (C1_fixe * Fgyr_Inclined.T).T
-
             # ** IMU mobile **
-            phi = math.atan2(Macc_stat[0, 0], Macc_stat[0, 2])
-            C1_mobile = np.matrix([[np.cos(phi), 0, np.sin(phi)],
-                                   [0, 1, 0],
-                                   [-np.sin(phi), 0, np.cos(phi)]]).T
+            vecG = np.array([0,0,1])
+            Macc_stat_norm = normVec(np.array(Macc_stat)[0])
+            u = normVec(np.cross(vecG,Macc_stat_norm))
+
+            def angRot2Vec(vector_1,vector_2):
+                unit_vector_1 = vector_1 / np.linalg.norm(vector_1)
+                unit_vector_2 = vector_2 / np.linalg.norm(vector_2)
+                dot_product = np.dot(unit_vector_1, unit_vector_2)
+                angle = np.arccos(dot_product)
+                return angle
+            angRot = angRot2Vec(vecG,Macc_stat_norm)
+
+            c=np.cos(angRot)
+            s=np.sin(angRot)
+            
+            C1_mobile = np.linalg.inv( np.matrix ([[u[0]**2 + (1-u[0]**2)*c, u[0]*u[1]*(1-c)-u[2]*s, u[0]*u[2]*(1-c)+u[1]*s],
+                                                    [u[0]*u[1]*(1-c)+u[2]*s, u[1]**2 + (1-u[1]**2)*c, u[1]*u[2]*(1-c)-u[0]*s],
+                                                    [u[0]*u[2]*(1-c)-u[1]*s, u[1]*u[2]*(1-c)+u[0]*s, u[2]**2 + (1-u[2]**2)*c]])
+                                    )
 
             # Correction capteurs dans IMU mobile
             # Macc_cor = (C1_mobile*Macc.T).T
             # Mgyr_cor = (C1_mobile*Mgyr.T).T
 
             Macc_Zero_cor = (C1_mobile * Macc_Zero.T).T
-            Mgyr_Zero_cor = (C1_mobile * Mgyr_Zero.T).T
+            # Mgyr_Zero_cor = (C1_mobile * Mgyr_Zero.T).T
 
             Macc_Inclined_cor = (C1_mobile * Macc_Inclined.T).T
             Mgyr_Inclined_cor = (C1_mobile * Mgyr_Inclined.T).T
@@ -207,11 +212,18 @@ class RotWorld(paramIMU):
             # (3) Axe de rotation (IMU mobile) pendant la bascule
 
             # Remarque: Trouver de fa�on autonome la p�riode de bascule...
-            Mgyr_basc = Mgyr_Inclined_cor
+            Macc_Zero_Dir = np.mean(Macc_Zero_cor, axis=0)
+            Macc_Inclined_Dir = np.mean(Macc_Inclined_cor, axis=0)
+            def vecBasc(Macc_Zero_Dir,Macc_Inclined_Dir):
+                vector_1 = np.array([Macc_Zero_Dir[0,0],Macc_Zero_Dir[0,1],Macc_Zero_Dir[0,2]])
+                vector_2 = np.array([Macc_Inclined_Dir[0,0],Macc_Inclined_Dir[0,1],Macc_Inclined_Dir[0,2]])
 
-            Mgyr_bascMod = np.sqrt(np.sum(np.multiply(Mgyr_basc, Mgyr_basc), axis=1))
-            Mgyr_bascN = np.divide(Mgyr_basc, Mgyr_bascMod * np.ones([1, 3]))
-            Mgyr_Dir = np.mean(Mgyr_bascN, axis=0)
+                vecRot = np.cross(vector_1,vector_2)
+                unit_vecRot = vecRot / np.linalg.norm(vecRot)
+                return np.matrix(unit_vecRot)
+
+            vecRot = vecBasc(Macc_Zero_Dir,Macc_Inclined_Dir)
+
             # La bonne nouvelle c'est que la composante en z est presque nulle...
             # donc l'alignement avec acc�l�ro tiens la route... la petite
             # composante est soit un r�siduel de l'alignement vs offset initial,
@@ -219,14 +231,13 @@ class RotWorld(paramIMU):
 
             # Trouvons l'angle de rotation autour de z qui permettra d'avoir une
             # bascule purement en "y".
-            vecBascule = Mgyr_Dir / np.sqrt(Mgyr_Dir * Mgyr_Dir.T)
-            ang_Rotz = math.atan2(vecBascule[0, 0], vecBascule[0, 1])
+            ang_Rotz = math.atan2(vecRot[0,0], vecRot[0,1])
             Mat_Rotz = np.matrix([[np.cos(ang_Rotz), -np.sin(ang_Rotz), 0],
                                   [np.sin(ang_Rotz), np.cos(ang_Rotz), 0],
                                   [0, 0, 1]])
 
             # v�rification axe bascule:
-            # test = Mat_Rotz * vecBascule.T
+            # test = Mat_Rotz * vecRot.T
             # print(test)
             # OK... pas mal �a... reste la petite composante en z mais...
 
@@ -238,13 +249,8 @@ class RotWorld(paramIMU):
             vecIni = np.mean(Macc_Zero, axis=0)
             # vecIni = vecIni / sqrt(vecIni*vecIni')
             vecIni_al = Cmobile * vecIni.T
-            # #(ii) vecteur statique final, normalis� (normalement, le m�me
-            # #     mais si j'ai introduit une erreur, on va le voir...
-            # vecFin = np.mean(Macc[Macc.shape[0]-1-10:Macc.shape[0]-1,:],axis=0)
-            # #vecFin = vecFin / sqrt(vecFin*vecFin')
-            # vecFin_al = Cmobile*vecFin.T
             # (iii) Vecteur de bascule
-            vecBascule = Mgyr_Dir
+            vecBascule = vecRot
             vecBascule_al = Cmobile * vecBascule.T
 
             # Avecteur devrait s'approcher de Adesire
@@ -259,9 +265,9 @@ class RotWorld(paramIMU):
         Fgyr_offset2 = [0, 0, 0]
         Facc_offset2 = [0, 0, 0]
 
-        # ORIGINAL
-        Facc_offset = np.mean(self.Facc_Zero, axis=1) - [0, 0, 1]
-        Fgyr_offset = np.mean(self.Fgyr_Zero, axis=1)
+        # # ORIGINAL
+        # Facc_offset = np.mean(self.Facc_Zero, axis=1) - [0, 0, 1]
+        # Fgyr_offset = np.mean(self.Fgyr_Zero, axis=1)
 
         # Filtre pour gyro
         # [B,A] = butter(3,0.3/0.5,"low") #a optimiser
@@ -277,39 +283,54 @@ class RotWorld(paramIMU):
         else:
             Fgyr = signalToFilter.T - Fgyr_offset
 
-        Macc = (Cterrain * self.Macc_Inclined).T - Macc_offset
+        # Macc = (Cterrain * self.Macc_Inclined).T - Macc_offset
 
-        signalToFilter = (Cterrain * self.Mgyr_Inclined)
-        if signalToFilter.shape[1] > ntaps:
-            Mgyr = signal.filtfilt(a, b, signalToFilter).T - Mgyr_offset
-        else:
-            Mgyr = signalToFilter.T - Mgyr_offset
+        # signalToFilter = (Cterrain * self.Mgyr_Inclined)
+        # if signalToFilter.shape[1] > ntaps:
+        #     Mgyr = signal.filtfilt(a, b, signalToFilter).T - Mgyr_offset
+        # else:
+        #     Mgyr = signalToFilter.T - Mgyr_offset
 
         ##
         Cfixe = []
         for j in range(20):
-            Fgyr_offset = Fgyr_offset + Fgyr_offset2
+            # Fgyr_offset = Fgyr_offset + Fgyr_offset2
             Facc_offset = Facc_offset + Facc_offset2
+
+            ## Cr�ation de vecteurs de l'essai
+            Facc_Zero = (Cterrain * self.Facc_Zero).T - Facc_offset
+            # Fgyr_Zero = self.Fgyr_Zero.T - Fgyr_offset
 
             # Inclinaison IMU fixe
             Facc_stat = np.mean(Facc_Zero, axis=0)
-            theta = math.atan2(Facc_stat[0, 0], Facc_stat[0, 2])
-            C1_fixe = np.matrix([[np.cos(theta), 0, np.sin(theta)],
-                                 [0, 1, 0],
-                                 [-np.sin(theta), 0, np.cos(theta)]]).T
+
+            vecG = np.array([0,0,1])
+            Facc_stat_norm = normVec(np.array(Facc_stat)[0])
+            u = normVec(np.cross(vecG,Macc_stat_norm))
+
+            def angRot2Vec(vector_1,vector_2):
+                unit_vector_1 = vector_1 / np.linalg.norm(vector_1)
+                unit_vector_2 = vector_2 / np.linalg.norm(vector_2)
+                dot_product = np.dot(unit_vector_1, unit_vector_2)
+                angle = np.arccos(dot_product)
+                return angle
+            angRot = angRot2Vec(vecG,Facc_stat_norm)
+
+            c=np.cos(angRot)
+            s=np.sin(angRot)
+            
+            C1_fixe = np.linalg.inv( np.matrix ([[u[0]**2 + (1-u[0]**2)*c, u[0]*u[1]*(1-c)-u[2]*s, u[0]*u[2]*(1-c)+u[1]*s],
+                                                    [u[0]*u[1]*(1-c)+u[2]*s, u[1]**2 + (1-u[1]**2)*c, u[1]*u[2]*(1-c)-u[0]*s],
+                                                    [u[0]*u[2]*(1-c)-u[1]*s, u[1]*u[2]*(1-c)+u[0]*s, u[2]**2 + (1-u[2]**2)*c]])
+                                    )
 
             # Correction capteurs dans IMU fixe
-            Facc_cor = (C1_fixe * Facc.T).T
-            Fgyr_cor = (C1_fixe * Fgyr.T).T
+            Facc_cor = (C1_fixe * Facc_Zero.T).T
+            # Fgyr_cor = (C1_fixe * Fgyr_Zero.T).T
 
             Facc_offset2 = np.mean(Facc_cor, axis=0) - [0, 0, 1]
-            Fgyr_offset2 = np.mean(Fgyr_cor, axis=0)
+            # Fgyr_offset2 = np.mean(Fgyr_cor, axis=0)
             Cfixe = C1_fixe
-
-        # Facc_cor = (Cfixe*Facc.T).T
-        # Fgyr_cor = (Cfixe*Fgyr.T).T
-        # Macc_cor = (Cmobile*Macc.T).T
-        # Mgyr_cor = (Cmobile*Mgyr.T).T
 
         self.Cterrain = Cterrain
         self.Facc_offset = Facc_offset
@@ -420,261 +441,179 @@ class RotWorld(paramIMU):
 
 class AngleAnalysis(RotWorld):
     def __init__(self):
-        # BOOL for state
-        self.isGetInitIMU = False
-        self.isCalibrationRunning = False
-
-        self.askAtZero = False  # ask the trigger for seat at zero orientation
-        self.isAtZero = False  # trigger for seat at zero orientation
-        self.askInclined = False  # ask the trigger for seat to be tilted
-        self.isInclined = False  # waiting trigger for seat to be tilted
-
-        self.isMeasuringRealTime = False
-        self.askMeasuringRealTime = False
-
         self.last_update = datetime.now()
         self.angleSiege = 0
 
         # define IMU saved datas
         RotWorld.__init__(self)
-        self.paramIMU=paramIMU()
+        # self.paramIMU=paramIMU()
+
+        #init_state
+        self.state = AngleAnalysisState.INIT
+
         pass
 
-    def createClient(self, clientName,config):
-        import paho.mqtt.client as mqtt
-        #create client connected to mqtt broker
-        
-        #create new instance
-        print("MQTT creating new instance named : "+str(clientName))
-        client = mqtt.Client(clientName) 
-        
-        #set username and password
-        print("MQTT setting  password")
-        client.username_pw_set(username=config.get('MQTT','usr'),password=config.get('MQTT','pswd'))
-        
-        #connection to broker
-        broker_address=config.get('MQTT','broker_address')
-        print("MQTT connecting to broker : "+broker_address)
-        client.connect(broker_address) #connect to broker
-
-        return client
-
-
-    def intializeIMU(self, config):
-        self.isGetInitIMU = False
-        self.isRotWorld = False
-        self.askMeasuringRealTime = False
-
-        self.calibrationThread = threading.Thread(target=self.calibrateIMU, args=(config,))
-        self.calibrationThread.start()
-
-    def calibrateIMU(self, config):
-        try:
-            self.isCalibrationRunning = True
-
-            # Create another client here...
-            # clientMQTT = self.createClient("AngleAnalysis_Calibration_2", config)
-            clientMQTT = self.createClient(None, config)
-
-            self.getCalibrationIMU(clientMQTT, config)
-
-            self.computeRotWorld()
-        except:
-            pass
-        finally:
-            try:
-                clientMQTT.disconnect()
-            except:
-                pass
-
-            if len(self.Cfixe) == 0 and len(self.Cmobile) == 0:
-                self.isRotWorld = True
-            self.isCalibrationRunning = False
-
-
-    @staticmethod
-    def on_message_GetIMU(client, userdata, message):
-        data = str(message.payload.decode("utf-8"))
-        info = json.loads(data)
-
-        # time = info['time']
-        m_ax = info['mobile_imu']['accelerometers']['x']
-        m_ay = info['mobile_imu']['accelerometers']['y']
-        m_az = info['mobile_imu']['accelerometers']['z']
-        m_gx = info['mobile_imu']['gyros']['x']
-        m_gy = info['mobile_imu']['gyros']['y']
-        m_gz = info['mobile_imu']['gyros']['z']
-        # mimu  = (time, m_ax, m_ay, m_az, m_gx, m_gy, m_gz)
-        client.mobileIMU.append([m_ax, m_ay, m_az, m_gx, m_gy, m_gz])
-
-        # print(client.mobileIMU_zero)
-
-        f_ax = info['fixed_imu']['accelerometers']['x']
-        f_ay = info['fixed_imu']['accelerometers']['y']
-        f_az = info['fixed_imu']['accelerometers']['z']
-        f_gx = info['fixed_imu']['gyros']['x']
-        f_gy = info['fixed_imu']['gyros']['y']
-        f_gz = info['fixed_imu']['gyros']['z']
-        # fimu  = (time, f_ax, f_ay, f_az, f_gx, f_gy, f_gz)
-        client.fixedIMU.append([f_ax, f_ay, f_az, f_gx, f_gy, f_gz])
-
-        print(len(client.fixedIMU))
-
-    @staticmethod
-    def loopGetIMU(clientMQTT, config):
-        # Loop to get IMU meaures
-
-        # initialize loop parameters
-        clientMQTT.fixedIMU = []
-        clientMQTT.mobileIMU = []
-
-        # subscribe topic
-        topic_websocket = config.get('MQTT', 'topic_subscribe')
-        print("Subscribing to topic", topic_websocket)
-        clientMQTT.subscribe(topic_websocket)
-
-        # start the loop
-        clientMQTT.loop_start()
-
-        # end the loop after getting n IMU measures
-        n = config.getint('AngleAnalysis', 'calibrationPeriod')
-        while len(clientMQTT.fixedIMU) < n and len(clientMQTT.mobileIMU) < n:
-            import time
-            time.sleep(0.1)
+    def update(self,**kwargs):
+        # need in kwargs:
+        # calibTrigger
+        # fixed_imu_data
+        # mobile_imu_data
+        # config
+        if False:
+            self.state = AngleAnalysisState.AA_ERROR
         else:
-            clientMQTT.loop_stop()
-            clientMQTT.unsubscribe(topic_websocket)
-            fixedIMU = clientMQTT.fixedIMU
-            mobileIMU = clientMQTT.mobileIMU
-            clientMQTT.fixedIMU = []
-            clientMQTT.mobileIMU = []
+            if self.state == AngleAnalysisState.INIT:
+                # Next step is to verify calib
+                self.state = AngleAnalysisState.CHECK_CALIBRATION_VALID
 
-        return fixedIMU, mobileIMU
+            elif self.state == AngleAnalysisState.AA_ERROR:
+                # Was in error (disconnected), go back to INIT state
+                self.__init__()
+                # self.state = AngleAnalysisState.INIT
 
-    def getCalibrationIMU(self, clientMQTT, config):
-        self.askAtZero = False
-        self.askInclined = False
-        self.isAtZero = False
-        self.isInclined = False
-
-        # Essai de calibration (tout � 0)
-        clientMQTT.on_message = self.on_message_GetIMU
-
-        # get IMU measures when seat at zero
-        self.askAtZero = True
-        while not self.isAtZero:
-            # pass
-            import time
-            time.sleep(0.1)
-        else:
-            fixedIMU_Zero, mobileIMU_Zero = self.loopGetIMU(clientMQTT, config)
-            self.askAtZero = False
-            self.isAtZero = False
-
-        # get IMU measures when seat is inclined
-        self.askInclined = True
-        while not self.isInclined:
-            # pass
-            import time
-            time.sleep(0.1)
-        else:
-            fixedIMU_Inclined, mobileIMU_Inclined = self.loopGetIMU(clientMQTT, config)
-            self.askInclined = False
-            self.isInclined = False
-
-        fixedIMU_Zero = np.array(fixedIMU_Zero)
-        mobileIMU_Zero = np.array(mobileIMU_Zero)
-        fixedIMU_Inclined = np.array(fixedIMU_Inclined)
-        mobileIMU_Inclined = np.array(mobileIMU_Inclined)
-
-        ##
-        # paramIMU.__init__(self)
-        RotWorld.__init__(self)
-        time.sleep(0.1)
-        self.storeParam(fixedIMU_Zero=fixedIMU_Zero,
-                   mobileIMU_Zero=mobileIMU_Zero,
-                   fixedIMU_Inclined=fixedIMU_Inclined,
-                   mobileIMU_Inclined=mobileIMU_Inclined)
-
-        self.isGetInitIMU = True
-
-    def startGetAngle(self, config):
-        self.isMeasuringRealTime = False
-        self.askMeasuringRealTime = False
-
-        if self.isRotWorld:
-            self.askMeasuringRealTime = True
-            # x = threading.Thread(target=self.getAngle, args=(clientMQTT, config,))
-            self.x = threading.Thread(target=self.getAngle, args=(config,))
-            self.x.start()
-        else:
-            print("IMU not calibrated")
-
-    def getAngle(self, config):
-        try:
-            # Create another client here...
-            # clientMQTT = self.createClient("AngleAnalysis_RealTime", config)
-            clientMQTT = self.createClient(None, config)
-
-
-            clientMQTT.on_message = self.on_message_GetIMU
-
-            # initialize loop parameters
-            clientMQTT.fixedIMU = []
-            clientMQTT.mobileIMU = []
-            paramIMU.__init__(self)
-
-            # subscribe topic
-            topic_websocket = config.get('MQTT', 'topic_subscribe')
-            print("Subscribing to topic", topic_websocket)
-            clientMQTT.subscribe(topic_websocket)
-
-            clientMQTT.loop_start()
-
-            while self.askMeasuringRealTime:
-                # start the loop
-                clientMQTT.loop_start()
-                if len(clientMQTT.fixedIMU) < 1 and len(clientMQTT.mobileIMU) < 1:
-                    # pass
-                    import time
-                    time.sleep(0.1)
+            elif self.state == AngleAnalysisState.CHECK_CALIBRATION_VALID:
+                # Verify is calibration is done
+                if self.isRotWorld:
+                    self.state = AngleAnalysisState.CALIBRATION_DONE
                 else:
-                    clientMQTT.loop_stop()
-                    fixedIMU_Inclined = np.array(clientMQTT.fixedIMU)
-                    mobileIMU_Inclined = np.array(clientMQTT.mobileIMU)
-                    clientMQTT.fixedIMU = []
-                    clientMQTT.mobileIMU = []
-
-                    ##
-                    self.storeParam(fixedIMU_Inclined=fixedIMU_Inclined,
-                                        mobileIMU_Inclined=mobileIMU_Inclined)
-
-                    angleSiege = self.computeAngle(self.Facc_Inclined,
-                                                    self.Fgyr_Inclined,
-                                                    self.Macc_Inclined,
-                                                    self.Mgyr_Inclined)
-
-                    self.last_update = datetime.now()
-                    self.angleSiege=angleSiege
-
-                    print(angleSiege)
-                    print(self.to_json())
-
+                    self.state = AngleAnalysisState.CALIBRATION_TODO
+                    
+            elif (self.state == AngleAnalysisState.CALIBRATION_WAIT_ZERO_TRIG):
+                # Wait for calibration zero angle trigger
+                if 'calibTrigger' in kwargs:
+                    #start gathering data at Zero angle for calibration
+                    self.fixedIMU = []
+                    self.mobileIMU = []
+                    self.calibTimer = time.time()
+                    self.state = AngleAnalysisState.CALIBRATION_RUNNING_ZERO
+                elif time.time()-self.calibTimer > kwargs['config'].getint('AngleAnalysis', 'calibrationTIMEOUT'):
+                    # TIMEOUT if trigger are too long
+                    self.state = AngleAnalysisState.AA_ERROR
                 pass
-        except:
-            pass
-        finally:
-            try:
-                clientMQTT
-            except:
-                pass
-            else:
-                clientMQTT.loop_stop()
-                clientMQTT.fixedIMU = []
-                clientMQTT.mobileIMU = []
-                clientMQTT.disconnect()
 
-            self.isMeasuringRealTime = False
+            elif self.state == AngleAnalysisState.CALIBRATION_RUNNING_ZERO:
+                # Wait
+                if 'fixed_imu_data' in kwargs and 'mobile_imu_data' in kwargs and 'config' in kwargs:
+                    try:
+                        self.GetMeasureIMU(kwargs['fixed_imu_data'],kwargs['mobile_imu_data'])
+
+                        # end the loop after getting n IMU measures
+                        n = kwargs['config'].getint('AngleAnalysis', 'calibrationPeriod')
+                        if len(self.fixedIMU) >= n and len(self.mobileIMU) >= n:
+                            self.storeParam(fixedIMU_Zero=np.array(self.fixedIMU),
+                                                mobileIMU_Zero=np.array(self.mobileIMU))
+                            self.calibTimer = time.time()
+                            self.state = AngleAnalysisState.CALIBRATION_WAIT_INCLINED_TRIG
+                            pass
+                        elif time.time()-self.calibTimer > kwargs['config'].getint('AngleAnalysis', 'calibrationTIMEOUT'):
+                            self.state = AngleAnalysisState.AA_ERROR
+                        else:
+                            print(str(len(self.fixedIMU))+" / "+str(n))
+                            pass
+                    except:
+                        self.state = AngleAnalysisState.AA_ERROR
+                pass
+
+            elif self.state == AngleAnalysisState.CALIBRATION_WAIT_INCLINED_TRIG:
+                # Wait for calibration zero angle trigger
+                if 'calibTrigger' in kwargs:
+                    #start gathering data at Zero angle for calibration
+                    self.fixedIMU = []
+                    self.mobileIMU = []
+                    self.calibTimer = time.time()
+                    self.state = AngleAnalysisState.CALIBRATION_RUNNING_INCLINED
+                elif time.time()-self.calibTimer > kwargs['config'].getint('AngleAnalysis', 'calibrationTIMEOUT'):
+                    # TIMEOUT if trigger are too long
+                    self.state = AngleAnalysisState.AA_ERROR
+                pass
+
+            elif self.state == AngleAnalysisState.CALIBRATION_RUNNING_INCLINED:
+                if 'fixed_imu_data' in kwargs and 'mobile_imu_data' in kwargs and 'config' in kwargs:
+                    try:
+                        self.GetMeasureIMU(kwargs['fixed_imu_data'],kwargs['mobile_imu_data'])
+
+                        # end the loop after getting n IMU measures
+                        n = kwargs['config'].getint('AngleAnalysis', 'calibrationPeriod')
+                        if len(self.fixedIMU) >= n and len(self.mobileIMU) >= n:
+                            self.storeParam(fixedIMU_Inclined=np.array(self.fixedIMU),
+                                                mobileIMU_Inclined=np.array(self.mobileIMU))
+                            self.state = AngleAnalysisState.CALIBRATION_WAIT_ROT_WORLD_CALC
+                            pass
+                        elif time.time()-self.calibTimer > kwargs['config'].getint('AngleAnalysis', 'calibrationTIMEOUT'):
+                            self.state = AngleAnalysisState.AA_ERROR
+                        else:
+                            print(str(len(self.fixedIMU))+" / "+str(n))
+                            pass
+                    except:
+                        self.state = AngleAnalysisState.AA_ERROR
+                pass
+
+            elif self.state == AngleAnalysisState.CALIBRATION_WAIT_ROT_WORLD_CALC:
+                try:
+                    self.computeRotWorld()
+                    if self.isRotWorld == True:
+                        self.state = AngleAnalysisState.CALIBRATION_DONE
+                    else:
+                        self.state = AngleAnalysisState.AA_ERROR
+                        pass
+                except:
+                    self.state = AngleAnalysisState.AA_ERROR
+                pass
+
+            elif self.state == AngleAnalysisState.CALIBRATION_DONE:
+                # Wait a calibation trigger
+                # else compute the measured angle
+                if 'calibTrigger' in kwargs:
+                    self.calibTimer = time.time()
+                    self.state = AngleAnalysisState.CALIBRATION_WAIT_ZERO_TRIG
+                else:
+                    if 'fixed_imu_data' in kwargs and 'mobile_imu_data' in kwargs:
+                        try:
+                            self.fixedIMU = []
+                            self.mobileIMU = []
+                            self.GetMeasureIMU(kwargs['fixed_imu_data'],kwargs['mobile_imu_data'])
+                            self.storeParam(fixedIMU_Inclined=np.array(self.fixedIMU),
+                                                    mobileIMU_Inclined=np.array(self.mobileIMU))
+
+                            self.angleSiege = self.computeAngle(self.Facc_Inclined,
+                                                        self.Fgyr_Inclined,
+                                                        self.Macc_Inclined,
+                                                        self.Mgyr_Inclined)
+
+                            self.last_update = datetime.now()
+
+                            print(self.angleSiege)
+                            print(self.to_json())
+                        except:
+                            self.state = AngleAnalysisState.AA_ERROR
+                pass
+
+            elif self.state == AngleAnalysisState.CALIBRATION_TODO:
+                # Wait for a calibation trigger
+                if 'calibTrigger' in kwargs:
+                    self.calibTimer = time.time()
+                    self.state = AngleAnalysisState.CALIBRATION_WAIT_ZERO_TRIG
+                pass
+
+        print('State AngleAnalysis: ', self.getStateName())
+
+    def GetMeasureIMU(self,fixed_imu_data,mobile_imu_data):
+        m_ax = mobile_imu_data[0]['x']
+        m_ay = mobile_imu_data[0]['y']
+        m_az = mobile_imu_data[0]['z']
+        m_gx = mobile_imu_data[1]['x']
+        m_gy = mobile_imu_data[1]['y']
+        m_gz = mobile_imu_data[1]['z']
+        self.mobileIMU.append([m_ax, m_ay, m_az, m_gx, m_gy, m_gz])
+
+        f_ax = fixed_imu_data[0]['x']
+        f_ay = fixed_imu_data[0]['y']
+        f_az = fixed_imu_data[0]['z']
+        f_gx = fixed_imu_data[1]['x']
+        f_gy = fixed_imu_data[1]['y']
+        f_gz = fixed_imu_data[1]['z']
+        self.fixedIMU.append([f_ax, f_ay, f_az, f_gx, f_gy, f_gz])
+        pass
 
     def getAngleAnalysis(self):
         result=self.getRotWorld()
@@ -682,5 +621,12 @@ class AngleAnalysis(RotWorld):
         result['angleSiege']= float(self.angleSiege)
 
         return result
+
     def to_json(self):
         return json.dumps(self.getAngleAnalysis())
+
+    def getStateName(self):
+        return self.state.name
+
+    def getStateValue(self):
+        return self.state.value

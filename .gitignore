@@ -1,5 +1,5 @@
 # Visual Studio Code
-/.vscode
+**/.vscode
 
 # SonarQube folders and files.
 **/sonar-scanner
@@ -8,3 +8,11 @@
 # Project folders and files.
 **/obj
 **/output
+
+**/*.pyc
+/bcm*
+**/venv*
+**/CMakeFiles*
+
+# Angle calibration file
+python/sensors/configRotWorld.json
