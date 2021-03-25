@@ -20,9 +20,9 @@ class TravelState(IMUDetectMotion):
         self.error_count = 0
 
     def setConfig(self,config):
-        super().setAttributes(sizeSlidingWindow = config.getint('Travel','sizeSlidingWindow'),    
-                                thresholdAcc = config.getfloat('Travel','thresholdAcc'),
-                                thresholdGyro = config.getfloat('Travel','thresholdGyro')
+        super().setAttributes(sizeSlidingWindow = config['Travel']['sizeSlidingWindow'],    
+                                thresholdAcc = config['Travel']['thresholdAcc'],
+                                thresholdGyro = config['Travel']['thresholdGyro']
                                 )
 
     def reset(self):
@@ -62,7 +62,11 @@ class TravelState(IMUDetectMotion):
                 #             f_gx,f_gy,f_gz])
                 
                 self.addIMUData(travel.get_all_data(raw=True))
-                self.isMoving = self.isMotion()
+                self.isMoving = bool(self.isMotion())
+                if self.isMoving:
+                    self.lastDistance = 101
+                else:
+                    self.lastDistance = 0
 
                 # self.travelX, self.travelY = travel.get_motion_slow()
                 # self.lastDistance = math.sqrt(self.travelX * self.travelX + self.travelY * self.travelY)
@@ -182,12 +186,12 @@ async def travel_loop(client, travel: mpu6050, state: TravelState, config):
     while True:
         state.update(travel)
 
-        if int(float(datetime.now().timestamp()-last_publish.timestamp())) >= config.getfloat('Travel','publishPeriod'):
+        if int(float(datetime.now().timestamp()-last_publish.timestamp())) >= config['Travel']['publishPeriod']:
             # Publish state
             await client.publish('sensors/travel', state.to_json())
             last_publish = datetime.now()
 
-        await asyncio.sleep(config.getfloat('Travel','samplingPeriod'))
+        await asyncio.sleep(config['Travel']['samplingPeriod'])
 
 
 async def travel_main(config: dict):
@@ -230,11 +234,18 @@ if __name__ == "__main__":
 
     # Setup config dict
     server_config = {'hostname': config_parser.get('MQTT','broker_address'), 
-                    'port': int(config_parser.get('MQTT','broker_port')),
+                    'port': config_parser.getint('MQTT','broker_port'),
                     'username': config_parser.get('MQTT','usr'), 
-                    'password': config_parser.get('MQTT','pswd') }
+                    'password': config_parser.get('MQTT','pswd')}
 
-    config = {'server': server_config}
+    travel_config = {'sizeSlidingWindow' : config_parser.getint('Travel','sizeSlidingWindow'),    
+                    'thresholdAcc' : config_parser.getfloat('Travel','thresholdAcc'),
+                    'thresholdGyro' : config_parser.getfloat('Travel','thresholdGyro'),
+                    'publishPeriod' : config_parser.getfloat('Travel','publishPeriod'),
+                    'samplingPeriod' : config_parser.getfloat('Travel','samplingPeriod') }
+
+    config = {'server': server_config,
+              'Travel' : travel_config}
 
     # main task
     asyncio.run(travel_main(config))

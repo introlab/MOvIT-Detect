@@ -200,7 +200,7 @@ class TravelFSMState:
                 }
             break;
             """
-            if chair_state.timestamp - self.__lastTime > 1:
+            if chair_state.timestamp - self.__lastTime > TravelFSMState.TRAVEL_START_TIMEOUT:
                 if self.__travelSum > TravelFSMState.TRAVEL_THRESHOLD:
                     self.__currentState = TravelFSMState.TravelState.TRAVEL_STARTED
                     # Keep sum for next state(s)
