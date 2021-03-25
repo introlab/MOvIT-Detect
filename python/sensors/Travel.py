@@ -50,16 +50,18 @@ class TravelState(IMUDetectMotion):
                 # This way we are sure the device is reinitialized if unplugged/plugged
                 travel.reset()
 
-                fixed_imu_data = travel.get_all_data(raw=True)
-                f_ax = fixed_imu_data[0]['x']
-                f_ay = fixed_imu_data[0]['y']
-                f_az = fixed_imu_data[0]['z']
-                f_gx = fixed_imu_data[1]['x']
-                f_gy = fixed_imu_data[1]['y']
-                f_gz = fixed_imu_data[1]['z']
+                # fixed_imu_data = travel.get_all_data(raw=True)
+                # f_ax = fixed_imu_data[0]['x']
+                # f_ay = fixed_imu_data[0]['y']
+                # f_az = fixed_imu_data[0]['z']
+                # f_gx = fixed_imu_data[1]['x']
+                # f_gy = fixed_imu_data[1]['y']
+                # f_gz = fixed_imu_data[1]['z']
 
-                self.addData([f_ax,f_ay,f_az,
-                            f_gx,f_gy,f_gz])
+                # self.addData([f_ax,f_ay,f_az,
+                #             f_gx,f_gy,f_gz])
+                
+                self.addIMUData(travel.get_all_data(raw=True))
                 self.isMoving = self.isMotion()
 
                 # self.travelX, self.travelY = travel.get_motion_slow()
@@ -182,12 +184,11 @@ async def travel_loop(client, travel: mpu6050, state: TravelState, config):
 
         if int(float(datetime.now().timestamp()-last_publish.timestamp())) >= config.getfloat('MotionDetect','publishPeriod'):
             # Publish state
-            # print('publishing', state.to_json())
             await client.publish('sensors/travel', state.to_json())
+            last_publish = datetime.now()
 
         await asyncio.sleep(config.getfloat('MotionDetect','samplingPeriod'))
 
-        
 
 async def travel_main(config: dict):
     reconnect_interval = 3  # [seconds]

@@ -81,8 +81,9 @@ class IMUDetectMotion:
             else:
                 Warning('thresholdGyro must be: float >0')
 
-    def addData(self,value):
-        """Add data to ``self.data`` and delete old value depending on ``self.sizeSlidingWindow``
+    def addData(self,value) -> None:
+        """
+        Add data to ``self.data`` and delete old value depending on ``self.sizeSlidingWindow``
 
         Args:
             value (array(6,)):  [f_ax f_ay f_az f_gx f_gy f_gz]
@@ -94,6 +95,22 @@ class IMUDetectMotion:
         while len(self.data) > self.sizeSlidingWindow:
             self.data = np.delete(self.data,len(self.data)-1,0)
 
+    def addIMUData(self,IMUdata) -> None:
+        """
+        Extract IMU data from the class ``mpu6050`` measurement and then store them
+
+        Args:
+            IMUdata (mpu6050.get_all_data(raw=True)): IMU measures data from mpu6050
+        """
+        f_ax = IMUdata[0]['x']
+        f_ay = IMUdata[0]['y']
+        f_az = IMUdata[0]['z']
+        f_gx = IMUdata[1]['x']
+        f_gy = IMUdata[1]['y']
+        f_gz = IMUdata[1]['z']
+
+        self.addData([f_ax,f_ay,f_az,
+                    f_gx,f_gy,f_gz])
 
     def isMotion(self):
         """
