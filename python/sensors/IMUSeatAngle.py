@@ -307,15 +307,15 @@ if __name__ == "__main__":
             # Update angle (depending on state...)
             imu.seat_angle = imu.update(config)
 
-            if int(float(datetime.now().timestamp()-last_publish.timestamp())) >= config.getfloat('Measures','publishPeriod'):
+            if int(float(datetime.now().timestamp()-last_publish.timestamp())) >= config.getfloat('IMUSeatAngle','publishPeriod'):
                 # Publish real angle value
                 client.publish('sensors/angle', imu.to_json())
                 last_publish = datetime.now()
 
             if not imu.aa.getStateName() == 'CALIBRATION_DONE':
-                time.sleep(config.getfloat('Measures','samplingPeriod'))
+                time.sleep(config.getfloat('IMUSeatAngle','samplingPeriod'))
             else:
-                time.sleep(config.getfloat('Measures','publishPeriod'))
+                time.sleep(config.getfloat('IMUSeatAngle','publishPeriod'))
     except:
         pass
     finally:

@@ -20,9 +20,9 @@ class TravelState(IMUDetectMotion):
         self.error_count = 0
 
     def setConfig(self,config):
-        super().setAttributes(sizeSlidingWindow = config.getint('MotionDetect','sizeSlidingWindow'),    
-                                thresholdAcc = config.getfloat('MotionDetect','thresholdAcc'),
-                                thresholdGyro = config.getfloat('MotionDetect','thresholdGyro')
+        super().setAttributes(sizeSlidingWindow = config.getint('Travel','sizeSlidingWindow'),    
+                                thresholdAcc = config.getfloat('Travel','thresholdAcc'),
+                                thresholdGyro = config.getfloat('Travel','thresholdGyro')
                                 )
 
     def reset(self):
@@ -182,12 +182,12 @@ async def travel_loop(client, travel: mpu6050, state: TravelState, config):
     while True:
         state.update(travel)
 
-        if int(float(datetime.now().timestamp()-last_publish.timestamp())) >= config.getfloat('MotionDetect','publishPeriod'):
+        if int(float(datetime.now().timestamp()-last_publish.timestamp())) >= config.getfloat('Travel','publishPeriod'):
             # Publish state
             await client.publish('sensors/travel', state.to_json())
             last_publish = datetime.now()
 
-        await asyncio.sleep(config.getfloat('MotionDetect','samplingPeriod'))
+        await asyncio.sleep(config.getfloat('Travel','samplingPeriod'))
 
 
 async def travel_main(config: dict):
