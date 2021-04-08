@@ -1,5 +1,6 @@
 from SeatAngle import SeatAngle
-from MPU6050 import mpu6050
+# from MPU6050 import mpu6050
+from MPU6050_safe import mpu6050
 import numpy as np
 from datetime import datetime
 import time
@@ -93,10 +94,12 @@ class IMUSeatAngle(SeatAngle):
         # will update timestamp
         super().update()
 
-        # Reset IMU every time ?
-        # This way we are sure the device is reinitialized if unplugged/plugged
-        self.fixed_imu.reset()
-        self.mobile_imu.reset()
+        # # Reset IMU every time ?
+        # # This way we are sure the device is reinitialized if unplugged/plugged
+        # self.fixed_imu.reset()
+        # self.mobile_imu.reset()
+        self.fixed_imu.wake_up()
+        self.mobile_imu.wake_up()
 
         self.fixed_imu_data = self.fixed_imu.get_all_data(raw=True)
         self.mobile_imu_data = self.mobile_imu.get_all_data(raw=True)
