@@ -1,6 +1,6 @@
 from SeatAngle import SeatAngle
 # from MPU6050 import mpu6050
-from MPU6050_safe import mpu6050
+from MPU6050_improved import mpu6050_safe as mpu6050
 import numpy as np
 from datetime import datetime
 import time
