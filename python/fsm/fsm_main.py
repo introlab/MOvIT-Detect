@@ -83,7 +83,12 @@ if __name__ == "__main__":
                     'username': config_parser.get('MQTT','usr'), 
                     'password': config_parser.get('MQTT','pswd') }
 
-    config = {'server': server_config}
+    TravelFSM_config = {'TRAVEL_START_TIMEOUT' : config_parser.getfloat('TravelFSM','TRAVEL_START_TIMEOUT'),
+                        'TRAVEL_STOP_TIMEOUT' : config_parser.getfloat('TravelFSM','TRAVEL_STOP_TIMEOUT'),
+                        'TRAVEL_THRESHOLD' : config_parser.getfloat('TravelFSM','TRAVEL_THRESHOLD')}
+
+    config = {'server': server_config,
+                'TravelFSM' : TravelFSM_config}
 
     # main task will start all others
     asyncio.run(movit_main_original(config))

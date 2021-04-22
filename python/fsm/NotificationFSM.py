@@ -602,13 +602,13 @@ class NotificationFSMState:
 
 
 class NotificationFSM:
-    def __init__(self):
+    def __init__(self,config):
         self.state = NotificationFSMState()
         # Keep only state number
         self.lastNotificationState = -1
         self.chairState = ChairState()
         self.angleState = AngleFSMState()
-        self.travelState = TravelFSMState()
+        self.travelState = TravelFSMState(config)
         self.seatingState = SeatingFSMState()
         self.maxDeltaTime = 10  # secs
 
@@ -650,7 +650,7 @@ class NotificationFSM:
         return self.state.to_json()
 
 
-async def connect_to_mqtt_server(config):
+async def connect_to_mqtt_server(config: dict):
     async with AsyncExitStack() as stack:
         # Keep track of the asyncio tasks that we create, so that
         # we can cancel them on exit
@@ -667,7 +667,7 @@ async def connect_to_mqtt_server(config):
             await stack.enter_async_context(client)
 
             # Create angle fsm
-            fsm = NotificationFSM()
+            fsm = NotificationFSM(config)
 
             # Messages that doesn't match a filter will get logged here
             messages = await stack.enter_async_context(client.unfiltered_messages())
@@ -692,7 +692,7 @@ async def connect_to_mqtt_server(config):
             await client.subscribe("fsm/travel")
             manager = client.filtered_messages('fsm/travel')
             messages = await stack.enter_async_context(manager)
-            task = asyncio.create_task(handle_travel_fsm_state(client, messages, fsm))
+            task = asyncio.create_task(handle_travel_fsm_state(client, messages, fsm, config))
             tasks.add(task)
 
             # Subscribe to seating fsm
@@ -875,10 +875,10 @@ async def handle_angle_fsm_state(client, messages, fsm: NotificationFSM):
             print(e)
 
 
-async def handle_travel_fsm_state(client, messages, fsm: NotificationFSM):
+async def handle_travel_fsm_state(client, messages, fsm: NotificationFSM, config: dict):
     async for message in messages:
         try:
-            state = TravelFSMState()
+            state = TravelFSMState(config)
             if state.from_json(message.payload.decode()):
                 fsm.setTravelState(state)
         except Exception as e:
@@ -937,8 +937,12 @@ if __name__ == "__main__":
                     'username': config_parser.get('MQTT','usr'), 
                     'password': config_parser.get('MQTT','pswd') }
 
-    config = {'server': server_config}
+    TravelFSM_config = {'TRAVEL_START_TIMEOUT' : config_parser.getfloat('TravelFSM','TRAVEL_START_TIMEOUT'),
+                        'TRAVEL_STOP_TIMEOUT' : config_parser.getfloat('TravelFSM','TRAVEL_STOP_TIMEOUT'),
+                        'TRAVEL_THRESHOLD' : config_parser.getfloat('TravelFSM','TRAVEL_THRESHOLD')}
 
+    config = {'server': server_config,
+                'TravelFSM' : TravelFSM_config}
     # main task
     asyncio.run(notification_fsm_main(config))
 

@@ -1,5 +1,6 @@
 from SeatAngle import SeatAngle
-from MPU6050 import mpu6050
+# from MPU6050 import mpu6050
+from MPU6050_improved import mpu6050_safe as mpu6050
 import numpy as np
 from datetime import datetime
 import time
@@ -93,10 +94,12 @@ class IMUSeatAngle(SeatAngle):
         # will update timestamp
         super().update()
 
-        # Reset IMU every time ?
-        # This way we are sure the device is reinitialized if unplugged/plugged
-        self.fixed_imu.reset()
-        self.mobile_imu.reset()
+        # # Reset IMU every time ?
+        # # This way we are sure the device is reinitialized if unplugged/plugged
+        # self.fixed_imu.reset()
+        # self.mobile_imu.reset()
+        self.fixed_imu.wake_up()
+        self.mobile_imu.wake_up()
 
         self.fixed_imu_data = self.fixed_imu.get_all_data(raw=True)
         self.mobile_imu_data = self.mobile_imu.get_all_data(raw=True)
@@ -307,15 +310,15 @@ if __name__ == "__main__":
             # Update angle (depending on state...)
             imu.seat_angle = imu.update(config)
 
-            if int(float(datetime.now().timestamp()-last_publish.timestamp())) >= config.getfloat('Measures','publishPeriod'):
+            if int(float(datetime.now().timestamp()-last_publish.timestamp())) >= config.getfloat('IMUSeatAngle','publishPeriod'):
                 # Publish real angle value
                 client.publish('sensors/angle', imu.to_json())
                 last_publish = datetime.now()
 
             if not imu.aa.getStateName() == 'CALIBRATION_DONE':
-                time.sleep(config.getfloat('Measures','samplingPeriod'))
+                time.sleep(config.getfloat('IMUSeatAngle','samplingPeriod'))
             else:
-                time.sleep(config.getfloat('Measures','publishPeriod'))
+                time.sleep(config.getfloat('IMUSeatAngle','publishPeriod'))
     except:
         pass
     finally:

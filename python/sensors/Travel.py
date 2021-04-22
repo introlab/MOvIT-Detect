@@ -1,4 +1,6 @@
-from PMW3901 import PMW3901
+# from MPU6050 import mpu6050
+from MPU6050_improved import mpu6050_safe as mpu6050
+from lib_movit_sensors.IMUDetectMotion import IMUDetectMotion
 from datetime import datetime
 import asyncio
 import aiofiles
@@ -7,15 +9,9 @@ from asyncio_mqtt import Client, MqttError
 import json
 import math
 
-class TravelState:
+class TravelState(IMUDetectMotion):
     def __init__(self):
-        self.timestamp = int(datetime.now().timestamp())
-        self.connected = False
-        self.isMoving = False
-        self.lastDistance = 0
-        self.error_count = 0
-
-    def reset(self):
+        super().__init__()
         self.timestamp = int(datetime.now().timestamp())
         self.connected = False
         self.isMoving = False
@@ -24,20 +20,49 @@ class TravelState:
         self.travelY = 0
         self.error_count = 0
 
-    def update(self, travel: PMW3901):
+    def setConfig(self,config):
+        super().setAttributes(sizeSlidingWindow = config['Travel']['sizeSlidingWindow'],    
+                                thresholdAcc = config['Travel']['thresholdAcc'],
+                                thresholdGyro = config['Travel']['thresholdGyro']
+                                )
+
+    def reset(self):
+        super().__init__()
+        self.timestamp = int(datetime.now().timestamp())
+        self.connected = False
+        self.isMoving = False
+        self.lastDistance = 0
+        self.travelX = 0
+        self.travelY = 0
+        self.error_count = 0
+
+    def update(self, travel: mpu6050):
         try:
 
             # For debug
-            self.error_count = travel.get_error_count()
+            # self.error_count = travel.get_error_count()
 
             if travel.connected():
                 self.timestamp = int(datetime.now().timestamp())
                 self.connected = True
                 self.isMoving = False
-                self.travelX, self.travelY = travel.get_motion_slow()
-                self.lastDistance = math.sqrt(self.travelX * self.travelX + self.travelY * self.travelY)
-                if self.lastDistance > 100.0:
-                    self.isMoving = True
+
+                # Reset IMU every time ?
+                # This way we are sure the device is reinitialized if unplugged/plugged
+                # travel.reset()
+                travel.wake_up()
+                
+                self.addIMUData(travel.get_all_data(raw=True))
+                self.isMoving = bool(self.isMotion())
+                if self.isMoving:
+                    self.lastDistance = 101
+                else:
+                    self.lastDistance = 0
+
+                # self.travelX, self.travelY = travel.get_motion_slow()
+                # self.lastDistance = math.sqrt(self.travelX * self.travelX + self.travelY * self.travelY)
+                # if self.lastDistance > 100.0:
+                #     self.isMoving = True
             else:
                 travel.reset()
                 self.reset()
@@ -108,10 +133,13 @@ async def connect_to_mqtt_server(config):
             await stack.enter_async_context(client)
 
             # Create PWM3901 driver
-            travel = PMW3901()
+            # travel = PMW3901()
+            # Create mpu6050 driver
+            travel = mpu6050(address=0x68)
 
             # Create Travel State
             state = TravelState()
+            state.setConfig(config)
 
             # Messages that doesn't match a filter will get logged here
             messages = await stack.enter_async_context(client.unfiltered_messages())
@@ -120,7 +148,7 @@ async def connect_to_mqtt_server(config):
 
 
             # Start periodic publish of travel state
-            task = asyncio.create_task(travel_loop(client, travel, state))
+            task = asyncio.create_task(travel_loop(client, travel, state,config))
             tasks.add(task)
 
         # Wait for everything to complete (or fail due to, e.g., network errors)
@@ -144,15 +172,18 @@ async def cancel_tasks(tasks):
         except asyncio.CancelledError:
             pass
 
-async def travel_loop(client, travel: PMW3901, state: TravelState):
+async def travel_loop(client, travel: mpu6050, state: TravelState, config):
+    last_publish = datetime.now()
     while True:
         state.update(travel)
-        # Publish state
-        # print('publishing', state.to_json())
-        await client.publish('sensors/travel', state.to_json())
 
-        # Wait next cycle, 1Hz
-        await asyncio.sleep(1)
+        if int(float(datetime.now().timestamp()-last_publish.timestamp())) >= config['Travel']['publishPeriod']:
+            # Publish state
+            await client.publish('sensors/travel', state.to_json())
+            last_publish = datetime.now()
+
+        await asyncio.sleep(config['Travel']['samplingPeriod'])
+
 
 async def travel_main(config: dict):
     reconnect_interval = 3  # [seconds]
@@ -194,11 +225,18 @@ if __name__ == "__main__":
 
     # Setup config dict
     server_config = {'hostname': config_parser.get('MQTT','broker_address'), 
-                    'port': int(config_parser.get('MQTT','broker_port')),
+                    'port': config_parser.getint('MQTT','broker_port'),
                     'username': config_parser.get('MQTT','usr'), 
-                    'password': config_parser.get('MQTT','pswd') }
+                    'password': config_parser.get('MQTT','pswd')}
 
-    config = {'server': server_config}
+    travel_config = {'sizeSlidingWindow' : config_parser.getint('Travel','sizeSlidingWindow'),    
+                    'thresholdAcc' : config_parser.getfloat('Travel','thresholdAcc'),
+                    'thresholdGyro' : config_parser.getfloat('Travel','thresholdGyro'),
+                    'publishPeriod' : config_parser.getfloat('Travel','publishPeriod'),
+                    'samplingPeriod' : config_parser.getfloat('Travel','samplingPeriod') }
+
+    config = {'server': server_config,
+              'Travel' : travel_config}
 
     # main task
     asyncio.run(travel_main(config))
