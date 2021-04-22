@@ -53,7 +53,9 @@ class TravelState(IMUDetectMotion):
                 travel.wake_up()
                 
                 self.addIMUData(travel.get_all_data(raw=True))
+                
                 self.isMoving = bool(self.isMotion())
+                
                 if self.isMoving:
                     self.lastDistance = 101
                 else:
