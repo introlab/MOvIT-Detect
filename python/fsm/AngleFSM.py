@@ -233,8 +233,8 @@ class AngleFSMState:
             self.__sum = 0
             self.__dataPoints = 0
 
-            if chair_state.Angle.seatAngle >= AngleFSMState.ANGLE_THRESHOLD \
-                    or chair_state.Angle.seatAngle <= AngleFSMState.REVERSE_ANGLE_THRESHOLD:
+            if (chair_state.Angle.seatAngle >= AngleFSMState.ANGLE_THRESHOLD \
+                    or chair_state.Angle.seatAngle <= AngleFSMState.REVERSE_ANGLE_THRESHOLD) and not chair_state.Travel.isMoving:
                 # Change state
                 self.__currentState = AngleFSMState.AngleState.CONFIRM_ANGLE
 
@@ -252,7 +252,7 @@ class AngleFSMState:
                     angleStopped = cs.time;
                 break;
             """
-            if AngleFSMState.ANGLE_THRESHOLD > chair_state.Angle.seatAngle > AngleFSMState.REVERSE_ANGLE_THRESHOLD:
+            if (AngleFSMState.ANGLE_THRESHOLD > chair_state.Angle.seatAngle > AngleFSMState.REVERSE_ANGLE_THRESHOLD) or chair_state.Travel.isMoving:
                 # Go back to INIT state
                 self.__currentState = AngleFSMState.AngleState.INIT
             elif (chair_state.timestamp - self.__angleStarted) > self.ANGLE_TIMEOUT:
@@ -328,7 +328,7 @@ class AngleFSMState:
             self.__dataPoints += 1
             self.__sum += chair_state.Angle.seatAngle
 
-            if AngleFSMState.ANGLE_THRESHOLD > chair_state.Angle.seatAngle > AngleFSMState.REVERSE_ANGLE_THRESHOLD:
+            if (AngleFSMState.ANGLE_THRESHOLD > chair_state.Angle.seatAngle > AngleFSMState.REVERSE_ANGLE_THRESHOLD) or chair_state.Travel.isMoving:
                 self.__currentState = AngleFSMState.AngleState.CONFIRM_STOP_ANGLE
 
             self.__angleStopped = chair_state.timestamp
@@ -346,14 +346,17 @@ class AngleFSMState:
                 }
             break;
             """
-            # Do not modify angle started or angle stopped here
-            if chair_state.Angle.seatAngle >= AngleFSMState.ANGLE_THRESHOLD or \
-                    chair_state.Angle.seatAngle <= AngleFSMState.REVERSE_ANGLE_THRESHOLD:
-                self.__currentState = AngleFSMState.AngleState.IN_TILT
+            if chair_state.Travel.isMoving:
+                self.__currentState = AngleFSMState.AngleState.ANGLE_STOPPED
             else:
-                # Wait for timeout
-                if (chair_state.timestamp - self.__angleStopped) > AngleFSMState.ANGLE_TIMEOUT:
-                    self.__currentState = AngleFSMState.AngleState.ANGLE_STOPPED
+                # Do not modify angle started or angle stopped here
+                if chair_state.Angle.seatAngle >= AngleFSMState.ANGLE_THRESHOLD or \
+                        chair_state.Angle.seatAngle <= AngleFSMState.REVERSE_ANGLE_THRESHOLD:
+                    self.__currentState = AngleFSMState.AngleState.IN_TILT
+                else:
+                    # Wait for timeout
+                    if (chair_state.timestamp - self.__angleStopped) > AngleFSMState.ANGLE_TIMEOUT:
+                        self.__currentState = AngleFSMState.AngleState.ANGLE_STOPPED
 
         elif self.__currentState == AngleFSMState.AngleState.ANGLE_STOPPED:
             """

@@ -320,6 +320,8 @@ class ChairState:
 
     def update_angle_data(self, values: dict):
         # Reset values
+        old_angle = self.Angle.seatAngle
+
         self.Angle.reset()
 
         if 'name' in values:
@@ -333,7 +335,10 @@ class ChairState:
             connected = values['connected']
 
         if 'seat_angle' in values and connected:
-            self.Angle.seatAngle = values['seat_angle']
+            if not self.Travel.isMoving:
+                self.Angle.seatAngle = values['seat_angle']
+            else:
+                self.Angle.seatAngle = old_angle
 
         if 'seat_angle_offset' in values and connected:
             self.Angle.angleOffset = values['seat_angle_offset']
