@@ -80,6 +80,7 @@ class NotificationFSMState:
         self.__secondsCounter = 0
         self.__currentTime = 0
         self.__stopReason = ''
+        self.__snoozeRepetition = 0
 
     def reset(self):
         self.__currentState = NotificationFSMState.NotificationState.INIT
@@ -89,6 +90,7 @@ class NotificationFSMState:
         self.__secondsCounter = 0
         self.__currentTime = 0
         self.__stopReason = ''
+        self.__snoozeRepetition = 0
 
     def in_state(self, state: NotificationState):
         return self.__currentState == state
@@ -120,6 +122,7 @@ class NotificationFSMState:
             'stateNum': self.getCurrentState(),
             'stateName': self.getCurrentStateName(),
             'snoozeCount': self.__snoozeCount,
+            'snoozeRepetition': self.__snoozeRepetition,
             # Config information
             'NOTIFICATION_ENABLED': NotificationFSMState.NOTIFICATION_ENABLED,
             'LED_BLINK': NotificationFSMState.LED_BLINK,
@@ -200,6 +203,7 @@ class NotificationFSMState:
             self.__startTime = 0
             self.__secondsCounter = 0
             self.__stopTime = 0
+            self.__snoozeRepetition = 0
 
             if seating_state.in_state(SeatingFSMState.SeatingState.CURRENTLY_SEATING):
                 self.__startTime = chair_state.timestamp
@@ -360,7 +364,8 @@ class NotificationFSMState:
             self.__secondsCounter = 0
             if chair_state.snoozeButton:
                 self.__snoozeCount += 1
-                if self.__snoozeCount >= 4:
+                if self.__snoozeCount >= 2:
+                    self.__snoozeRepetition += 1
                     # 4 seconds press
                     self.__currentState = NotificationFSMState.NotificationState.TILT_SNOOZED
                     self.__stopReason = "SNOOZED_REQUESTED"
@@ -428,6 +433,11 @@ class NotificationFSMState:
                         angle_state.in_state(AngleFSMState.AngleState.IN_TILT)):
                     self.__currentState = NotificationFSMState.NotificationState.WAITING_FOR_TILT
                     self.__stopReason = 'TILT_REQUESTED'
+
+            # Too much Snooze?
+            if self.__snoozeRepetition > NotificationFSMState.MAX_SNOOZE:
+                self.__currentState = NotificationFSMState.NotificationState.INIT
+                self.__stopReason = 'TOO_MUCH_SNOOZE'
 
             # Not seated?
             if not (seating_state.in_state(SeatingFSMState.SeatingState.CURRENTLY_SEATING) or

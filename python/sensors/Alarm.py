@@ -8,6 +8,8 @@ import json
 
 
 class AlarmState:
+    MAX_MOTOR = 30
+
     def __init__(self):
         self.timestamp = int(datetime.now().timestamp())
         self.connected = False
@@ -20,6 +22,7 @@ class AlarmState:
         self.isAlternatingAlarmOn = False
         self.isMotorAlarmOn = False
         self.isButtonOn = False
+        self.alarmCount = 0
 
     def reset(self):
         self.timestamp = int(datetime.now().timestamp())
@@ -33,6 +36,7 @@ class AlarmState:
         self.isAlternatingAlarmOn = False
         self.isMotorAlarmOn = False
         self.isButtonOn = False
+        self.alarmCount = 0
 
     def update(self, connected=False):
         self.timestamp = int(datetime.now().timestamp())
@@ -50,7 +54,8 @@ class AlarmState:
             'isBlinkLedsAlarmOn': self.isBlinkLedsAlarmOn,
             'isAlternatingAlarmOn': self.isAlternatingAlarmOn,
             'isMotorAlarmOn': self.isMotorAlarmOn,
-            'isButtonOn': self.isButtonOn
+            'isButtonOn': self.isButtonOn,
+            'alarmCount': self.alarmCount
         }
 
     def from_dict(self, values: dict):
@@ -301,10 +306,15 @@ async def alarm_loop(client, pca: pca9536, state: AlarmState):
         connected = pca.connected()
         state.update(connected)
 
+        maxMotor = state.MAX_MOTOR
+
         if connected:
             if state.enabled:
+                if not state.alarmCount > maxMotor:
+                    state.alarmCount += 1
+                
                 # Motor
-                if state.isMotorAlarmOn:
+                if state.isMotorAlarmOn and not state.alarmCount >= maxMotor:
                     pca.set_motor(1)
                 else:
                     pca.set_motor(0)
@@ -335,6 +345,7 @@ async def alarm_loop(client, pca: pca9536, state: AlarmState):
                 pca.set_green_led(0)
                 pca.set_red_led(0)
                 pca.set_motor(0)
+                state.alarmCount = 0
 
             # Read button
             state.isButtonOn = pca.get_button()
