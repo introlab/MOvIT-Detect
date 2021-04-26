@@ -361,7 +361,7 @@ class NotificationFSMState:
             """
 
             self.__stopReason = 'Other'
-            self.__secondsCounter = 0
+            self.__secondsCounter += 1
             if chair_state.snoozeButton:
                 self.__snoozeCount += 1
                 if self.__snoozeCount >= 2:
@@ -372,6 +372,10 @@ class NotificationFSMState:
                     self.__secondsCounter = 0
             else:
                 self.__snoozeCount = 0
+
+            if self.__secondsCounter%angle_state.getTargetDuration() == angle_state.getTargetDuration()-1:
+                self.__stopReason = "MISSED_TILT"
+
 
             if travel_state.in_state(TravelFSMState.TravelState.ON_THE_MOVE):
                 self.__currentState = NotificationFSMState.NotificationState.IN_TRAVEL_ELAPSED
@@ -432,6 +436,7 @@ class NotificationFSMState:
                 if (self.__secondsCounter >= NotificationFSMState.SNOOZE_TIME or
                         angle_state.in_state(AngleFSMState.AngleState.IN_TILT)):
                     self.__currentState = NotificationFSMState.NotificationState.WAITING_FOR_TILT
+                    self.__secondsCounter = 0
                     self.__stopReason = 'TILT_REQUESTED'
 
             # Too much Snooze?
@@ -459,6 +464,7 @@ class NotificationFSMState:
             break;
             """
             self.__currentState = NotificationFSMState.NotificationState.WAITING_FOR_TILT
+            self.__secondsCounter = 0
             self.__stopReason = 'INITIAL_TILT_REQUESTED'
 
         elif self.__currentState == NotificationFSMState.NotificationState.IN_TILT:
@@ -601,6 +607,7 @@ class NotificationFSMState:
                 self.__currentState = NotificationFSMState.NotificationState.IN_TRAVEL_ELAPSED
             else:
                 self.__currentState = NotificationFSMState.NotificationState.WAITING_FOR_TILT
+                self.__secondsCounter = 0
 
         else:
             # Invalid state
