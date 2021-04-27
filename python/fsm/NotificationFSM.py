@@ -18,6 +18,7 @@ class NotificationFSMState:
     MOTOR_VIBRATION = False
     SNOOZE_TIME = 5
     MAX_SNOOZE = 2
+    PUSH_SNOOZE_COUNT = 2
 
     @classmethod
     def setParameters(cls, enabled=False, ledBlink=False, motorVibration=False, snoozeTime=5):
@@ -71,7 +72,7 @@ class NotificationFSMState:
             else:
                 raise ValueError('{} is not a valid NotificationState name'.format(name))
 
-    def __init__(self):
+    def __init__(self,config):
         self.__type = 'NotificationFSMState'
         self.__currentState = NotificationFSMState.NotificationState.INIT
         self.__snoozeCount = 0
@@ -81,6 +82,11 @@ class NotificationFSMState:
         self.__currentTime = 0
         self.__stopReason = ''
         self.__snoozeRepetition = 0
+
+        if config.has_section('NotificationFSM'):
+            self.MAX_SNOOZE = config.getint('NotificationFSM','MAX_SNOOZE')
+            self.PUSH_SNOOZE_COUNT = config.getint('NotificationFSM','PUSH_SNOOZE_COUNT')
+
 
     def reset(self):
         self.__currentState = NotificationFSMState.NotificationState.INIT
@@ -364,7 +370,7 @@ class NotificationFSMState:
             self.__secondsCounter += 1
             if chair_state.snoozeButton:
                 self.__snoozeCount += 1
-                if self.__snoozeCount >= 2:
+                if self.__snoozeCount >= self.PUSH_SNOOZE_COUNT:
                     self.__snoozeRepetition += 1
                     # 4 seconds press
                     self.__currentState = NotificationFSMState.NotificationState.TILT_SNOOZED
@@ -620,14 +626,18 @@ class NotificationFSMState:
 
 class NotificationFSM:
     def __init__(self,config):
-        self.state = NotificationFSMState()
+        self.state = NotificationFSMState(config)
         # Keep only state number
         self.lastNotificationState = -1
         self.chairState = ChairState()
         self.angleState = AngleFSMState()
         self.travelState = TravelFSMState(config)
         self.seatingState = SeatingFSMState()
-        self.maxDeltaTime = 10  # secs
+
+        if config.has_section('NotificationFSM'):
+            self.maxDeltaTime = config.getfloat('NotificationFSM','maxDeltaTime')
+        else:
+            self.maxDeltaTime = 10  # secs
 
     def __repr__(self):
         return "<NotificationFSM state: {}>".format(self.state.getCurrentStateName())
@@ -667,19 +677,19 @@ class NotificationFSM:
         return self.state.to_json()
 
 
-async def connect_to_mqtt_server(config: dict):
+async def connect_to_mqtt_server(config):
     async with AsyncExitStack() as stack:
         # Keep track of the asyncio tasks that we create, so that
         # we can cancel them on exit
         tasks = set()
         stack.push_async_callback(cancel_tasks, tasks)
 
-        if 'server' in config:
+        if config.has_section('server'):
             # Connect to the MQTT broker
             # client = Client("10.0.1.20", username="admin", password="movitplus")
-            client = Client(config['server']['hostname'],
-                            username=config['server']['username'],
-                            password=config['server']['password'])
+            client = Client(config.get('MQTT','broker_address'),
+                            username=config.get('MQTT','usr'),
+                            password=config.get('MQTT','pswd'))
 
             await stack.enter_async_context(client)
 
@@ -695,14 +705,14 @@ async def connect_to_mqtt_server(config: dict):
             await client.subscribe("sensors/chairState")
             manager = client.filtered_messages('sensors/chairState')
             messages = await stack.enter_async_context(manager)
-            task = asyncio.create_task(handle_sensors_chair_state(client, messages, fsm))
+            task = asyncio.create_task(handle_sensors_chair_state(client, messages, fsm, config))
             tasks.add(task)
 
             # Subscribe to angle fsm
             await client.subscribe("fsm/angle")
             manager = client.filtered_messages('fsm/angle')
             messages = await stack.enter_async_context(manager)
-            task = asyncio.create_task(handle_angle_fsm_state(client, messages, fsm))
+            task = asyncio.create_task(handle_angle_fsm_state(client, messages, fsm, config))
             tasks.add(task)
 
             # Subscribe to travel fsm
@@ -716,7 +726,7 @@ async def connect_to_mqtt_server(config: dict):
             await client.subscribe("fsm/seating")
             manager = client.filtered_messages('fsm/seating')
             messages = await stack.enter_async_context(manager)
-            task = asyncio.create_task(handle_seating_fsm_state(client, messages, fsm))
+            task = asyncio.create_task(handle_seating_fsm_state(client, messages, fsm, config))
             tasks.add(task)
 
             # Notification changes
@@ -855,7 +865,7 @@ async def publish_notification_fsm(client, fsm: NotificationFSM):
         await asyncio.sleep(1)
 
 
-async def handle_sensors_chair_state(client, messages, fsm: NotificationFSM):
+async def handle_sensors_chair_state(client, messages, fsm: NotificationFSM, config):
     async for message in messages:
         try:
             state = ChairState()
@@ -882,17 +892,17 @@ async def handle_config_notifications_settings(client, messages, fsm: Notificati
             print(e)
 
 
-async def handle_angle_fsm_state(client, messages, fsm: NotificationFSM):
+async def handle_angle_fsm_state(client, messages, fsm: NotificationFSM, config):
     async for message in messages:
         try:
-            state = AngleFSMState()
+            state = AngleFSMState(config)
             if state.from_json(message.payload.decode()):
                 fsm.setAngeState(state)
         except Exception as e:
             print(e)
 
 
-async def handle_travel_fsm_state(client, messages, fsm: NotificationFSM, config: dict):
+async def handle_travel_fsm_state(client, messages, fsm: NotificationFSM, config):
     async for message in messages:
         try:
             state = TravelFSMState(config)
@@ -902,17 +912,17 @@ async def handle_travel_fsm_state(client, messages, fsm: NotificationFSM, config
             print(e)
 
 
-async def handle_seating_fsm_state(client, messages, fsm: NotificationFSM):
+async def handle_seating_fsm_state(client, messages, fsm: NotificationFSM, config):
     async for message in messages:
         try:
-            state = SeatingFSMState()
+            state = SeatingFSMState(config)
             if state.from_json(message.payload.decode()):
                 fsm.setSeatingState(state)
         except Exception as e:
             print(e)
 
 
-async def notification_fsm_main(config: dict):
+async def notification_fsm_main(config):
     reconnect_interval = 3  # [seconds]
 
     while True:
@@ -961,5 +971,5 @@ if __name__ == "__main__":
     config = {'server': server_config,
                 'TravelFSM' : TravelFSM_config}
     # main task
-    asyncio.run(notification_fsm_main(config))
+    asyncio.run(notification_fsm_main(config_parser))
 
