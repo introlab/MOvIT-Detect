@@ -1,5 +1,5 @@
-from  PressureMat import PressureMat
-from  MAX11611 import MAX11611
+from  lib_movit_sensors.PressureMat import PressureMat
+from  lib_movit_sensors.MAX11611 import MAX11611
 import numpy as np
 import time
 import paho.mqtt.client as mqtt

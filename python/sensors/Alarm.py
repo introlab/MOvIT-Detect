@@ -1,4 +1,4 @@
-from PCA9536 import pca9536
+from lib_movit_sensors.PCA9536 import pca9536
 from datetime import datetime
 import asyncio
 import aiofiles
