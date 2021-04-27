@@ -6,11 +6,19 @@ from contextlib import AsyncExitStack, asynccontextmanager
 from asyncio_mqtt import Client, MqttError
 import json
 
+class AlarmParameters:
+    MAX_MOTOR = 3
+    FREQ_ALARM = 10
 
-class AlarmState:
-    MAX_MOTOR = 30
+    def __init__(self,config):
+        # parameters from config
+        if config.has_section("Alarm"):
+            self.MAX_MOTOR = config.getfloat('Alarm','max_motor')
+            self.FREQ_ALARM = config.getfloat('Alarm','freq_alarm') 
+class AlarmState(AlarmParameters):
+    def __init__(self,config):
+        super().__init__(config)
 
-    def __init__(self):
         self.timestamp = int(datetime.now().timestamp())
         self.connected = False
         self.enabled = False
@@ -107,12 +115,12 @@ async def connect_to_mqtt_server(config):
         tasks = set()
         stack.push_async_callback(cancel_tasks, tasks)
 
-        if 'server' in config:
+        if config.has_section("server"):
             # Connect to the MQTT broker
             # client = Client("10.0.1.20", username="admin", password="movitplus")
-            client = Client(config['server']['hostname'],
-                            username=config['server']['username'],
-                            password=config['server']['password'])
+            client = Client(config.get('MQTT','broker_address'), 
+                            username=config.get('MQTT','usr'), 
+                            password=config.get('MQTT','pswd'))
 
             await stack.enter_async_context(client)
 
@@ -120,7 +128,7 @@ async def connect_to_mqtt_server(config):
             pca = pca9536()
 
             # Create Alarm State
-            state = AlarmState()
+            state = AlarmState(config)
 
             # Messages that doesn't match a filter will get logged here
             messages = await stack.enter_async_context(client.unfiltered_messages())
@@ -237,7 +245,6 @@ async def handle_alarm_red_led_on(client, messages, pca: pca9536, state: AlarmSt
         except Exception as e:
             print(e)
 
-
 async def handle_alarm_red_led_blink(client, messages, pca: pca9536, state: AlarmState):
     # Topic: sensors/alarm/redLedBlink
     async for message in messages:
@@ -311,7 +318,7 @@ async def alarm_loop(client, pca: pca9536, state: AlarmState):
         if connected:
             if state.enabled:
                 if not state.alarmCount > maxMotor:
-                    state.alarmCount += 1
+                    state.alarmCount += 1/state.FREQ_ALARM
                 
                 # Motor
                 if state.isMotorAlarmOn and not state.alarmCount >= maxMotor:
@@ -357,9 +364,9 @@ async def alarm_loop(client, pca: pca9536, state: AlarmState):
         await client.publish('sensors/alarm/state', state.to_json())
 
         # Wait next cycle
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(1/state.FREQ_ALARM)
 
-async def alarm_main(config: dict):
+async def alarm_main(config: configparser.ConfigParser):
     reconnect_interval = 3  # [seconds]
 
     while True:
@@ -395,15 +402,15 @@ if __name__ == "__main__":
         print('Cannot load config file', args.config)
         exit(-1)
 
-    # Setup config dict
-    server_config = {'hostname': config_parser.get('MQTT','broker_address'), 
-                    'port': int(config_parser.get('MQTT','broker_port')),
-                    'username': config_parser.get('MQTT','usr'), 
-                    'password': config_parser.get('MQTT','pswd') }
+    # # Setup config dict
+    # server_config = {'hostname': config_parser.get('MQTT','broker_address'), 
+    #                 'port': int(config_parser.get('MQTT','broker_port')),
+    #                 'username': config_parser.get('MQTT','usr'), 
+    #                 'password': config_parser.get('MQTT','pswd') }
 
-    config = {'server': server_config}
+    # config = {'server': server_config}
 
     # main task
-    asyncio.run(alarm_main(config))
+    asyncio.run(alarm_main(config_parser))
 
 
