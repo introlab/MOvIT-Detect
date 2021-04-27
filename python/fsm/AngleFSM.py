@@ -26,6 +26,13 @@ class AngleFSMState:
     ANGLE_DURATION = 10
     ANGLE_FREQUENCY = 10
 
+    def __init__(self,config) -> None:
+        if config.has_section('AngleFSM'):
+            self.ANGLE_TIMEOUT = config.getint('AngleFSM','ANGLE_TIMEOUT')
+            self.ANGLE_THRESHOLD = config.getint('AngleFSM','ANGLE_THRESHOLD')
+            self.REVERSE_ANGLE_THRESHOLD = config.getint('AngleFSM','REVERSE_ANGLE_THRESHOLD')
+        pass
+
     @classmethod
     def setParameters(cls, frequency, duration, angle):
         AngleFSMState.ANGLE_TARGET = angle
@@ -374,8 +381,8 @@ class AngleFSMState:
 
 
 class AngleFSM:
-    def __init__(self):
-        self.state = AngleFSMState()
+    def __init__(self,config):
+        self.state = AngleFSMState(config)
         self.chairState = ChairState()
 
     def setChairState(self, state: ChairState):
@@ -396,17 +403,17 @@ async def connect_to_mqtt_server(config):
         tasks = set()
         stack.push_async_callback(cancel_tasks, tasks)
 
-        if 'server' in config:
+        if config.has_section('server'):
             # Connect to the MQTT broker
             # client = Client("10.0.1.20", username="admin", password="movitplus")
-            client = Client(config['server']['hostname'],
-                            username=config['server']['username'],
-                            password=config['server']['password'])
+            client = Client(config.get('MQTT','broker_address'),
+                            username=config.get('MQTT','usr'),
+                            password=config.get('MQTT','pswd'))
 
             await stack.enter_async_context(client)
 
             # Create angle fsm
-            fsm = AngleFSM()
+            fsm = AngleFSM(config)
 
             # Messages that doesn't match a filter will get logged here
             messages = await stack.enter_async_context(client.unfiltered_messages())
@@ -489,7 +496,7 @@ async def handle_sensors_chair_state(client, messages, fsm):
             print(e)
 
 
-async def angle_fsm_main(config: dict):
+async def angle_fsm_main(config):
     reconnect_interval = 3  # [seconds]
 
     while True:
@@ -525,15 +532,7 @@ if __name__ == "__main__":
         print('Cannot load config file', args.config)
         exit(-1)
 
-    # Setup config dict
-    server_config = {'hostname': config_parser.get('MQTT','broker_address'), 
-                    'port': int(config_parser.get('MQTT','broker_port')),
-                    'username': config_parser.get('MQTT','usr'), 
-                    'password': config_parser.get('MQTT','pswd') }
-
-    config = {'server': server_config}
-
     # main task
-    asyncio.run(angle_fsm_main(config))
+    asyncio.run(angle_fsm_main(config_parser))
 
     
