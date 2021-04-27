@@ -4,7 +4,7 @@ from contextlib import AsyncExitStack, asynccontextmanager
 import json
 
 
-async def movit_main_original(config: dict):
+async def movit_main_original(config):
     from ChairState import chair_state_main
     from AngleFSM import angle_fsm_main
     from TravelFSM import travel_fsm_main
@@ -77,18 +77,5 @@ if __name__ == "__main__":
         print('Cannot load config file', args.config)
         exit(-1)
 
-    # Setup config dict
-    server_config = {'hostname': config_parser.get('MQTT','broker_address'), 
-                    'port': int(config_parser.get('MQTT','broker_port')),
-                    'username': config_parser.get('MQTT','usr'), 
-                    'password': config_parser.get('MQTT','pswd') }
-
-    TravelFSM_config = {'TRAVEL_START_TIMEOUT' : config_parser.getfloat('TravelFSM','TRAVEL_START_TIMEOUT'),
-                        'TRAVEL_STOP_TIMEOUT' : config_parser.getfloat('TravelFSM','TRAVEL_STOP_TIMEOUT'),
-                        'TRAVEL_THRESHOLD' : config_parser.getfloat('TravelFSM','TRAVEL_THRESHOLD')}
-
-    config = {'server': server_config,
-                'TravelFSM' : TravelFSM_config}
-
     # main task will start all others
-    asyncio.run(movit_main_original(config))
+    asyncio.run(movit_main_original(config_parser))
