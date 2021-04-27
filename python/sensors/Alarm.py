@@ -107,7 +107,6 @@ class AlarmState(AlarmParameters):
         values = json.loads(data)
         self.from_dict(values)
 
-
 async def connect_to_mqtt_server(config):
     async with AsyncExitStack() as stack:
         # Keep track of the asyncio tasks that we create, so that
@@ -287,13 +286,11 @@ async def handle_alarm_green_led_blink(client, messages, pca: pca9536, state: Al
         except Exception as e:
             print(e)
 
-
 async def log_messages(messages, template):
     async for message in messages:
         # 🤔 Note that we assume that the message payload is an
         # UTF8-encoded string (hence the `bytes.decode` call).
         print(template.format(message.payload.decode()))
-
 
 async def cancel_tasks(tasks):
     for task in tasks:
@@ -304,7 +301,6 @@ async def cancel_tasks(tasks):
             await task
         except asyncio.CancelledError:
             pass
-
 
 async def alarm_loop(client, pca: pca9536, state: AlarmState):
     # 10 Hz
@@ -401,14 +397,6 @@ if __name__ == "__main__":
     if not len(read_ok):
         print('Cannot load config file', args.config)
         exit(-1)
-
-    # # Setup config dict
-    # server_config = {'hostname': config_parser.get('MQTT','broker_address'), 
-    #                 'port': int(config_parser.get('MQTT','broker_port')),
-    #                 'username': config_parser.get('MQTT','usr'), 
-    #                 'password': config_parser.get('MQTT','pswd') }
-
-    # config = {'server': server_config}
 
     # main task
     asyncio.run(alarm_main(config_parser))
