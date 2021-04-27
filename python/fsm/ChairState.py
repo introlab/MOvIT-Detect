@@ -393,12 +393,12 @@ async def connect_to_mqtt_server(config):
         tasks = set()
         stack.push_async_callback(cancel_tasks, tasks)
 
-        if 'server' in config:
+        if config.has_section('server'):
             # Connect to the MQTT broker
             # client = Client("10.0.1.20", username="admin", password="movitplus")
-            client = Client(config['server']['hostname'],
-                            username=config['server']['username'],
-                            password=config['server']['password'])
+            client = Client(config.get('MQTT','broker_address'),
+                            username=config.get('MQTT','usr'),
+                            password=config.get('MQTT','pswd'))
 
             await stack.enter_async_context(client)
 
@@ -548,7 +548,7 @@ async def cancel_tasks(tasks):
             pass
 
 
-async def chair_state_main(config: dict):
+async def chair_state_main(config):
     reconnect_interval = 3  # [seconds]
 
     while True:
@@ -584,13 +584,5 @@ if __name__ == "__main__":
         print('Cannot load config file', args.config)
         exit(-1)
 
-    # Setup config dict
-    server_config = {'hostname': config_parser.get('MQTT','broker_address'), 
-                    'port': int(config_parser.get('MQTT','broker_port')),
-                    'username': config_parser.get('MQTT','usr'), 
-                    'password': config_parser.get('MQTT','pswd') }
-
-    config = {'server': server_config}
-
     # main task
-    asyncio.run(chair_state_main(config))
+    asyncio.run(chair_state_main(config_parser))
