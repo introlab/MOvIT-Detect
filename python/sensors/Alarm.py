@@ -13,8 +13,8 @@ class AlarmParameters:
     def __init__(self,config):
         # parameters from config
         if config.has_section("Alarm"):
-            self.MAX_MOTOR = config.getfloat('Alarm','max_motor')
-            self.FREQ_ALARM = config.getfloat('Alarm','freq_alarm') 
+            AlarmParameters.MAX_MOTOR = config.getfloat('Alarm','max_motor')
+            AlarmParameters.FREQ_ALARM = config.getfloat('Alarm','freq_alarm') 
 class AlarmState(AlarmParameters):
     def __init__(self,config):
         super().__init__(config)

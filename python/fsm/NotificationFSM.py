@@ -84,8 +84,8 @@ class NotificationFSMState:
         self.__snoozeRepetition = 0
 
         if config.has_section('NotificationFSM'):
-            self.MAX_SNOOZE = config.getint('NotificationFSM','MAX_SNOOZE')
-            self.PUSH_SNOOZE_COUNT = config.getint('NotificationFSM','PUSH_SNOOZE_COUNT')
+            NotificationFSMState.MAX_SNOOZE = config.getint('NotificationFSM','MAX_SNOOZE')
+            NotificationFSMState.PUSH_SNOOZE_COUNT = config.getint('NotificationFSM','PUSH_SNOOZE_COUNT')
 
 
     def reset(self):
@@ -134,7 +134,8 @@ class NotificationFSMState:
             'LED_BLINK': NotificationFSMState.LED_BLINK,
             'MOTOR_VIBRATION': NotificationFSMState.MOTOR_VIBRATION,
             'SNOOZE_TIME': NotificationFSMState.SNOOZE_TIME,
-            'MAX_SNOOZE': NotificationFSMState.MAX_SNOOZE
+            'MAX_SNOOZE': NotificationFSMState.MAX_SNOOZE,
+            'PUSH_SNOOZE_COUNT': NotificationFSMState.PUSH_SNOOZE_COUNT
         }
 
     def from_dict(self, values):
@@ -370,7 +371,7 @@ class NotificationFSMState:
             self.__secondsCounter += 1
             if chair_state.snoozeButton:
                 self.__snoozeCount += 1
-                if self.__snoozeCount >= self.PUSH_SNOOZE_COUNT:
+                if self.__snoozeCount >= NotificationFSMState.PUSH_SNOOZE_COUNT:
                     self.__snoozeRepetition += 1
                     # 4 seconds press
                     self.__currentState = NotificationFSMState.NotificationState.TILT_SNOOZED

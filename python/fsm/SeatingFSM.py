@@ -47,7 +47,7 @@ class SeatingFSMState:
         self.__currentTime = 0
 
         if config.has_section('SeatingFSM'):
-            self.SEATING_TIMEOUT = config.getfloat('SeatingFSM','SEATING_TIMEOUT')
+            SeatingFSMState.SEATING_TIMEOUT = config.getfloat('SeatingFSM','SEATING_TIMEOUT')
             pass
 
     def in_state(self, state: SeatingState):

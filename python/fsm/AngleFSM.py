@@ -89,13 +89,13 @@ class AngleFSMState:
         self.__angleStopped = 0
 
         if config.has_section('AngleFSM'):
-            self.ANGLE_TIMEOUT = config.getint('AngleFSM','ANGLE_TIMEOUT')
-            self.ANGLE_THRESHOLD = config.getint('AngleFSM','ANGLE_THRESHOLD')
-            self.REVERSE_ANGLE_THRESHOLD = config.getint('AngleFSM','REVERSE_ANGLE_THRESHOLD')
-            self.ANGLE_TILT_0 = config.getint('AngleFSM','ANGLE_TILT_0')
-            self.ANGLE_TILT_1 = config.getint('AngleFSM','ANGLE_TILT_1')
-            self.ANGLE_TILT_2 = config.getint('AngleFSM','ANGLE_TILT_2')
-            self.ANGLE_TILT_3 = config.getint('AngleFSM','ANGLE_TILT_3')
+            AngleFSMState.ANGLE_TIMEOUT = config.getint('AngleFSM','ANGLE_TIMEOUT')
+            AngleFSMState.ANGLE_THRESHOLD = config.getint('AngleFSM','ANGLE_THRESHOLD')
+            AngleFSMState.REVERSE_ANGLE_THRESHOLD = config.getint('AngleFSM','REVERSE_ANGLE_THRESHOLD')
+            AngleFSMState.ANGLE_TILT_0 = config.getint('AngleFSM','ANGLE_TILT_0')
+            AngleFSMState.ANGLE_TILT_1 = config.getint('AngleFSM','ANGLE_TILT_1')
+            AngleFSMState.ANGLE_TILT_2 = config.getint('AngleFSM','ANGLE_TILT_2')
+            AngleFSMState.ANGLE_TILT_3 = config.getint('AngleFSM','ANGLE_TILT_3')
 
     def reset(self):
         self.__currentState = AngleFSMState.AngleState.INIT
@@ -269,7 +269,7 @@ class AngleFSMState:
             if (AngleFSMState.ANGLE_THRESHOLD > chair_state.Angle.seatAngle > AngleFSMState.REVERSE_ANGLE_THRESHOLD) or chair_state.Travel.isMoving:
                 # Go back to INIT state
                 self.__currentState = AngleFSMState.AngleState.INIT
-            elif (chair_state.timestamp - self.__angleStarted) > self.ANGLE_TIMEOUT:
+            elif (chair_state.timestamp - self.__angleStarted) > AngleFSMState.ANGLE_TIMEOUT:
                 self.__angleStarted = chair_state.timestamp
                 # Go to ANGLE_STARTED
                 self.__currentState = AngleFSMState.AngleState.ANGLE_STARTED
@@ -326,13 +326,13 @@ class AngleFSMState:
             break;
             """
             if chair_state.timestamp - self.__lastTime >= 1:
-                if chair_state.Angle.seatAngle < self.ANGLE_TILT_0:
+                if chair_state.Angle.seatAngle < AngleFSMState.ANGLE_TILT_0:
                     self.__result[0] += 1
-                elif self.ANGLE_TILT_0 <= chair_state.Angle.seatAngle < self.ANGLE_TILT_1:
+                elif AngleFSMState.ANGLE_TILT_0 <= chair_state.Angle.seatAngle < AngleFSMState.ANGLE_TILT_1:
                     self.__result[1] += 1
-                elif self.ANGLE_TILT_1 <= chair_state.Angle.seatAngle < self.ANGLE_TILT_2:
+                elif AngleFSMState.ANGLE_TILT_1 <= chair_state.Angle.seatAngle < AngleFSMState.ANGLE_TILT_2:
                     self.__result[2] += 1
-                elif self.ANGLE_TILT_2 <= chair_state.Angle.seatAngle < self.ANGLE_TILT_3:
+                elif AngleFSMState.ANGLE_TILT_2 <= chair_state.Angle.seatAngle < AngleFSMState.ANGLE_TILT_3:
                     self.__result[3] += 1
                 else:
                     self.__result[4] += 1
