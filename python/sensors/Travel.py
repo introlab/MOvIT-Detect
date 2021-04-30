@@ -129,7 +129,7 @@ async def connect_to_mqtt_server(config):
         tasks = set()
         stack.push_async_callback(cancel_tasks, tasks)
 
-        if config.has_section('server'):
+        if config.has_section('MQTT'):
             # Connect to the MQTT broker
             # client = Client("10.0.1.20", username="admin", password="movitplus")
             client = Client(config.get('MQTT','broker_address'),
