@@ -362,7 +362,7 @@ async def alarm_loop(client, pca: pca9536, state: AlarmState):
         # Wait next cycle
         await asyncio.sleep(1/state.FREQ_ALARM)
 
-async def alarm_main(config: configparser.ConfigParser):
+async def alarm_main(config):
     reconnect_interval = 3  # [seconds]
 
     while True:
