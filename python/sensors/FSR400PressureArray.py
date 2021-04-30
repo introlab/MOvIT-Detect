@@ -8,7 +8,7 @@ import argparse
 import configparser
 
 class FSR400PressureArray(PressureMat):
-    def __init__(self):
+    def __init__(self,config):
         # ADC instance, default parameters
         # Initialized before PressureMat constructor to make sure adc exists
         self.adc = MAX11611()
@@ -84,7 +84,7 @@ if __name__ == "__main__":
         print('Cannot load config file', args.config)
         exit(-1)
 
-    mat = FSR400PressureArray()
+    mat = FSR400PressureArray(config_parser)
 
     # Create MQTT client
     client = mqtt.Client(None)

@@ -85,7 +85,7 @@ class NotificationFSMState:
 
         if config.has_section('NotificationFSM'):
             NotificationFSMState.MAX_SNOOZE = config.getint('NotificationFSM','MAX_SNOOZE')
-            NotificationFSMState.PUSH_SNOOZE_COUNT = config.getint('NotificationFSM','PUSH_SNOOZE_COUNT')
+            NotificationFSMState.PUSH_SNOOZE_COUNT = config.getfloat('NotificationFSM','PUSH_SNOOZE_COUNT')
 
 
     def reset(self):

@@ -89,13 +89,13 @@ class AngleFSMState:
         self.__angleStopped = 0
 
         if config.has_section('AngleFSM'):
-            AngleFSMState.ANGLE_TIMEOUT = config.getint('AngleFSM','ANGLE_TIMEOUT')
-            AngleFSMState.ANGLE_THRESHOLD = config.getint('AngleFSM','ANGLE_THRESHOLD')
-            AngleFSMState.REVERSE_ANGLE_THRESHOLD = config.getint('AngleFSM','REVERSE_ANGLE_THRESHOLD')
-            AngleFSMState.ANGLE_TILT_0 = config.getint('AngleFSM','ANGLE_TILT_0')
-            AngleFSMState.ANGLE_TILT_1 = config.getint('AngleFSM','ANGLE_TILT_1')
-            AngleFSMState.ANGLE_TILT_2 = config.getint('AngleFSM','ANGLE_TILT_2')
-            AngleFSMState.ANGLE_TILT_3 = config.getint('AngleFSM','ANGLE_TILT_3')
+            AngleFSMState.ANGLE_TIMEOUT = config.getfloat('AngleFSM','ANGLE_TIMEOUT')
+            AngleFSMState.ANGLE_THRESHOLD = config.getfloat('AngleFSM','ANGLE_THRESHOLD')
+            AngleFSMState.REVERSE_ANGLE_THRESHOLD = config.getfloat('AngleFSM','REVERSE_ANGLE_THRESHOLD')
+            AngleFSMState.ANGLE_TILT_0 = config.getfloat('AngleFSM','ANGLE_TILT_0')
+            AngleFSMState.ANGLE_TILT_1 = config.getfloat('AngleFSM','ANGLE_TILT_1')
+            AngleFSMState.ANGLE_TILT_2 = config.getfloat('AngleFSM','ANGLE_TILT_2')
+            AngleFSMState.ANGLE_TILT_3 = config.getfloat('AngleFSM','ANGLE_TILT_3')
 
     def reset(self):
         self.__currentState = AngleFSMState.AngleState.INIT

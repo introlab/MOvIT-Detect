@@ -65,9 +65,9 @@ class TravelFSMState:
         self.setConfig(config)
 
     def setConfig(self,config):
-        TravelFSMState.TRAVEL_START_TIMEOUT = config['TravelFSM']['TRAVEL_START_TIMEOUT']
-        TravelFSMState.TRAVEL_STOP_TIMEOUT = config['TravelFSM']['TRAVEL_STOP_TIMEOUT']
-        TravelFSMState.TRAVEL_THRESHOLD = config['TravelFSM']['TRAVEL_THRESHOLD']
+        TravelFSMState.TRAVEL_START_TIMEOUT = config,getfloat('TravelFSM','TRAVEL_START_TIMEOUT')
+        TravelFSMState.TRAVEL_STOP_TIMEOUT = config.getfloat('TravelFSM','TRAVEL_STOP_TIMEOUT')
+        TravelFSMState.TRAVEL_THRESHOLD = config.getfloat('TravelFSM','TRAVEL_THRESHOLD')
 
     def in_state(self, state: TravelState):
         return self.__currentState == state
