@@ -89,7 +89,7 @@ if __name__ == "__main__":
     # Create MQTT client
     client = mqtt.Client(None)
     client.username_pw_set(username=config_parser.get('MQTT','usr'), password=config_parser.get('MQTT','pswd'))
-    client.connect(host=config_parser.get('MQTT','broker_address'), port=config_parser.get('MQTT','broker_port'))
+    client.connect(host=config_parser.get('MQTT','broker_address'), port=config_parser.getint('MQTT','broker_port'))
     
     while True:    
         # Always update
