@@ -631,9 +631,9 @@ class NotificationFSM:
         # Keep only state number
         self.lastNotificationState = -1
         self.chairState = ChairState()
-        self.angleState = AngleFSMState()
+        self.angleState = AngleFSMState(config)
         self.travelState = TravelFSMState(config)
-        self.seatingState = SeatingFSMState()
+        self.seatingState = SeatingFSMState(config)
 
         if config.has_section('NotificationFSM'):
             self.maxDeltaTime = config.getfloat('NotificationFSM','maxDeltaTime')
