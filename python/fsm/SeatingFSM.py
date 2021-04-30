@@ -231,7 +231,7 @@ class SeatingFSMState:
 
 
 class SeatingFSM:
-    def __init__(self,config = configparser.ConfigParser()):
+    def __init__(self,config):
         self.state = SeatingFSMState(config)
         self.chairState = ChairState()
 
