@@ -25,6 +25,11 @@ class AngleFSMState:
     ANGLE_TARGET = 30
     ANGLE_DURATION = 10
     ANGLE_FREQUENCY = 10
+    
+    ANGLE_TILT_0 = 0
+    ANGLE_TILT_1 = 15
+    ANGLE_TILT_2 = 30
+    ANGLE_TILT_3 = 45
 
     @classmethod
     def setParameters(cls, frequency, duration, angle):
@@ -70,7 +75,7 @@ class AngleFSMState:
             else:
                 raise ValueError('{} is not a valid AngleState name'.format(name))
 
-    def __init__(self):
+    def __init__(self,config):
         self.__type = 'AngleFSMState'
         self.__currentState = AngleFSMState.AngleState.INIT
         self.__event = 'Other'
@@ -82,6 +87,15 @@ class AngleFSMState:
         self.__currentTime = 0
         self.__angleStarted = 0
         self.__angleStopped = 0
+
+        if config.has_section('AngleFSM'):
+            AngleFSMState.ANGLE_TIMEOUT = config.getfloat('AngleFSM','ANGLE_TIMEOUT')
+            AngleFSMState.ANGLE_THRESHOLD = config.getfloat('AngleFSM','ANGLE_THRESHOLD')
+            AngleFSMState.REVERSE_ANGLE_THRESHOLD = config.getfloat('AngleFSM','REVERSE_ANGLE_THRESHOLD')
+            AngleFSMState.ANGLE_TILT_0 = config.getfloat('AngleFSM','ANGLE_TILT_0')
+            AngleFSMState.ANGLE_TILT_1 = config.getfloat('AngleFSM','ANGLE_TILT_1')
+            AngleFSMState.ANGLE_TILT_2 = config.getfloat('AngleFSM','ANGLE_TILT_2')
+            AngleFSMState.ANGLE_TILT_3 = config.getfloat('AngleFSM','ANGLE_TILT_3')
 
     def reset(self):
         self.__currentState = AngleFSMState.AngleState.INIT
@@ -255,7 +269,7 @@ class AngleFSMState:
             if (AngleFSMState.ANGLE_THRESHOLD > chair_state.Angle.seatAngle > AngleFSMState.REVERSE_ANGLE_THRESHOLD) or chair_state.Travel.isMoving:
                 # Go back to INIT state
                 self.__currentState = AngleFSMState.AngleState.INIT
-            elif (chair_state.timestamp - self.__angleStarted) > self.ANGLE_TIMEOUT:
+            elif (chair_state.timestamp - self.__angleStarted) > AngleFSMState.ANGLE_TIMEOUT:
                 self.__angleStarted = chair_state.timestamp
                 # Go to ANGLE_STARTED
                 self.__currentState = AngleFSMState.AngleState.ANGLE_STARTED
@@ -312,13 +326,13 @@ class AngleFSMState:
             break;
             """
             if chair_state.timestamp - self.__lastTime >= 1:
-                if chair_state.Angle.seatAngle < 0:
+                if chair_state.Angle.seatAngle < AngleFSMState.ANGLE_TILT_0:
                     self.__result[0] += 1
-                elif 0 <= chair_state.Angle.seatAngle < 15:
+                elif AngleFSMState.ANGLE_TILT_0 <= chair_state.Angle.seatAngle < AngleFSMState.ANGLE_TILT_1:
                     self.__result[1] += 1
-                elif 15 <= chair_state.Angle.seatAngle < 30:
+                elif AngleFSMState.ANGLE_TILT_1 <= chair_state.Angle.seatAngle < AngleFSMState.ANGLE_TILT_2:
                     self.__result[2] += 1
-                elif 30 <= chair_state.Angle.seatAngle < 45:
+                elif AngleFSMState.ANGLE_TILT_2 <= chair_state.Angle.seatAngle < AngleFSMState.ANGLE_TILT_3:
                     self.__result[3] += 1
                 else:
                     self.__result[4] += 1
@@ -374,8 +388,8 @@ class AngleFSMState:
 
 
 class AngleFSM:
-    def __init__(self):
-        self.state = AngleFSMState()
+    def __init__(self,config):
+        self.state = AngleFSMState(config)
         self.chairState = ChairState()
 
     def setChairState(self, state: ChairState):
@@ -396,17 +410,17 @@ async def connect_to_mqtt_server(config):
         tasks = set()
         stack.push_async_callback(cancel_tasks, tasks)
 
-        if 'server' in config:
+        if config.has_section('MQTT'):
             # Connect to the MQTT broker
             # client = Client("10.0.1.20", username="admin", password="movitplus")
-            client = Client(config['server']['hostname'],
-                            username=config['server']['username'],
-                            password=config['server']['password'])
+            client = Client(config.get('MQTT','broker_address'),
+                            username=config.get('MQTT','usr'),
+                            password=config.get('MQTT','pswd'))
 
             await stack.enter_async_context(client)
 
             # Create angle fsm
-            fsm = AngleFSM()
+            fsm = AngleFSM(config)
 
             # Messages that doesn't match a filter will get logged here
             messages = await stack.enter_async_context(client.unfiltered_messages())
@@ -489,7 +503,7 @@ async def handle_sensors_chair_state(client, messages, fsm):
             print(e)
 
 
-async def angle_fsm_main(config: dict):
+async def angle_fsm_main(config):
     reconnect_interval = 3  # [seconds]
 
     while True:
@@ -525,15 +539,7 @@ if __name__ == "__main__":
         print('Cannot load config file', args.config)
         exit(-1)
 
-    # Setup config dict
-    server_config = {'hostname': config_parser.get('MQTT','broker_address'), 
-                    'port': int(config_parser.get('MQTT','broker_port')),
-                    'username': config_parser.get('MQTT','usr'), 
-                    'password': config_parser.get('MQTT','pswd') }
-
-    config = {'server': server_config}
-
     # main task
-    asyncio.run(angle_fsm_main(config))
+    asyncio.run(angle_fsm_main(config_parser))
 
     

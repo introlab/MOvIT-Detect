@@ -4,7 +4,7 @@
 # https://opensource.org/licenses/MIT
 
 
-from MPU6050 import mpu6050
+from .MPU6050 import mpu6050
 
 class mpu6050_safe(mpu6050):
     def wake_up(self):

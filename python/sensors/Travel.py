@@ -1,5 +1,5 @@
 # from MPU6050 import mpu6050
-from MPU6050_improved import mpu6050_safe as mpu6050
+from lib_movit_sensors.MPU6050_improved import mpu6050_safe as mpu6050
 from lib_movit_sensors.IMUDetectMotion import IMUDetectMotion
 from datetime import datetime
 import asyncio
@@ -10,7 +10,7 @@ import json
 import math
 
 class TravelState(IMUDetectMotion):
-    def __init__(self):
+    def __init__(self,config):
         super().__init__()
         self.timestamp = int(datetime.now().timestamp())
         self.connected = False
@@ -20,10 +20,14 @@ class TravelState(IMUDetectMotion):
         self.travelY = 0
         self.error_count = 0
 
+        if config.has_section('Travel'):
+            self.setConfig(config)
+
+
     def setConfig(self,config):
-        super().setAttributes(sizeSlidingWindow = config['Travel']['sizeSlidingWindow'],    
-                                thresholdAcc = config['Travel']['thresholdAcc'],
-                                thresholdGyro = config['Travel']['thresholdGyro']
+        super().setAttributes(sizeSlidingWindow = config.getint('Travel','sizeSlidingWindow'),    
+                                thresholdAcc = config.getfloat('Travel','thresholdAcc'),
+                                thresholdGyro = config.getfloat('Travel','thresholdGyro')
                                 )
 
     def reset(self):
@@ -125,12 +129,12 @@ async def connect_to_mqtt_server(config):
         tasks = set()
         stack.push_async_callback(cancel_tasks, tasks)
 
-        if 'server' in config:
+        if config.has_section('MQTT'):
             # Connect to the MQTT broker
             # client = Client("10.0.1.20", username="admin", password="movitplus")
-            client = Client(config['server']['hostname'],
-                            username=config['server']['username'],
-                            password=config['server']['password'])
+            client = Client(config.get('MQTT','broker_address'),
+                            username=config.get('MQTT','usr'),
+                            password=config.get('MQTT','pswd'))
 
             await stack.enter_async_context(client)
 
@@ -140,8 +144,7 @@ async def connect_to_mqtt_server(config):
             travel = mpu6050(address=0x68)
 
             # Create Travel State
-            state = TravelState()
-            state.setConfig(config)
+            state = TravelState(config)
 
             # Messages that doesn't match a filter will get logged here
             messages = await stack.enter_async_context(client.unfiltered_messages())
@@ -179,15 +182,15 @@ async def travel_loop(client, travel: mpu6050, state: TravelState, config):
     while True:
         state.update(travel)
 
-        if int(float(datetime.now().timestamp()-last_publish.timestamp())) >= config['Travel']['publishPeriod']:
+        if int(float(datetime.now().timestamp()-last_publish.timestamp())) >= config.getfloat('Travel','publishPeriod'):
             # Publish state
             await client.publish('sensors/travel', state.to_json())
             last_publish = datetime.now()
 
-        await asyncio.sleep(config['Travel']['samplingPeriod'])
+        await asyncio.sleep(config.getfloat('Travel','samplingPeriod'))
 
 
-async def travel_main(config: dict):
+async def travel_main(config):
     reconnect_interval = 3  # [seconds]
 
     while True:
@@ -225,20 +228,5 @@ if __name__ == "__main__":
         print('Cannot load config file', args.config)
         exit(-1)
 
-    # Setup config dict
-    server_config = {'hostname': config_parser.get('MQTT','broker_address'), 
-                    'port': config_parser.getint('MQTT','broker_port'),
-                    'username': config_parser.get('MQTT','usr'), 
-                    'password': config_parser.get('MQTT','pswd')}
-
-    travel_config = {'sizeSlidingWindow' : config_parser.getint('Travel','sizeSlidingWindow'),    
-                    'thresholdAcc' : config_parser.getfloat('Travel','thresholdAcc'),
-                    'thresholdGyro' : config_parser.getfloat('Travel','thresholdGyro'),
-                    'publishPeriod' : config_parser.getfloat('Travel','publishPeriod'),
-                    'samplingPeriod' : config_parser.getfloat('Travel','samplingPeriod') }
-
-    config = {'server': server_config,
-              'Travel' : travel_config}
-
     # main task
-    asyncio.run(travel_main(config))
+    asyncio.run(travel_main(config_parser))

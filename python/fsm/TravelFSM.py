@@ -65,9 +65,9 @@ class TravelFSMState:
         self.setConfig(config)
 
     def setConfig(self,config):
-        self.TRAVEL_START_TIMEOUT = config['TravelFSM']['TRAVEL_START_TIMEOUT']
-        self.TRAVEL_STOP_TIMEOUT = config['TravelFSM']['TRAVEL_STOP_TIMEOUT']
-        self.TRAVEL_THRESHOLD = config['TravelFSM']['TRAVEL_THRESHOLD']
+        TravelFSMState.TRAVEL_START_TIMEOUT = config.getfloat('TravelFSM','TRAVEL_START_TIMEOUT')
+        TravelFSMState.TRAVEL_STOP_TIMEOUT = config.getfloat('TravelFSM','TRAVEL_STOP_TIMEOUT')
+        TravelFSMState.TRAVEL_THRESHOLD = config.getfloat('TravelFSM','TRAVEL_THRESHOLD')
 
     def in_state(self, state: TravelState):
         return self.__currentState == state
@@ -335,12 +335,12 @@ async def connect_to_mqtt_server(config):
         tasks = set()
         stack.push_async_callback(cancel_tasks, tasks)
 
-        if 'server' in config:
+        if config.has_section('MQTT'):
             # Connect to the MQTT broker
             # client = Client("10.0.1.20", username="admin", password="movitplus")
-            client = Client(config['server']['hostname'],
-                            username=config['server']['username'],
-                            password=config['server']['password'])
+            client = Client(config.get('MQTT','broker_address'),
+                            username=config.get('MQTT','usr'),
+                            password=config.get('MQTT','pswd'))
 
             await stack.enter_async_context(client)
 
@@ -406,7 +406,7 @@ async def handle_sensors_chair_state(client, messages, fsm):
             print(e)
 
 
-async def travel_fsm_main(config: dict):
+async def travel_fsm_main(config):
     reconnect_interval = 3  # [seconds]
 
     while True:
@@ -441,19 +441,6 @@ if __name__ == "__main__":
         print('Cannot load config file', args.config)
         exit(-1)
 
-    # Setup config dict
-    server_config = {'hostname': config_parser.get('MQTT','broker_address'), 
-                    'port': int(config_parser.get('MQTT','broker_port')),
-                    'username': config_parser.get('MQTT','usr'), 
-                    'password': config_parser.get('MQTT','pswd') }
-
-    TravelFSM_config = {'TRAVEL_START_TIMEOUT' : config_parser.getfloat('TravelFSM','TRAVEL_START_TIMEOUT'),
-                        'TRAVEL_STOP_TIMEOUT' : config_parser.getfloat('TravelFSM','TRAVEL_STOP_TIMEOUT'),
-                        'TRAVEL_THRESHOLD' : config_parser.getfloat('TravelFSM','TRAVEL_THRESHOLD')}
-
-    config = {'server': server_config,
-                'TravelFSM' : TravelFSM_config}
-
     # main task
-    asyncio.run(travel_fsm_main(config))
+    asyncio.run(travel_fsm_main(config_parser))
 

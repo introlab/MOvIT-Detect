@@ -38,13 +38,17 @@ class SeatingFSMState:
             else:
                 raise ValueError('{} is not a valid SeatingState name'.format(name))
 
-    def __init__(self):
+    def __init__(self,config):
         self.__type = 'SeatingFSMState'
         self.__event = 'Other'
         self.__currentState = SeatingFSMState.SeatingState.INIT
         self.__seatingStarted = 0
         self.__seatingStopped = 0
         self.__currentTime = 0
+
+        if config.has_section('SeatingFSM'):
+            SeatingFSMState.SEATING_TIMEOUT = config.getfloat('SeatingFSM','SEATING_TIMEOUT')
+            pass
 
     def in_state(self, state: SeatingState):
         return self.__currentState == state
@@ -227,8 +231,8 @@ class SeatingFSMState:
 
 
 class SeatingFSM:
-    def __init__(self):
-        self.state = SeatingFSMState()
+    def __init__(self,config):
+        self.state = SeatingFSMState(config)
         self.chairState = ChairState()
 
     def setChairState(self, state: ChairState):
@@ -248,17 +252,17 @@ async def connect_to_mqtt_server(config):
         tasks = set()
         stack.push_async_callback(cancel_tasks, tasks)
 
-        if 'server' in config:
+        if config.has_section('MQTT'):
             # Connect to the MQTT broker
             # client = Client("10.0.1.20", username="admin", password="movitplus")
-            client = Client(config['server']['hostname'],
-                            username=config['server']['username'],
-                            password=config['server']['password'])
+            client = Client(config.get('MQTT','broker_address'),
+                            username=config.get('MQTT','usr'),
+                            password=config.get('MQTT','pswd'))
 
             await stack.enter_async_context(client)
 
             # Create angle fsm
-            fsm = SeatingFSM()
+            fsm = SeatingFSM(config)
 
             # Messages that doesn't match a filter will get logged here
             messages = await stack.enter_async_context(client.unfiltered_messages())
@@ -319,7 +323,7 @@ async def handle_sensors_chair_state(client, messages, fsm):
             print(e)
 
 
-async def seating_fsm_main(config: dict):
+async def seating_fsm_main(config):
     print('seating_fsm_main')
     reconnect_interval = 3  # [seconds]
 
@@ -356,14 +360,6 @@ if __name__ == "__main__":
         print('Cannot load config file', args.config)
         exit(-1)
 
-    # Setup config dict
-    server_config = {'hostname': config_parser.get('MQTT','broker_address'), 
-                    'port': int(config_parser.get('MQTT','broker_port')),
-                    'username': config_parser.get('MQTT','usr'), 
-                    'password': config_parser.get('MQTT','pswd') }
-
-    config = {'server': server_config}
-
     # main task
-    asyncio.run(seating_fsm_main(config))
+    asyncio.run(seating_fsm_main(config_parser))
 

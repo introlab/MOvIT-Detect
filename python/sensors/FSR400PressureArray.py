@@ -1,5 +1,5 @@
-from  PressureMat import PressureMat
-from  MAX11611 import MAX11611
+from  lib_movit_sensors.PressureMat import PressureMat
+from  lib_movit_sensors.MAX11611 import MAX11611
 import numpy as np
 import time
 import paho.mqtt.client as mqtt
@@ -8,7 +8,7 @@ import argparse
 import configparser
 
 class FSR400PressureArray(PressureMat):
-    def __init__(self):
+    def __init__(self,config):
         # ADC instance, default parameters
         # Initialized before PressureMat constructor to make sure adc exists
         self.adc = MAX11611()
@@ -84,18 +84,12 @@ if __name__ == "__main__":
         print('Cannot load config file', args.config)
         exit(-1)
 
-    # Setup config dict
-    server_config = {'hostname': config_parser.get('MQTT','broker_address'), 
-                    'port': int(config_parser.get('MQTT','broker_port')),
-                    'username': config_parser.get('MQTT','usr'), 
-                    'password': config_parser.get('MQTT','pswd') }
-
-    mat = FSR400PressureArray()
+    mat = FSR400PressureArray(config_parser)
 
     # Create MQTT client
-    client = mqtt.Client('FSR400PressureArray MQTT Client')
-    client.username_pw_set(server_config['username'], server_config['password'])
-    client.connect(host=server_config['hostname'], port=server_config['port'])
+    client = mqtt.Client(None)
+    client.username_pw_set(username=config_parser.get('MQTT','usr'), password=config_parser.get('MQTT','pswd'))
+    client.connect(host=config_parser.get('MQTT','broker_address'), port=config_parser.getint('MQTT','broker_port'))
     
     while True:    
         # Always update
