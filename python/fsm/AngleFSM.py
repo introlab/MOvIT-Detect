@@ -25,7 +25,10 @@ class AngleFSMState:
     ANGLE_TARGET = 30
     ANGLE_DURATION = 10
     ANGLE_FREQUENCY = 10
-    
+    ANGLE_RECOMMENDED_TARGET = ANGLE_TARGET
+    ANGLE_RECOMMENDED_DURATION = ANGLE_DURATION
+    ANGLE_RECOMMENDED_FREQUENCY = ANGLE_FREQUENCY
+
     ANGLE_TILT_0 = 0
     ANGLE_TILT_1 = 15
     ANGLE_TILT_2 = 30
@@ -36,6 +39,12 @@ class AngleFSMState:
         AngleFSMState.ANGLE_TARGET = angle
         AngleFSMState.ANGLE_DURATION = duration
         AngleFSMState.ANGLE_FREQUENCY = frequency
+
+    @classmethod
+    def setRecommendedParameters(cls, frequency, duration, angle):
+        AngleFSMState.ANGLE_RECOMMENDED_TARGET = angle
+        AngleFSMState.ANGLE_RECOMMENDED_DURATION = duration
+        AngleFSMState.ANGLE_RECOMMENDED_FREQUENCY = frequency
 
     @classmethod
     def getTargetAngle(cls):
@@ -162,7 +171,10 @@ class AngleFSMState:
             'REVERSE_ANGLE_THRESHOLD': AngleFSMState.REVERSE_ANGLE_THRESHOLD,
             'ANGLE_TARGET': AngleFSMState.ANGLE_TARGET,
             'ANGLE_DURATION': AngleFSMState.ANGLE_DURATION,
-            'ANGLE_FREQUENCY': AngleFSMState.ANGLE_FREQUENCY
+            'ANGLE_FREQUENCY': AngleFSMState.ANGLE_FREQUENCY,
+            'ANGLE_RECOMMENDED_TARGET': AngleFSMState.ANGLE_RECOMMENDED_TARGET,
+            'ANGLE_RECOMMENDED_DURATION': AngleFSMState.ANGLE_RECOMMENDED_DURATION,
+            'ANGLE_RECOMMENDED_FREQUENCY': AngleFSMState.ANGLE_RECOMMENDED_FREQUENCY
         }
 
     def from_dict(self, values: dict):
@@ -203,6 +215,16 @@ class AngleFSMState:
 
             if 'ANGLE_FREQUENCY' in values:
                 AngleFSMState.ANGLE_FREQUENCY = values['ANGLE_FREQUENCY']
+
+            if 'ANGLE_RECOMMENDED_TARGET' in values:
+                AngleFSMState.ANGLE_RECOMMENDED_TARGET = values['ANGLE_RECOMMENDED_TARGET']
+
+            if 'ANGLE_RECOMMENDED_DURATION' in values:
+                AngleFSMState.ANGLE_RECOMMENDED_DURATION = values['ANGLE_RECOMMENDED_DURATION']
+
+            if 'ANGLE_RECOMMENDED_FREQUENCY' in values:
+                AngleFSMState.ANGLE_RECOMMENDED_FREQUENCY = values['ANGLE_RECOMMENDED_FREQUENCY']
+
 
             return True
         return False
@@ -481,14 +503,26 @@ async def publish_angle_fsm(client, fsm):
 async def handle_goal_update_data(client, messages, fsm):
     async for message in messages:
         try:
-            parts = message.payload.decode().split(':')
-            if len(parts) == 3 and len(message.payload) > 2:
-                # get all info
-                frequency = int(parts[0])
-                duration = int(parts[1])
-                angle = int(parts[2])
+            # DL - 27/05/2021 new goal as user / clinician json 
+            reqs = json.loads(message.payload)
+
+            if 'user' in reqs:
+                frequency = reqs['user']['tiltFrequency']
+                duration = reqs['user']['tiltLength']
+                angle = reqs['user']['tiltAngle']
+
                 # update parameters
                 AngleFSMState.setParameters(frequency, duration, angle)
+
+            if 'clinician' in reqs:
+                frequency = reqs['clinician']['tiltFrequency']
+                duration = reqs['clinician']['tiltLength']
+                angle = reqs['clinician']['tiltAngle']
+
+                # update parameters
+                AngleFSMState.setRecommendedParameters(frequency, duration, angle)
+
+
         except Exception as e:
             print(e)
 
