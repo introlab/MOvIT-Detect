@@ -82,7 +82,7 @@ class NotificationFSMState:
         self.__currentTime = 0
         self.__stopReason = ''
         self.__snoozeRepetition = 0
-        self.__secondsBetween2Tilts = 0
+        self.__secondsWaitingForTilt = 0
 
         if config.has_section('NotificationFSM'):
             NotificationFSMState.MAX_SNOOZE = config.getint('NotificationFSM','MAX_SNOOZE')
@@ -98,7 +98,7 @@ class NotificationFSMState:
         self.__currentTime = 0
         self.__stopReason = ''
         self.__snoozeRepetition = 0
-        self.__secondsBetween2Tilts = 0
+        self.__secondsWaitingForTilt = 0
 
     def in_state(self, state: NotificationState):
         return self.__currentState == state
@@ -138,7 +138,7 @@ class NotificationFSMState:
             'SNOOZE_TIME': NotificationFSMState.SNOOZE_TIME,
             'MAX_SNOOZE': NotificationFSMState.MAX_SNOOZE,
             'PUSH_SNOOZE_COUNT': NotificationFSMState.PUSH_SNOOZE_COUNT,
-            'secondsBetween2Tilts': self.__secondsBetween2Tilts
+            'secondsWaitingForTilt': self.__secondsWaitingForTilt
         }
 
     def from_dict(self, values):
@@ -214,7 +214,7 @@ class NotificationFSMState:
             self.__secondsCounter = 0
             self.__stopTime = 0
             self.__snoozeRepetition = 0
-            self.__secondsBetween2Tilts = 0
+            self.__secondsWaitingForTilt = 0
 
             if seating_state.in_state(SeatingFSMState.SeatingState.CURRENTLY_SEATING):
                 self.__startTime = chair_state.timestamp
@@ -373,7 +373,7 @@ class NotificationFSMState:
 
             self.__stopReason = 'Other'
             self.__secondsCounter += 1
-            self.__secondsBetween2Tilts += 1
+            self.__secondsWaitingForTilt += 1
             if chair_state.snoozeButton:
                 self.__snoozeCount += 1 # config push_snooze_count seconds press
                 if self.__snoozeCount >= NotificationFSMState.PUSH_SNOOZE_COUNT:
@@ -384,8 +384,13 @@ class NotificationFSMState:
             else:
                 self.__snoozeCount = 0
 
-            if self.__secondsBetween2Tilts >= angle_state.getTargetFrequency():
-                self.__secondsBetween2Tilts = 0
+            # waiting period > frenquency recommended
+            if self.__secondsWaitingForTilt >= angle_state.getRecommendedTargetFrequency():
+                self.__stopReason = "MISSED_RECOMMENDED_TILT"
+
+            # waiting period > frenquency goal
+            if self.__secondsWaitingForTilt >= angle_state.getTargetFrequency():
+                self.__secondsWaitingForTilt = 0
                 self.__secondsCounter = 0
                 self.__stopReason = "MISSED_TILT"
                 self.__currentState = NotificationFSMState.NotificationState.WAITING_FOR_TILT
@@ -448,7 +453,7 @@ class NotificationFSMState:
             self.__stopReason = 'Other'
             if self.__currentTime != chair_state.timestamp:
                 self.__secondsCounter += 1
-                self.__secondsBetween2Tilts += 1 
+                self.__secondsWaitingForTilt += 1 
                 if (self.__secondsCounter >= NotificationFSMState.SNOOZE_TIME or
                         angle_state.in_state(AngleFSMState.AngleState.IN_TILT)):
                     self.__currentState = NotificationFSMState.NotificationState.WAITING_FOR_TILT
@@ -471,10 +476,14 @@ class NotificationFSMState:
                 self.__stopReason = 'USER_DISABLED'
                 self.__currentState = NotificationFSMState.NotificationState.INIT
 
-            # time beetween 2 tilts exceed the frequency ? 
-            if self.__secondsBetween2Tilts >= angle_state.getTargetFrequency():
+            # time waiting for tilit exceed the frequency recommende? 
+            if self.__secondsWaitingForTilt >= angle_state.getRecommendedTargetFrequency():
+                self.__stopReason = "MISSED_RECOMMENDED_TILT"
+
+            # time waiting for tilit exceed the frequency goal? 
+            if self.__secondsWaitingForTilt >= angle_state.getTargetFrequency():
                 self.__stopReason = "MISSED_TILT"
-                self.__secondsBetween2Tilts = 0
+                self.__secondsWaitingForTilt = 0
                 #self.__secondsCounter = 0
                # self.__currentState = NotificationFSMState.NotificationState.WAITING_FOR_TILT
 

@@ -57,6 +57,18 @@ class AngleFSMState:
     @classmethod
     def getTargetFrequency(cls):
         return AngleFSMState.ANGLE_FREQUENCY
+    
+    @classmethod
+    def getRecommendedTargetAngle(cls):
+        return AngleFSMState.ANGLE_RECOMMENDED_TARGET
+
+    @classmethod
+    def getRecommendedTargetDuration(cls):
+        return AngleFSMState.ANGLE_RECOMMENDED_DURATION
+
+    @classmethod
+    def getRecommendedTargetFrequency(cls):
+        return AngleFSMState.ANGLE_RECOMMENDED_FREQUENCY
 
     @unique
     class AngleState(Enum):
