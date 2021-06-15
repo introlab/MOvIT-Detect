@@ -385,7 +385,7 @@ class NotificationFSMState:
                 self.__snoozeCount = 0
 
             # waiting period > frenquency recommended
-            if self.__secondsWaitingForTilt >= angle_state.getRecommendedTargetFrequency():
+            if (self.__secondsWaitingForTilt % angle_state.getRecommendedTargetFrequency()) == 0:
                 self.__stopReason = "MISSED_RECOMMENDED_TILT"
 
             # waiting period > frenquency goal
@@ -477,7 +477,7 @@ class NotificationFSMState:
                 self.__currentState = NotificationFSMState.NotificationState.INIT
 
             # time waiting for tilit exceed the frequency recommende? 
-            if self.__secondsWaitingForTilt >= angle_state.getRecommendedTargetFrequency():
+            if (self.__secondsWaitingForTilt % angle_state.getRecommendedTargetFrequency()) == 0 :
                 self.__stopReason = "MISSED_RECOMMENDED_TILT"
 
             # time waiting for tilit exceed the frequency goal? 
