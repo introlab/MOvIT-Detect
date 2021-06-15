@@ -142,25 +142,34 @@ class PressureInformation:
 class AngleInformation:
     def __init__(self):
         self.sensorName = 'default'
+        self.stateAngle = 'default'
+        self.inCalibration = False
         self.mIMUAngle = 0.0
         self.fIMUAngle = 0.0
         self.seatAngle = 0.0
         self.angleOffset = 0.0
         self.fIMURawData = {}
         self.mIMURawData = {}
+        self.calibrationTime = 30
+        self.calibrationEnd = 0 
 
     def reset(self):
         self.sensorName = 'default'
+        self.stateAngle = 'default'
+        self.inCalibration = False
         self.mIMUAngle = 0.0
         self.fIMUAngle = 0.0
         self.seatAngle = 0.0
         self.angleOffset = 0.0
         self.fIMURawData = {}
         self.mIMURawData = {}
+        self.calibrationTime = 20;
 
     def to_dict(self):
         return {
             'sensorName': self.sensorName,
+            'stateAngle': self.stateAngle,
+            'inCalibration': self.inCalibration,
             'mIMUAngle': float(format(self.mIMUAngle, '.2f')),     # float(self.mIMUAngle),
             'fIMUAngle': float(format(self.fIMUAngle, '.2f')),     # float(self.fIMUAngle),
             'seatAngle': float(format(self.seatAngle, '.2f')),     # float(self.seatAngle),
@@ -170,6 +179,10 @@ class AngleInformation:
     def from_dict(self, values: dict):
         if 'sensorName' in values:
             self.sensorName = values['sensorName']
+        if 'state' in values:
+            self.stateAngle = values['stateAngle']
+        if 'inCalibration' in values:
+            self.inCalibration = values['inCalibration']
         if 'mIMUAngle' in values:
             self.mIMUAngle = values['mIMUAngle']
         if 'fIMUAngle' in values:
@@ -324,11 +337,23 @@ class ChairState:
 
         self.Angle.reset()
 
-        if 'name' in values:
-            self.Angle.sensorName = values['name']
-
         if 'timestamp' in values:
             self.timestamp = max(values['timestamp'], self.timestamp)
+
+        if 'name' in values:
+            self.Angle.sensorName = values['name']
+        
+        if 'state' in values:
+            self.Angle.stateAngle = values['state']['stateName']
+
+        self.Angle.inCalibration = False
+        if (self.Angle.stateAngle == "WAITING_FOR_CALIBRATION_TRIGGER" or self.Angle.stateAngle == "WAITING_FOR_CALIBRATION"):
+            self.Angle.calibrationEnd = self.timestamp 
+            self.Angle.inCalibration = True
+        if ((self.timestamp - self.Angle.calibrationEnd) < self.Angle.calibrationTime):
+            self.Angle.inCalibration = True
+        else:
+           self.Angle.calibrationEnd = 0;
 
         connected = False
         if 'connected' in values:

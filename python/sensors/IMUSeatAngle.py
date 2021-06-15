@@ -23,6 +23,7 @@ class IMUSeatAngleState(Enum):
     RUNNING_CALIBRATED = 5
     WAITING_FOR_CALIBRATION = 6
     WAITING_FOR_CALIBRATION_TRIGGER = 7
+    CALIBRATION_TODO = 8
 
 class IMUSeatAngle(SeatAngle):
 
@@ -47,7 +48,7 @@ class IMUSeatAngle(SeatAngle):
         return self.state == IMUSeatAngleState.RUNNING_CALIBRATED
 
     def calib_trigger(self):
-        if IMUSeatAngleState.CALIBRATION_DONE or IMUSeatAngleState.RUNNING_CALIBRATED:
+        if IMUSeatAngleState.CALIBRATION_DONE or IMUSeatAngleState.RUNNING_CALIBRATED or IMUSeatAngleState.CALIBRATION_TODO:
             self.state = IMUSeatAngleState.WAITING_FOR_CALIBRATION_TRIGGER
         self.calib_flag = True
 
@@ -138,7 +139,7 @@ class IMUSeatAngle(SeatAngle):
                     self.state = IMUSeatAngleState.CALIBRATION_DONE
                 elif self.aa.getStateName() == 'CALIBRATION_TODO':
                     # If calibration not ready, wait for trigger...
-                    self.state = IMUSeatAngleState.WAITING_FOR_CALIBRATION_TRIGGER
+                    self.state = IMUSeatAngleState.CALIBRATION_TODO
                 else:
                     self.state == IMUSeatAngleState.AA_ERROR
 
@@ -204,7 +205,7 @@ class IMUSeatAngle(SeatAngle):
                     self.state = IMUSeatAngleState.AA_ERROR
                 pass
 
-            elif self.state == IMUSeatAngleState.WAITING_FOR_CALIBRATION_TRIGGER:
+            elif self.state == IMUSeatAngleState.WAITING_FOR_CALIBRATION_TRIGGER or self.state == IMUSeatAngleState.CALIBRATION_TODO:
                 if (self.aa.getStateName() == 'CALIBRATION_WAIT_ZERO_TRIG' 
                     or self.aa.getStateName() == 'CALIBRATION_WAIT_INCLINED_TRIG'
                     or self.aa.getStateName() == 'CALIBRATION_TODO'):
