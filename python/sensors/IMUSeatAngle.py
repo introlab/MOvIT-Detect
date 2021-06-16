@@ -47,10 +47,13 @@ class IMUSeatAngle(SeatAngle):
     def calibrated(self):
         return self.state == IMUSeatAngleState.RUNNING_CALIBRATED
 
-    def calib_trigger(self):
-        if IMUSeatAngleState.CALIBRATION_DONE or IMUSeatAngleState.RUNNING_CALIBRATED or IMUSeatAngleState.CALIBRATION_TODO:
-            self.state = IMUSeatAngleState.WAITING_FOR_CALIBRATION_TRIGGER
-        self.calib_flag = True
+    def calib_trigger(self, stateBool):
+        if (stateBool):
+            if IMUSeatAngleState.CALIBRATION_DONE or IMUSeatAngleState.RUNNING_CALIBRATED or IMUSeatAngleState.CALIBRATION_TODO:
+                self.state = IMUSeatAngleState.WAITING_FOR_CALIBRATION_TRIGGER
+            self.calib_flag = True 
+        else:
+            self.state = IMUSeatAngleState.INIT
 
     def to_dict(self) -> dict:
         result = super().to_dict()   
@@ -294,7 +297,10 @@ if __name__ == "__main__":
         def on_message(client, userdata: IMUSeatAngle, message):
             print(client, userdata, message)
             if message.topic == 'config/calib_imu':
-                imu.calib_trigger()
+                response = (json.loads(message.payload.decode())['calibrationState'])
+                if response != True and response != False:
+                    response = True
+                imu.calib_trigger(response)
 
         # Set userdata
         client.user_data_set(imu)
