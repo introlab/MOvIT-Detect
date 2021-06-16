@@ -283,6 +283,10 @@ class NotificationFSMState:
                 self.__stopReason = 'USER_DISABLED'
                 self.__currentState = NotificationFSMState.NotificationState.INIT
 
+            # in calibration?
+            if chair_state.Angle.inCalibration:
+                self.__stopReason = "IN_CALIBRATION"
+
         elif self.__currentState == NotificationFSMState.NotificationState.IN_TRAVEL:
             """
             case NotificationState::IN_TRAVEL:
@@ -417,6 +421,10 @@ class NotificationFSMState:
                 self.__currentState = NotificationFSMState.NotificationState.IN_TILT
                 self.__stopReason = 'TILT_BEGIN'
                 self.__secondsCounter = 0
+            
+            # in calibration?
+            if chair_state.Angle.inCalibration:
+                self.__stopReason = "IN_CALIBRATION"
 
             # enabled?
             if not enabled:
@@ -470,6 +478,10 @@ class NotificationFSMState:
                     seating_state.in_state(SeatingFSMState.SeatingState.CONFIRM_STOP_SEATING)):
                 self.__currentState = NotificationFSMState.NotificationState.INIT
                 self.__stopReason = 'NOT_SEATED'
+
+            # in calibration?
+            if chair_state.Angle.inCalibration:
+                self.__stopReason = "IN_CALIBRATION"
 
             # enabled?
             if not enabled:
@@ -556,6 +568,10 @@ class NotificationFSMState:
             elif angle_state.in_state(AngleFSMState.AngleState.ANGLE_STOPPED):
                 self.__currentState = NotificationFSMState.NotificationState.NOTIFICATION_TILT_STOPPED
                 self.__stopReason = 'END_OF_TILT'
+            
+            # in calibration?
+            if chair_state.Angle.inCalibration:
+                self.__stopReason = "IN_CALIBRATION"
 
             # enabled?
             if not enabled:

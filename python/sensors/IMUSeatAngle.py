@@ -23,6 +23,7 @@ class IMUSeatAngleState(Enum):
     RUNNING_CALIBRATED = 5
     WAITING_FOR_CALIBRATION = 6
     WAITING_FOR_CALIBRATION_TRIGGER = 7
+    CALIBRATION_TODO = 8
 
 class IMUSeatAngle(SeatAngle):
 
@@ -46,10 +47,13 @@ class IMUSeatAngle(SeatAngle):
     def calibrated(self):
         return self.state == IMUSeatAngleState.RUNNING_CALIBRATED
 
-    def calib_trigger(self):
-        if IMUSeatAngleState.CALIBRATION_DONE or IMUSeatAngleState.RUNNING_CALIBRATED:
-            self.state = IMUSeatAngleState.WAITING_FOR_CALIBRATION_TRIGGER
-        self.calib_flag = True
+    def calib_trigger(self, stateBool):
+        if (stateBool):
+            if IMUSeatAngleState.CALIBRATION_DONE or IMUSeatAngleState.RUNNING_CALIBRATED or IMUSeatAngleState.CALIBRATION_TODO:
+                self.state = IMUSeatAngleState.WAITING_FOR_CALIBRATION_TRIGGER
+            self.calib_flag = True 
+        else:
+            self.state = IMUSeatAngleState.INIT
 
     def to_dict(self) -> dict:
         result = super().to_dict()   
@@ -138,7 +142,7 @@ class IMUSeatAngle(SeatAngle):
                     self.state = IMUSeatAngleState.CALIBRATION_DONE
                 elif self.aa.getStateName() == 'CALIBRATION_TODO':
                     # If calibration not ready, wait for trigger...
-                    self.state = IMUSeatAngleState.WAITING_FOR_CALIBRATION_TRIGGER
+                    self.state = IMUSeatAngleState.CALIBRATION_TODO
                 else:
                     self.state == IMUSeatAngleState.AA_ERROR
 
@@ -204,7 +208,7 @@ class IMUSeatAngle(SeatAngle):
                     self.state = IMUSeatAngleState.AA_ERROR
                 pass
 
-            elif self.state == IMUSeatAngleState.WAITING_FOR_CALIBRATION_TRIGGER:
+            elif self.state == IMUSeatAngleState.WAITING_FOR_CALIBRATION_TRIGGER or self.state == IMUSeatAngleState.CALIBRATION_TODO:
                 if (self.aa.getStateName() == 'CALIBRATION_WAIT_ZERO_TRIG' 
                     or self.aa.getStateName() == 'CALIBRATION_WAIT_INCLINED_TRIG'
                     or self.aa.getStateName() == 'CALIBRATION_TODO'):
@@ -293,7 +297,10 @@ if __name__ == "__main__":
         def on_message(client, userdata: IMUSeatAngle, message):
             print(client, userdata, message)
             if message.topic == 'config/calib_imu':
-                imu.calib_trigger()
+                response = (json.loads(message.payload.decode())['calibrationState'])
+                if response != True and response != False:
+                    response = True
+                imu.calib_trigger(response)
 
         # Set userdata
         client.user_data_set(imu)
