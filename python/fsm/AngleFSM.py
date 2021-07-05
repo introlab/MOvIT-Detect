@@ -282,7 +282,7 @@ class AngleFSMState:
             self.__dataPoints = 0
 
             if (chair_state.Angle.seatAngle >= AngleFSMState.ANGLE_THRESHOLD \
-                    or chair_state.Angle.seatAngle <= AngleFSMState.REVERSE_ANGLE_THRESHOLD) and not chair_state.Travel.isMoving:
+                    or chair_state.Angle.seatAngle <= AngleFSMState.REVERSE_ANGLE_THRESHOLD) and not chair_state.Travel.isMoving and chair_state.Pressure.isSeated:
                 # Change state
                 self.__currentState = AngleFSMState.AngleState.CONFIRM_ANGLE
 
@@ -300,7 +300,7 @@ class AngleFSMState:
                     angleStopped = cs.time;
                 break;
             """
-            if (AngleFSMState.ANGLE_THRESHOLD > chair_state.Angle.seatAngle > AngleFSMState.REVERSE_ANGLE_THRESHOLD) or chair_state.Travel.isMoving:
+            if (AngleFSMState.ANGLE_THRESHOLD > chair_state.Angle.seatAngle > AngleFSMState.REVERSE_ANGLE_THRESHOLD) or chair_state.Travel.isMoving or not chair_state.Pressure.isSeated:
                 # Go back to INIT state
                 self.__currentState = AngleFSMState.AngleState.INIT
             elif (chair_state.timestamp - self.__angleStarted) > AngleFSMState.ANGLE_TIMEOUT:
@@ -376,7 +376,7 @@ class AngleFSMState:
             self.__dataPoints += 1
             self.__sum += chair_state.Angle.seatAngle
 
-            if (AngleFSMState.ANGLE_THRESHOLD > chair_state.Angle.seatAngle > AngleFSMState.REVERSE_ANGLE_THRESHOLD) or chair_state.Travel.isMoving:
+            if (AngleFSMState.ANGLE_THRESHOLD > chair_state.Angle.seatAngle > AngleFSMState.REVERSE_ANGLE_THRESHOLD) or chair_state.Travel.isMoving or not chair_state.Pressure.isSeated:
                 self.__currentState = AngleFSMState.AngleState.CONFIRM_STOP_ANGLE
 
             self.__angleStopped = chair_state.timestamp
@@ -394,7 +394,7 @@ class AngleFSMState:
                 }
             break;
             """
-            if chair_state.Travel.isMoving:
+            if chair_state.Travel.isMoving or not chair_state.Pressure.isSeated:
                 self.__currentState = AngleFSMState.AngleState.ANGLE_STOPPED
             else:
                 # Do not modify angle started or angle stopped here
