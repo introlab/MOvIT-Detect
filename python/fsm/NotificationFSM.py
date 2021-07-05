@@ -224,6 +224,10 @@ class NotificationFSMState:
             if not enabled:
                 self.__currentState = NotificationFSMState.NotificationState.INIT
                 self.__stopReason = 'Other'
+            # no goal?
+            if (angle_state.getTargetFrequency() == 0):
+                self.__stopReason = "NO_GOAL"
+                self.__currentState = NotificationFSMState.NotificationState.INIT
 
         elif self.__currentState == NotificationFSMState.NotificationState.WAIT_PERIOD:
             """
@@ -286,6 +290,12 @@ class NotificationFSMState:
             # in calibration?
             if chair_state.Angle.inCalibration:
                 self.__stopReason = "IN_CALIBRATION"
+            
+            # no goal?
+            if (angle_state.getTargetFrequency() == 0):
+                self.__stopReason = "NO_GOAL"
+                self.__currentState = NotificationFSMState.NotificationState.INIT
+
 
         elif self.__currentState == NotificationFSMState.NotificationState.IN_TRAVEL:
             """
@@ -389,13 +399,15 @@ class NotificationFSMState:
                 self.__snoozeCount = 0
 
             # waiting period > frenquency recommended
-            if ((self.__secondsWaitingForTilt % angle_state.getRecommendedTargetFrequency()) == 0):
-                self.__stopReason = "MISSED_RECOMMENDED_TILT"
+            if (angle_state.getRecommendedTargetFrequency() != 0):
+                if ((self.__secondsWaitingForTilt % angle_state.getRecommendedTargetFrequency()) == 0):
+                    self.__stopReason = "MISSED_RECOMMENDED_TILT"
 
             # waiting period > frenquency goal
-            if ((self.__secondsWaitingForTilt % angle_state.getTargetFrequency()) == 0):
-                self.__secondsCounter = 0
-                self.__stopReason = "MISSED_TILT"
+            if (angle_state.getTargetFrequency() != 0):
+                if ((self.__secondsWaitingForTilt % angle_state.getTargetFrequency()) == 0):
+                    self.__secondsCounter = 0
+                    self.__stopReason = "MISSED_TILT"
 
 
             if travel_state.in_state(TravelFSMState.TravelState.ON_THE_MOVE):
@@ -423,7 +435,12 @@ class NotificationFSMState:
             # in calibration?
             if chair_state.Angle.inCalibration:
                 self.__stopReason = "IN_CALIBRATION"
-
+             
+            # no goal?
+            if (angle_state.getTargetFrequency() == 0):
+                self.__stopReason = "NO_GOAL"
+                self.__currentState = NotificationFSMState.NotificationState.INIT
+        
             # enabled?
             if not enabled:
                 self.__stopReason = 'USER_DISABLED'
@@ -480,6 +497,11 @@ class NotificationFSMState:
             # in calibration?
             if chair_state.Angle.inCalibration:
                 self.__stopReason = "IN_CALIBRATION"
+            
+            # no goal?
+            if (angle_state.getTargetFrequency() == 0):
+                self.__stopReason = "NO_GOAL"
+                self.__currentState = NotificationFSMState.NotificationState.INIT
 
             # enabled?
             if not enabled:
@@ -487,14 +509,16 @@ class NotificationFSMState:
                 self.__currentState = NotificationFSMState.NotificationState.INIT
 
             # time waiting for tilit exceed the frequency recommende? 
-            if ((self.__secondsWaitingForTilt % angle_state.getRecommendedTargetFrequency()) == 0) :
-                self.__stopReason = "MISSED_RECOMMENDED_TILT"
+            if (angle_state.getRecommendedTargetFrequency() != 0):
+                if ((self.__secondsWaitingForTilt % angle_state.getRecommendedTargetFrequency()) == 0) :
+                    self.__stopReason = "MISSED_RECOMMENDED_TILT"
 
             # time waiting for tilit exceed the frequency goal? 
-            if ((self.__secondsWaitingForTilt % angle_state.getTargetFrequency()) == 0):
-                self.__stopReason = "MISSED_TILT"
-                #self.__secondsCounter = 0
-               # self.__currentState = NotificationFSMState.NotificationState.WAITING_FOR_TILT
+            if (angle_state.getTargetFrequency() != 0):
+                if ((self.__secondsWaitingForTilt % angle_state.getTargetFrequency()) == 0):
+                    self.__stopReason = "MISSED_TILT"
+                    #self.__secondsCounter = 0
+                    # self.__currentState = NotificationFSMState.NotificationState.WAITING_FOR_TILT
 
         elif self.__currentState == NotificationFSMState.NotificationState.NOTIFICATION_TILT_STARTED:
             """
@@ -569,6 +593,11 @@ class NotificationFSMState:
             # in calibration?
             if chair_state.Angle.inCalibration:
                 self.__stopReason = "IN_CALIBRATION"
+            
+            # no goal?
+            if (angle_state.getTargetFrequency() == 0):
+                self.__stopReason = "NO_GOAL"
+                self.__currentState = NotificationFSMState.NotificationState.INIT
 
             # enabled?
             if not enabled:
