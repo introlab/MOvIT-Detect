@@ -143,6 +143,7 @@ class AngleInformation:
     def __init__(self):
         self.sensorName = 'default'
         self.stateAngle = 'default'
+        self.connectedAngle = False
         self.inCalibration = False
         self.mIMUAngle = 0.0
         self.fIMUAngle = 0.0
@@ -156,6 +157,7 @@ class AngleInformation:
     def reset(self):
         self.sensorName = 'default'
         self.stateAngle = 'default'
+        self.connectedAngle = False
         self.inCalibration = False
         self.mIMUAngle = 0.0
         self.fIMUAngle = 0.0
@@ -169,6 +171,7 @@ class AngleInformation:
         return {
             'sensorName': self.sensorName,
             'stateAngle': self.stateAngle,
+            'connectedAngle': self.connectedAngle,
             'inCalibration': self.inCalibration,
             'mIMUAngle': float(format(self.mIMUAngle, '.2f')),     # float(self.mIMUAngle),
             'fIMUAngle': float(format(self.fIMUAngle, '.2f')),     # float(self.fIMUAngle),
@@ -181,6 +184,8 @@ class AngleInformation:
             self.sensorName = values['sensorName']
         if 'state' in values:
             self.stateAngle = values['stateAngle']
+        if 'connectedAngle' in values:
+            self.connectedAngle = values['connectedAngle']
         if 'inCalibration' in values:
             self.inCalibration = values['inCalibration']
         if 'mIMUAngle' in values:
@@ -355,23 +360,22 @@ class ChairState:
         else:
            self.Angle.calibrationEnd = 0;
 
-        connected = False
         if 'connected' in values:
-            connected = values['connected']
+            self.Angle.connectedAngle = values['connected']
 
-        if 'seat_angle' in values and connected:
+        if 'seat_angle' in values and self.Angle.connectedAngle:
             if not self.Travel.isMoving:
                 self.Angle.seatAngle = values['seat_angle']
             else:
                 self.Angle.seatAngle = old_angle
 
-        if 'seat_angle_offset' in values and connected:
+        if 'seat_angle_offset' in values and self.Angle.connectedAngle:
             self.Angle.angleOffset = values['seat_angle_offset']
 
-        if 'mobile_imu' in values and connected:
+        if 'mobile_imu' in values and self.Angle.connectedAngle:
             self.Angle.mIMURawData = values['mobile_imu']
 
-        if 'fixed_imu' in values and connected:
+        if 'fixed_imu' in values and self.Angle.connectedAngle:
             self.Angle.fIMURawData = values['fixed_imu']
 
 

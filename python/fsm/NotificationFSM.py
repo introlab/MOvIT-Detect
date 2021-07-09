@@ -224,10 +224,16 @@ class NotificationFSMState:
             if not enabled:
                 self.__currentState = NotificationFSMState.NotificationState.INIT
                 self.__stopReason = 'Other'
+
             # no goal?
             if (angle_state.getTargetFrequency() == 0):
                 self.__stopReason = "NO_GOAL"
                 self.__currentState = NotificationFSMState.NotificationState.INIT
+
+            # imu not connected ?
+            if not chair_state.Angle.connectedAngle:
+                self.__currentState = NotificationFSMState.NotificationState.INIT
+                self.__stopReason = "notConnectedIMU"
 
         elif self.__currentState == NotificationFSMState.NotificationState.WAIT_PERIOD:
             """
@@ -263,6 +269,7 @@ class NotificationFSMState:
             break;
             """
             self.__stopReason = 'Other'
+
             # Moving ?
             if travel_state.in_state(TravelFSMState.TravelState.ON_THE_MOVE):
                 self.__currentState = NotificationFSMState.NotificationState.IN_TRAVEL
@@ -274,8 +281,9 @@ class NotificationFSMState:
                     self.__secondsCounter += 1
 
                     # Waiting time for a tilt finished?
-                    if self.__secondsCounter > angle_state.getTargetFrequency() or \
-                            angle_state.in_state(AngleFSMState.AngleState.IN_TILT):
+                    if ((self.__secondsCounter > angle_state.getTargetFrequency() or \
+                            angle_state.in_state(AngleFSMState.AngleState.IN_TILT)) and not
+                            chair_state.Angle.inCalibration):
                         self.__currentState = NotificationFSMState.NotificationState.NOTIFICATION_TILT_STARTED
 
             else:
@@ -286,6 +294,11 @@ class NotificationFSMState:
             if not enabled:
                 self.__stopReason = 'USER_DISABLED'
                 self.__currentState = NotificationFSMState.NotificationState.INIT
+            
+            # imu not connected ?
+            if not chair_state.Angle.connectedAngle:
+                self.__currentState = NotificationFSMState.NotificationState.INIT
+                self.__stopReason = "notConnectedIMU"
 
             # in calibration?
             if chair_state.Angle.inCalibration:
@@ -340,6 +353,11 @@ class NotificationFSMState:
             if not enabled:
                 self.__stopReason = 'USER_DISABLED'
                 self.__currentState = NotificationFSMState.NotificationState.INIT
+
+            # imu not connected ?
+            if not chair_state.Angle.connectedAngle:
+                self.__currentState = NotificationFSMState.NotificationState.INIT
+                self.__stopReason = "notConnectedIMU"
 
         elif self.__currentState == NotificationFSMState.NotificationState.WAITING_FOR_TILT:
             """
@@ -425,8 +443,8 @@ class NotificationFSMState:
                 return
 
             # Tilt detected?
-            if (angle_state.in_state(AngleFSMState.AngleState.ANGLE_STARTED)
-                    or angle_state.in_state(AngleFSMState.AngleState.IN_TILT)):
+            if ((angle_state.in_state(AngleFSMState.AngleState.ANGLE_STARTED)
+                    or angle_state.in_state(AngleFSMState.AngleState.IN_TILT)) and not chair_state.Angle.inCalibration):
                 self.__currentState = NotificationFSMState.NotificationState.IN_TILT
                 self.__stopReason = 'TILT_BEGIN'
                 self.__secondsCounter = 0
@@ -435,6 +453,7 @@ class NotificationFSMState:
             # in calibration?
             if chair_state.Angle.inCalibration:
                 self.__stopReason = "IN_CALIBRATION"
+
              
             # no goal?
             if (angle_state.getTargetFrequency() == 0):
@@ -445,6 +464,11 @@ class NotificationFSMState:
             if not enabled:
                 self.__stopReason = 'USER_DISABLED'
                 self.__currentState = NotificationFSMState.NotificationState.INIT
+
+            # imu not connected ?
+            if not chair_state.Angle.connectedAngle:
+                self.__currentState = NotificationFSMState.NotificationState.INIT
+                self.__stopReason = "notConnectedIMU"
 
         elif self.__currentState == NotificationFSMState.NotificationState.TILT_SNOOZED:
             """
@@ -507,6 +531,11 @@ class NotificationFSMState:
             if not enabled:
                 self.__stopReason = 'USER_DISABLED'
                 self.__currentState = NotificationFSMState.NotificationState.INIT
+            
+            # imu not connected ?
+            if not chair_state.Angle.connectedAngle:
+                self.__currentState = NotificationFSMState.NotificationState.INIT
+                self.__stopReason = "notConnectedIMU"
 
             # time waiting for tilit exceed the frequency recommende? 
             if (angle_state.getRecommendedTargetFrequency() != 0):
@@ -604,6 +633,11 @@ class NotificationFSMState:
                 self.__stopReason = 'USER_DISABLED'
                 self.__currentState = NotificationFSMState.NotificationState.INIT
 
+            # imu not connected ?
+            if not chair_state.Angle.connectedAngle:
+                self.__currentState = NotificationFSMState.NotificationState.INIT
+                self.__stopReason = "notConnectedIMU"
+
         elif self.__currentState == NotificationFSMState.NotificationState.TILT_DURATION_OK:
             """
             case NotificationState::TILT_DURATION_OK:
@@ -656,6 +690,11 @@ class NotificationFSMState:
             if not enabled:
                 self.__stopReason = 'USER_DISABLED'
                 self.__currentState = NotificationFSMState.NotificationState.INIT
+            
+            # imu not connected ?
+            if not chair_state.Angle.connectedAngle:
+                self.__currentState = NotificationFSMState.NotificationState.INIT
+                self.__stopReason = "notConnectedIMU"
 
         elif self.__currentState == NotificationFSMState.NotificationState.NOTIFICATION_TILT_STOPPED:
             """
